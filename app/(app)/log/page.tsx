@@ -31,9 +31,9 @@ export default function LogPage() {
   const dateObj = new Date(date + 'T12:00:00')
   const dayName = DAYS[dateObj.getDay()]
 
-  const sevenDays = Array.from({ length: 7 }, (_, i) => {
+  const sevenDays = Array.from({ length: 14 }, (_, i) => {
     const d = new Date()
-    d.setDate(d.getDate() - 6 + i)
+    d.setDate(d.getDate() - 13 + i)
     return d.toISOString().split('T')[0]
   })
 
@@ -57,15 +57,17 @@ export default function LogPage() {
 
   return (
     <div className="space-y-6 max-w-lg mx-auto page-enter">
-      <PageHeader title="Meal Log 📋" subtitle="View and manage your meals by day" />
+      <PageHeader title="Meal Log 📋" subtitle="Xem bữa ăn theo ngày bạn chọn" />
 
-      {/* 7-day pill date selector */}
-      <div className="flex gap-2 overflow-x-auto pb-2 -mx-1">
+      {/* Date selector - scrollable pills + full date picker */}
+      <div className="space-y-3">
+        <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 scrollbar-hide">
         {sevenDays.map((d) => {
           const isActive = d === date
           const dObj = new Date(d + 'T12:00:00')
           const label = DAYS[dObj.getDay()].slice(0, 2)
           const num = dObj.getDate()
+          const isToday = d === today
           return (
             <button
               key={d}
@@ -74,13 +76,27 @@ export default function LogPage() {
               className={`shrink-0 px-4 py-2.5 rounded-2xl text-sm font-bold transition-all ${
                 isActive
                   ? 'hoverboard-gradient text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  : isToday
+                    ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
               {label} {num}
             </button>
           )
         })}
+        </div>
+        <div className="flex items-center gap-2">
+          <label htmlFor="log-date" className="text-xs font-medium text-slate-500 shrink-0">Chọn ngày:</label>
+          <input
+            id="log-date"
+            type="date"
+            value={date}
+            max={today}
+            onChange={(e) => setDate(e.target.value)}
+            className="flex-1 px-4 py-2.5 rounded-2xl bg-slate-50 border-none text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+          />
+        </div>
       </div>
 
       {/* Daily summary */}

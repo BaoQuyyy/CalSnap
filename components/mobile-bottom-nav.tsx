@@ -17,8 +17,8 @@ export function MobileBottomNav() {
   const pathname = usePathname()
 
   return (
-    <nav className="md:hidden fixed bottom-4 left-4 right-4 z-50" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-      <div className="bg-slate-900/95 backdrop-blur-2xl rounded-2xl border border-white/10 shadow-xl flex items-stretch justify-around px-2 py-2 gap-0.5 max-w-lg mx-auto">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 pt-2 rounded-t-[2rem] bg-slate-900/95 backdrop-blur-2xl border-t border-x border-white/10 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
+      <div className="flex items-stretch justify-around px-2 py-2 gap-0.5 max-w-lg mx-auto">
         {navItems.map(({ href, label, icon: Icon }) => {
           const isActive = pathname === href
           const isCenter = href === '/scan'
