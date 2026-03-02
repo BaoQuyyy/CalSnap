@@ -49,7 +49,7 @@ ${plan ? `- Plan: ${plan.daily_calories} kcal, ${plan.daily_protein_g}g protein`
 QUY TAC: Ngan gon, than thien. Dung tieng Viet neu user viet tieng Viet.`
 
     const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
 
     const parts: any[] = []
     if (message?.trim()) parts.push({ text: message.trim() })
