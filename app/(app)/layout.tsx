@@ -2,9 +2,6 @@ import { Navbar } from '@/components/navbar'
 import { MobileBottomNav } from '@/components/mobile-bottom-nav'
 import { InstallPrompt } from '@/components/install-prompt'
 import { FloatingAIAssistant } from '@/components/floating-ai-assistant'
-// Thêm sau {children}:
-<FloatingAIAssistant />
-
 
 export default function AppLayout({
     children,
@@ -19,6 +16,7 @@ export default function AppLayout({
             </main>
             <MobileBottomNav />
             <InstallPrompt />
+            <FloatingAIAssistant />
         </div>
     )
 }

@@ -11,10 +11,12 @@ interface Message {
 }
 
 const QUICK_ACTIONS = [
-  'Hôm nay tôi đã ăn gì?',
+  'Tôi vừa ăn gì hôm nay?',
   'Còn bao nhiêu kcal hôm nay?',
-  'Log 1 tô phở bò cho tôi',
-  'Gợi ý bữa tối lành mạnh',
+  'Tôi vừa ăn 1 tô phở bò',
+  'Gợi ý bữa tối theo plan của tôi',
+  'Phân tích dinh dưỡng hôm nay',
+  'Tôi nên ăn gì để đủ protein?',
 ]
 
 const toBase64 = (file: File): Promise<string> =>
@@ -69,21 +71,27 @@ export function FloatingAIAssistant() {
       const data = await res.json()
       const reply = data.reply ?? 'Xin lỗi, tôi không hiểu. Bạn thử lại nhé!'
 
-      // Parse [ACTION:...] tags
-      const actionMatch = reply.match(/\[ACTION:(\w+):(\{.*?\})\]/)
+      const actionMatches = reply.matchAll(/\[ACTION:(\w+):(\{.*?\})\]/g)
       let cleanReply = reply.replace(/\[ACTION:.*?\]/g, '').trim()
 
-      if (actionMatch) {
-        const actionType = actionMatch[1]
-        const actionData = JSON.parse(actionMatch[2])
+      for (const match of actionMatches) {
+        const actionType = match[1]
+        const actionData = JSON.parse(match[2])
+
+        await fetch('/api/assistant/action', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: actionType, data: actionData }),
+        })
 
         if (actionType === 'LOG_MEAL') {
-          await fetch('/api/assistant/action', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ type: 'LOG_MEAL', data: actionData }),
-          })
           cleanReply += `\n\n✅ Đã log: ${actionData.foodName} (${actionData.calories} kcal)`
+        } else if (actionType === 'UPDATE_MEAL') {
+          cleanReply += `\n\n✏️ Đã cập nhật: ${actionData.foodName}`
+        } else if (actionType === 'DELETE_MEAL') {
+          cleanReply += `\n\n🗑️ Đã xóa: ${actionData.foodName}`
+        } else if (actionType === 'UPDATE_GOAL') {
+          cleanReply += `\n\n🎯 Đã cập nhật mục tiêu: ${actionData.daily_calorie_goal} kcal/ngày`
         }
       }
 
