@@ -21,6 +21,7 @@ interface MealSummary {
 interface Profile {
   full_name?: string
   daily_calorie_goal?: number
+  journey_score?: number
   journey_streak?: number
   weight_kg?: number
   target_weight_kg?: number
@@ -91,7 +92,12 @@ export default function DashboardPage() {
                 {profile?.full_name ?? 'CalSnap user'}
               </h1>
             </div>
-            <JourneyProgress streak={profile?.journey_streak ?? 0} />
+            <JourneyProgress
+              journeyScore={profile?.journey_score ?? 0}
+              streak={profile?.journey_streak ?? 0}
+              onTrackDays={0}
+              history={[]}
+            />
           </div>
 
           <div className="bg-white/10 rounded-[2rem] p-4 md:p-5">
