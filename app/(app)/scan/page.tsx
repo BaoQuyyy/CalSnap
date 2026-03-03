@@ -220,7 +220,7 @@ Người dùng muốn điều chỉnh/thêm: "${adjustment}". Hãy tính lại t
         <div className="space-y-5 max-w-lg mx-auto overflow-x-hidden page-enter pb-8">
 
             {/* ── HEADER ── */}
-            <div className="-mx-4 md:-mx-8 nutri-header">
+            <div className="-mx-4 md:-mx-8 nutri-header rounded-b-[2.5rem]">
                 <div className="relative z-10 px-5 md:px-8 pt-12 pb-8">
                     <div className="flex items-center gap-3">
                         <div className="w-11 h-11 rounded-2xl bg-white/20 flex items-center justify-center text-2xl">📸</div>

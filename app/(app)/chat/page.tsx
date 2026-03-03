@@ -84,7 +84,7 @@ export default function ChatPage() {
   return (
     <div className="flex flex-col h-[calc(100dvh-8rem)] md:h-[calc(100vh-6rem)] max-w-2xl mx-auto page-enter min-h-0 w-full max-w-full overflow-hidden">
       {/* Header */}
-      <div className="-mx-4 md:-mx-8 nutri-header mb-4">
+      <div className="-mx-4 md:-mx-8 nutri-header-danger rounded-b-[2.5rem] mb-4">
         <div className="relative z-10 px-5 md:px-8 pt-10 pb-5 flex items-center justify-between gap-3">
           <div>
             <h1 className="text-white text-xl font-display font-extrabold">
