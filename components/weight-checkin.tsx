@@ -4,6 +4,7 @@
 import { useState } from 'react'
 import { TrendingDown, TrendingUp, Plus, X } from 'lucide-react'
 import { addWeightCheckin } from '@/app/actions/weight'
+import { toast } from 'sonner'
 
 interface WeightHistoryItem {
   date: string
@@ -37,10 +38,17 @@ export function WeightCheckin({
     const kg = parseFloat(input)
     if (isNaN(kg) || kg < 20 || kg > 300) return
     setLoading(true)
-    await addWeightCheckin(kg)
-    setCurrent(kg)
-    setInput('')
-    setShowInput(false)
+    const res = await addWeightCheckin(kg)
+    if ((res as any)?.error) {
+      toast.error((res as any).error)
+    } else {
+      setCurrent(kg)
+      setInput('')
+      setShowInput(false)
+      toast.success(`✅ Đã cập nhật cân nặng: ${kg}kg — plan dinh dưỡng đã được tính lại!`)
+      // Reload để dashboard hiện chỉ số mới
+      setTimeout(() => window.location.reload(), 1200)
+    }
     setLoading(false)
   }
 
@@ -65,7 +73,7 @@ export function WeightCheckin({
         </button>
       </div>
 
-      {/* 2 số to 2 bên — KHÔNG có badge chen giữa */}
+      {/* 2 số to 2 bên */}
       <div className="flex items-end justify-between mb-3">
         <div>
           <p className="text-4xl font-black text-slate-800">
@@ -91,7 +99,7 @@ export function WeightCheckin({
         />
       </div>
 
-      {/* Badge + thời gian nằm DƯỚI thanh — không chen giữa 2 số nữa */}
+      {/* Badge + thời gian */}
       <div className="flex items-center justify-between mb-4">
         <div className={`flex items-center gap-1.5 px-3 py-1 rounded-2xl ${
           isLosing ? 'bg-orange-50 text-orange-600' : 'bg-emerald-50 text-emerald-600'
@@ -123,7 +131,7 @@ export function WeightCheckin({
         </div>
       )}
 
-      {/* Input check-in — ẩn mặc định, hiện khi bấm + */}
+      {/* Input check-in */}
       {showInput && (
         <div className="pt-3 border-t border-slate-100">
           <p className="text-xs font-bold text-slate-500 mb-2">
@@ -146,6 +154,9 @@ export function WeightCheckin({
               {loading ? '...' : 'Lưu'}
             </button>
           </div>
+          <p className="text-[10px] text-slate-400 mt-2">
+            💡 Plan dinh dưỡng sẽ tự động cập nhật theo cân nặng mới
+          </p>
         </div>
       )}
     </div>
