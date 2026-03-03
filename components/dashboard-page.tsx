@@ -215,24 +215,19 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── GRID CHÍNH: Habits | AI + Chart ── */}
-      <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      {/* ── GRID CHÍNH: HabitCards | AI + Chart + QuickRelog ── */}
+      <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-start">
 
-        {/* Cột trái: Habits + Water/Steps Tracker */}
-        <div className="space-y-4">
+        {/* Cột trái: chỉ HabitCards — self-start để không bị kéo dài */}
+        <div className="self-start">
           <HabitCards
             date={date}
             initialHabits={habits}
             onUpdate={(newCal) => { if (newCal !== undefined) setExerciseCalories(newCal) }}
           />
-          <DailyTracker
-            date={date}
-            initialSteps={habits?.steps ?? 0}
-            initialWaterMl={habits?.water_ml ?? 0}
-          />
         </div>
 
-        {/* Cột phải: AI + Weekly chart */}
+        {/* Cột phải: AI + Chart + QuickRelog */}
         <div className="space-y-4">
           <div className="glass-card rounded-[2rem] p-5 flex flex-col gap-3">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Trợ lý AI</p>
@@ -260,22 +255,29 @@ export default function DashboardPage() {
               weeklyCalories.length === 0 ? <p className="text-xs text-slate-400">Chưa có dữ liệu — hãy log vài bữa ăn nhé.</p> :
                 <WeeklyChart data={weeklyCalories} goal={calorieGoal} />}
           </div>
+
+          <div className="glass-card rounded-[2rem] p-5">
+            <QuickRelog recentMeals={recentMeals} onRelog={relogHandler} />
+          </div>
         </div>
       </div>
 
-      {/* ── GRID PHỤ: Quick Relog | Weight + Monthly ── */}
-      <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <div className="glass-card rounded-[2rem] p-5">
-          <QuickRelog recentMeals={recentMeals} onRelog={relogHandler} />
-        </div>
+      {/* ── WATER & STEPS: full width ── */}
+      <DailyTracker
+        date={date}
+        initialSteps={habits?.steps ?? 0}
+        initialWaterMl={habits?.water_ml ?? 0}
+      />
 
-        <div className="space-y-4">
-          {profile?.weight_kg && profile?.target_weight_kg && (
-            <WeightCheckin currentWeight={profile.weight_kg} targetWeight={profile.target_weight_kg} history={[]} />
-          )}
+      {/* ── HÀNG PHỤ: Weight | Monthly ── */}
+      {profile?.weight_kg && profile?.target_weight_kg ? (
+        <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-start">
+          <WeightCheckin currentWeight={profile.weight_kg} targetWeight={profile.target_weight_kg} history={[]} />
           <MonthlySummaryCard />
         </div>
-      </div>
+      ) : (
+        <MonthlySummaryCard />
+      )}
 
       {/* ── WEEKLY REPORT ── */}
       <WeeklyReport data={null} />
