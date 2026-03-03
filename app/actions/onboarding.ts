@@ -14,6 +14,61 @@ export interface OnboardingData {
     activity_level: 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active'
 }
 
+function calculateFallbackPlan(data: OnboardingData) {
+    const heightM = data.height_cm / 100
+    const bmi = Math.round((data.weight_kg / (heightM ** 2)) * 10) / 10
+    const bmi_category =
+        bmi < 18.5 ? 'Underweight' :
+        bmi < 25 ? 'Normal' :
+        bmi < 30 ? 'Overweight' : 'Obese'
+
+    // Mifflin-St Jeor
+    const bmr = data.gender === 'male'
+        ? Math.round(10 * data.weight_kg + 6.25 * data.height_cm - 5 * data.age + 5)
+        : Math.round(10 * data.weight_kg + 6.25 * data.height_cm - 5 * data.age - 161)
+
+    const activityMultiplier = {
+        sedentary: 1.2,
+        light: 1.375,
+        moderate: 1.55,
+        active: 1.725,
+        very_active: 1.9,
+    }[data.activity_level]
+
+    const tdee = Math.round(bmr * activityMultiplier)
+
+    const daily_calories =
+        data.goal === 'lose_weight' ? tdee - 500 :
+        data.goal === 'gain_muscle' ? tdee + 300 :
+        tdee
+
+    const daily_protein_g = Math.round(data.weight_kg * 2)
+    const daily_carbs_g = Math.round((daily_calories * 0.45) / 4)
+    const daily_fat_g = Math.round((daily_calories * 0.25) / 9)
+    const water_liters = Math.round(data.weight_kg * 0.033 * 10) / 10
+
+    const weightDiff = Math.abs(data.weight_kg - data.target_weight_kg)
+    const estimated_weeks_to_goal = weightDiff === 0 ? 0 : Math.round(weightDiff / 0.5)
+
+    return {
+        bmi,
+        bmi_category,
+        bmr,
+        tdee,
+        daily_calories,
+        daily_protein_g,
+        daily_carbs_g,
+        daily_fat_g,
+        water_liters,
+        weekly_workouts: 3,
+        workout_duration_minutes: 45,
+        workout_types: ['Cardio', 'Strength Training'],
+        estimated_weeks_to_goal,
+        tips: ['Stay consistent', 'Track your meals', 'Get enough sleep'],
+        summary: `Dựa trên chỉ số của bạn (BMI: ${bmi}), mục tiêu ${daily_calories} kcal/ngày sẽ giúp bạn đạt mục tiêu trong khoảng ${estimated_weeks_to_goal} tuần.`,
+    }
+}
+
 export async function saveOnboarding(data: OnboardingData) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -72,28 +127,11 @@ Return ONLY a valid JSON object with this exact structure, no markdown, no expla
 
     let fitnessPlan = null
 
-    // Ưu tiên dùng GOOGLE_AI_API_KEY; fallback sang GEMINI_API_KEY cho kompat cũ
     const apiKey = process.env.GOOGLE_AI_API_KEY ?? process.env.GEMINI_API_KEY
 
     if (!apiKey) {
-        // Không có API key: dùng fallback an toàn để app vẫn hoạt động
-        fitnessPlan = {
-            bmi: Math.round((data.weight_kg / ((data.height_cm / 100) ** 2)) * 10) / 10,
-            bmi_category: 'Normal',
-            bmr: 1800,
-            tdee: 2200,
-            daily_calories: 2000,
-            daily_protein_g: 150,
-            daily_carbs_g: 200,
-            daily_fat_g: 67,
-            water_liters: 2.5,
-            weekly_workouts: 3,
-            workout_duration_minutes: 45,
-            workout_types: ['Cardio', 'Strength Training'],
-            estimated_weeks_to_goal: 12,
-            tips: ['Stay consistent', 'Track your meals', 'Get enough sleep'],
-            summary: 'Stay consistent with your nutrition and exercise routine to reach your goal.',
-        }
+        // Không có API key: tính từ công thức thay vì hardcode
+        fitnessPlan = calculateFallbackPlan(data)
     } else {
         try {
             const geminiRes = await fetch(
@@ -113,24 +151,8 @@ Return ONLY a valid JSON object with this exact structure, no markdown, no expla
             const cleaned = text.replace(/```json|```/g, '').trim()
             fitnessPlan = JSON.parse(cleaned)
         } catch {
-            // Fallback plan nếu Gemini lỗi (quota, key sai, network, ...)
-            fitnessPlan = {
-                bmi: Math.round((data.weight_kg / ((data.height_cm / 100) ** 2)) * 10) / 10,
-                bmi_category: 'Normal',
-                bmr: 1800,
-                tdee: 2200,
-                daily_calories: 2000,
-                daily_protein_g: 150,
-                daily_carbs_g: 200,
-                daily_fat_g: 67,
-                water_liters: 2.5,
-                weekly_workouts: 3,
-                workout_duration_minutes: 45,
-                workout_types: ['Cardio', 'Strength Training'],
-                estimated_weeks_to_goal: 12,
-                tips: ['Stay consistent', 'Track your meals', 'Get enough sleep'],
-                summary: 'Stay consistent with your nutrition and exercise routine to reach your goal.',
-            }
+            // Fallback nếu Gemini lỗi — tính từ công thức, không hardcode
+            fitnessPlan = calculateFallbackPlan(data)
         }
     }
 
