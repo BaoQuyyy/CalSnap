@@ -83,7 +83,6 @@ export default function DashboardPage() {
         setHabits(null)
       }
 
-      // Load "log lại gần đây" (một lần)
       if (recentMeals.length === 0) {
         try {
           const data = await getMealsForDate('recent')
@@ -117,7 +116,6 @@ export default function DashboardPage() {
   const remaining = calorieGoal - calories
   const pct = calorieGoal > 0 ? Math.min(100, Math.round((calories / calorieGoal) * 100)) : 0
 
-  // 7 ngày của tuần hiện tại (bắt đầu từ Chủ nhật)
   const today = new Date()
   const weekdayLabels = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
   const startOfWeek = new Date(today)
@@ -140,10 +138,8 @@ export default function DashboardPage() {
     year: 'numeric',
   })
   const firstName =
-    profile?.full_name?.trim()?.split(' ')?.[0] ??
-    'bạn'
+    profile?.full_name?.trim()?.split(' ')?.[0] ?? 'bạn'
 
-  // Ring chart values
   const ringSize = 220
   const ringStroke = 18
   const r = (ringSize - ringStroke * 2) / 2
@@ -232,7 +228,7 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          {/* Date strip (keep existing date set logic) */}
+          {/* Date strip */}
           <div className="mt-5 flex gap-2">
             <div className="w-full bg-white/15 rounded-2xl p-2 flex gap-1">
               {headerDays.map((d, idx) => {
@@ -241,7 +237,8 @@ export default function DashboardPage() {
                 const dayLabel = weekdayLabels[d.getDay()]
                 const dayCalories =
                   weeklyCalories.find((x) => x.date === dStr)?.calories ?? 0
-                const dayPct = calorieGoal > 0 ? Math.min(100, Math.round((dayCalories / calorieGoal) * 100)) : 0
+                // Bỏ Math.min(100) để hiển thị > 100% khi vượt mục tiêu
+                const dayPct = calorieGoal > 0 ? Math.round((dayCalories / calorieGoal) * 100) : 0
 
                 return (
                   <button
@@ -259,7 +256,9 @@ export default function DashboardPage() {
                     </div>
                     <div
                       className={`w-7 h-7 rounded-full mx-auto mt-1 flex items-center justify-center text-[10px] font-bold ${
-                        isActive ? 'bg-[#2E7D32] text-white' : 'bg-white/15 text-white'
+                        dayPct > 100
+                          ? isActive ? 'bg-red-500 text-white' : 'bg-red-400 text-white'
+                          : isActive ? 'bg-[#2E7D32] text-white' : 'bg-white/15 text-white'
                       }`}
                       title={`${dayCalories.toLocaleString()} kcal`}
                     >
@@ -277,7 +276,6 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-[minmax(0,3fr)_minmax(0,2.2fr)]">
         {/* Left: macros + habits */}
         <div className="space-y-4">
-          {/* Macros summary */}
           <div className="glass-card rounded-[2rem] p-5">
             <div className="flex items-center justify-between mb-3">
               <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -300,7 +298,6 @@ export default function DashboardPage() {
 
         {/* Right: AI tools + charts + relog */}
         <div className="space-y-4">
-          {/* AI logging */}
           <div className="glass-card rounded-[2rem] p-5 flex flex-col gap-3">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
               Trợ lý AI
@@ -345,7 +342,6 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Weekly chart */}
           <div className="glass-card rounded-[2rem] p-5">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -366,7 +362,6 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* Quick relog */}
           <div className="glass-card rounded-[2rem] p-5">
             <QuickRelog
               recentMeals={recentMeals}
@@ -378,7 +373,6 @@ export default function DashboardPage() {
                 }
                 toast.success(`Đã log lại: ${meal.food_name} (${meal.calories} kcal)`)
 
-                // Nếu đang xem hôm nay thì refresh totals ngay để dashboard "sống"
                 if (date === todayStr) {
                   const supabase = createClient()
                   const { data: { user } } = await supabase.auth.getUser()
@@ -402,7 +396,6 @@ export default function DashboardPage() {
             />
           </div>
 
-          {/* Weekly report + weight */}
           <WeeklyReport data={null} />
           {profile?.weight_kg && profile?.target_weight_kg && (
             <WeightCheckin
@@ -422,7 +415,6 @@ export default function DashboardPage() {
         </div>
 
         <div className="space-y-4">
-          {/* Lấp khoảng trống: biểu đồ + log lại nhanh */}
           <div className="glass-card rounded-[2rem] p-5">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -454,7 +446,6 @@ export default function DashboardPage() {
                 }
                 toast.success(`Đã log lại: ${meal.food_name} (${meal.calories} kcal)`)
 
-                // Nếu đang xem hôm nay thì refresh totals ngay để dashboard "sống"
                 if (date === todayStr) {
                   const supabase = createClient()
                   const { data: { user } } = await supabase.auth.getUser()
@@ -478,7 +469,6 @@ export default function DashboardPage() {
             />
           </div>
 
-          {/* Báo cáo tuần & cân nặng */}
           <WeeklyReport data={null} />
           {profile?.weight_kg && profile?.target_weight_kg && (
             <WeightCheckin
@@ -517,4 +507,3 @@ export default function DashboardPage() {
     </div>
   )
 }
-
