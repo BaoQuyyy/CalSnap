@@ -177,8 +177,10 @@ export async function getWeeklyCalories() {
     })
 
     return Object.entries(grouped).map(([date, calories]) => ({
-        date: new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' }),
+        date, // giữ nguyên YYYY-MM-DD
         calories,
+        label: new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' }),
+
     }))
 }
 

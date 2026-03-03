@@ -4,6 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 
 interface WeeklyData {
     date: string
+    label?: string
     calories: number
 }
 
@@ -19,7 +20,7 @@ export function WeeklyChart({ data, goal = 2000 }: WeeklyChartProps) {
                 <BarChart data={data} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border)/40%)" vertical={false} />
                     <XAxis
-                        dataKey="date"
+                        dataKey="label"
                         tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
                         axisLine={false}
                         tickLine={false}
