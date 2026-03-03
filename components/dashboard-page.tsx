@@ -308,6 +308,7 @@ export default function DashboardPage() {
           </div>
 
           <HabitCards
+            key={`habits-${date}-${habits?.exercise_calories ?? 0}`}
             date={date}
             initialHabits={habits}
             onUpdate={() => loadHabits(date)}
@@ -430,6 +431,7 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-[minmax(0,2.1fr)_minmax(0,2.1fr)]">
         <div className="space-y-4">
           <HabitCards
+            key={`habits-${date}-${habits?.exercise_calories ?? 0}`}
             date={date}
             initialHabits={habits}
             onUpdate={() => loadHabits(date)}
