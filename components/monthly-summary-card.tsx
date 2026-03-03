@@ -164,6 +164,7 @@ export function MonthlySummaryCard() {
             <div className="inline-flex items-center gap-1 rounded-full bg-slate-100 p-1">
               {[
                 { id: 'calories', label: 'Calories' },
+                { id: 'protein', label: 'Protein' },
                 { id: 'steps', label: 'Steps' },
                 { id: 'water', label: 'Water' },
               ].map((m) => (
@@ -171,11 +172,10 @@ export function MonthlySummaryCard() {
                   key={m.id}
                   type="button"
                   onClick={() => setMetric(m.id as any)}
-                  className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors ${
-                    metric === m.id
+                  className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors ${metric === m.id
                       ? 'bg-emerald-500 text-white shadow-sm'
                       : 'text-slate-500 hover:text-slate-800'
-                  }`}
+                    }`}
                 >
                   {m.label}
                 </button>
@@ -198,6 +198,10 @@ export function MonthlySummaryCard() {
                   <linearGradient id="waterArea" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#0ea5e9" stopOpacity={0.9} />
                     <stop offset="100%" stopColor="#0ea5e9" stopOpacity={0.05} />
+                  </linearGradient>
+                  <linearGradient id="proteinArea" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#a855f7" stopOpacity={0.9} />
+                    <stop offset="100%" stopColor="#a855f7" stopOpacity={0.05} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
@@ -243,6 +247,16 @@ export function MonthlySummaryCard() {
                     strokeWidth={2}
                     fill="url(#stepsArea)"
                     name="Steps"
+                  />
+                )}
+                {metric === 'protein' && (
+                  <Area
+                    type="monotone"
+                    dataKey="protein"
+                    stroke="#a855f7"
+                    strokeWidth={2}
+                    fill="url(#proteinArea)"
+                    name="Protein"
                   />
                 )}
                 {metric === 'water' && (

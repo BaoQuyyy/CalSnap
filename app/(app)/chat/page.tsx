@@ -76,8 +76,53 @@ export default function ChatPage() {
 
   const clearChat = () => setMessages([])
 
+  // Parse markdown: **bold**, *italic*, ordered/unordered lists
+  const renderContent = (text: string) => {
+    // Escape HTML first
+    let html = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+
+    // Parse ordered list blocks (lines starting with "1. 2. 3.")
+    html = html.replace(
+      /((?:^|\n)\d+\.\s.+)+/g,
+      (block) => {
+        const items = block
+          .trim()
+          .split('\n')
+          .filter((l) => l.match(/^\d+\./))
+          .map((l) => `<li class="ml-4 list-decimal">${l.replace(/^\d+\.\s*/, '')}</li>`)
+          .join('')
+        return `<ol class="space-y-1 my-2 pl-2">${items}</ol>`
+      }
+    )
+
+    // Parse unordered list blocks (lines starting with "- ")
+    html = html.replace(
+      /((?:^|\n)-\s.+)+/g,
+      (block) => {
+        const items = block
+          .trim()
+          .split('\n')
+          .filter((l) => l.match(/^-\s/))
+          .map((l) => `<li class="ml-4 list-disc">${l.replace(/^-\s*/, '')}</li>`)
+          .join('')
+        return `<ul class="space-y-1 my-2 pl-2">${items}</ul>`
+      }
+    )
+
+    // Bold, italic, newlines
+    html = html
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/\n/g, '<br />')
+
+    return html
+  }
+
   return (
-    <div className="flex flex-col h-[calc(100dvh-8rem)] md:h-[calc(100vh-6rem)] max-w-2xl mx-auto page-enter min-h-0 w-full max-w-full overflow-hidden">
+    <div className="font-sans flex flex-col h-[calc(100dvh-8rem)] md:h-[calc(100vh-6rem)] max-w-2xl mx-auto page-enter min-h-0 w-full max-w-full overflow-hidden">
 
       {/* Header */}
       <div className="nutri-header rounded-[2rem] overflow-hidden mb-4">
@@ -128,12 +173,18 @@ export default function ChatPage() {
 
         {messages.map((m, i) => (
           <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[80%] p-4 rounded-[1.5rem] text-sm ${
-              m.role === 'user'
-                ? 'hoverboard-gradient text-white rounded-tr-sm'
-                : 'glass-card text-slate-800 rounded-tl-sm'
-            }`}>
-              <p className="whitespace-pre-wrap leading-relaxed">{m.content}</p>
+            <div className={`max-w-[80%] p-4 rounded-[1.5rem] text-sm ${m.role === 'user'
+              ? 'hoverboard-gradient text-white rounded-tr-sm'
+              : 'glass-card text-slate-800 rounded-tl-sm'
+              }`}>
+              {m.role === 'assistant' ? (
+                <p
+                  className="leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: renderContent(m.content) }}
+                />
+              ) : (
+                <p className="whitespace-pre-wrap leading-relaxed">{m.content}</p>
+              )}
               <p className={`text-[10px] mt-1 ${m.role === 'user' ? 'text-white/70' : 'text-slate-400'}`}>
                 {m.timestamp.toLocaleTimeString('vi-VN', { hour: 'numeric', minute: '2-digit' })}
               </p>

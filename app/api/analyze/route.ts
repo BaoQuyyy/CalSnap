@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { rateLimit } from '@/lib/rate-limit'
 
 const IMAGE_PROMPT = `Bạn là chuyên gia dinh dưỡng, trả lời bằng tiếng Việt.
 Phân tích món ăn trong bức ảnh và TRẢ VỀ DUY NHẤT một JSON với cấu trúc:
@@ -22,6 +23,22 @@ YÊU CẦU:
 Mô tả từ người dùng: `
 
 export async function POST(req: NextRequest) {
+    // Rate limit: 10 requests per minute per IP
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+    const rl = rateLimit(ip, { limit: 10, window: 60 })
+    if (!rl.success) {
+        return NextResponse.json(
+            { error: 'Bạn đang gửi quá nhiều yêu cầu. Vui lòng chờ 1 phút rồi thử lại.' },
+            {
+                status: 429,
+                headers: {
+                    'X-RateLimit-Remaining': '0',
+                    'X-RateLimit-Reset': String(rl.reset),
+                },
+            }
+        )
+    }
+
     const apiKey = process.env.GOOGLE_AI_API_KEY
     if (!apiKey || apiKey.length < 10 || apiKey.startsWith('your_')) {
         console.error('[/api/analyze] GOOGLE_AI_API_KEY is not configured')

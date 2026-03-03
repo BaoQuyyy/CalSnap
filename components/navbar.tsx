@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
+import { ThemeToggle } from '@/components/theme-toggle'
 
 const navItems = [
   { href: '/', label: 'Dashboard' },
@@ -35,7 +36,7 @@ export function Navbar() {
   }, [])
 
   return (
-    <header className="hidden md:block bg-white/70 backdrop-blur sticky top-0 z-40 border-b border-white/40 px-8 py-4">
+    <header className="hidden md:block bg-white/70 dark:bg-slate-900/80 backdrop-blur sticky top-0 z-40 border-b border-white/40 dark:border-slate-700/40 px-8 py-4">
       <div className="max-w-6xl mx-auto flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
           <Image src="/calsnap-logo.svg" width={36} height={36} alt="CalSnap" />
@@ -60,6 +61,7 @@ export function Navbar() {
         </nav>
 
         <div className="flex items-center gap-3">
+          <ThemeToggle />
           <div className="w-9 h-9 rounded-full bg-emerald-500 text-white font-bold flex items-center justify-center text-sm">
             {userInitial || '?'}
           </div>

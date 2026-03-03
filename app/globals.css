@@ -226,3 +226,22 @@ body {
 .nutri-header-danger {
   background: linear-gradient(145deg, #d4856a 0%, #e8967a 50%, #f2b09a 100%);
 }
+
+/* ============ Dark mode overrides ============ */
+.dark body {
+  background-color: #0d1117;
+}
+
+.dark .glass-card {
+  background: rgba(30, 41, 59, 0.75);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.dark .nutri-bg {
+  background: linear-gradient(135deg, #1a2e1a, #1e3a1e);
+}
+
+.dark .nutri-header {
+  background: linear-gradient(145deg, #166534 0%, #15803d 60%, #16a34a 100%);
+}

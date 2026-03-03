@@ -20,6 +20,7 @@ export default function ScanPage() {
     const [errorMsg, setErrorMsg] = useState<string | null>(null)
     const [saving, setSaving] = useState(false)
     const [saved, setSaved] = useState(false)
+    const [analyzingProgress, setAnalyzingProgress] = useState(0)
 
     // AI Portion Assistant
     const [portionInput, setPortionInput] = useState('')
@@ -84,6 +85,16 @@ export default function ScanPage() {
         if (!imageData) return
         setState('analyzing')
         setErrorMsg(null)
+        setAnalyzingProgress(0)
+
+        // Fake progress: creep up to 90% while waiting
+        const startTime = Date.now()
+        const progressInterval = setInterval(() => {
+            const elapsed = Date.now() - startTime
+            // Exponential slow-down: fast at first, then plateaus near 90%
+            const pct = 90 * (1 - Math.exp(-elapsed / 4000))
+            setAnalyzingProgress(Math.min(90, pct))
+        }, 100)
 
         try {
             const resized = await resizeImage(imageData, 800)
@@ -104,11 +115,14 @@ export default function ScanPage() {
                 setEditProtein(data.result.protein)
                 setEditCarbs(data.result.carbs)
                 setEditFat(data.result.fat)
+                setAnalyzingProgress(100)
                 setState('result')
             }
         } catch {
             setErrorMsg('Failed to connect to AI service. Please try again.')
             setState('error')
+        } finally {
+            clearInterval(progressInterval)
         }
     }
 
@@ -155,7 +169,7 @@ export default function ScanPage() {
         if (typeof window === 'undefined') return
         if (!result) { window.localStorage.removeItem(LOCAL_SCAN_KEY); return }
         const payload = { result, editFoodName, editCalories, editProtein, editCarbs, editFat, savedAt: new Date().toISOString() }
-        try { window.localStorage.setItem(LOCAL_SCAN_KEY, JSON.stringify(payload)) } catch {}
+        try { window.localStorage.setItem(LOCAL_SCAN_KEY, JSON.stringify(payload)) } catch { }
     }, [result, editFoodName, editCalories, editProtein, editCarbs, editFat])
 
     useEffect(() => {
@@ -183,7 +197,7 @@ export default function ScanPage() {
             setEditFat(data.editFat)
             setState('result')
             setImageVisible(false)
-        } catch {}
+        } catch { }
     }, [])
 
     const adjustPortion = async (adjustment: string) => {
@@ -211,9 +225,9 @@ Người dùng muốn điều chỉnh/thêm: "${adjustment}". Hãy tính lại t
     }
 
     const confidenceMeta = {
-        high:   { label: 'Độ tin cậy cao', cls: 'bg-emerald-50 text-emerald-600 border-emerald-200' },
-        medium: { label: 'Độ tin cậy TB',  cls: 'bg-amber-50 text-amber-600 border-amber-200'     },
-        low:    { label: 'Độ tin cậy thấp', cls: 'bg-red-50 text-red-500 border-red-200'           },
+        high: { label: 'Độ tin cậy cao', cls: 'bg-emerald-50 text-emerald-600 border-emerald-200' },
+        medium: { label: 'Độ tin cậy TB', cls: 'bg-amber-50 text-amber-600 border-amber-200' },
+        low: { label: 'Độ tin cậy thấp', cls: 'bg-red-50 text-red-500 border-red-200' },
     } as const
 
     return (
@@ -247,6 +261,14 @@ Người dùng muốn điều chỉnh/thêm: "${adjustment}". Hãy tính lại t
                                     </div>
                                     <p className="text-white text-sm font-semibold">Đang phân tích...</p>
                                     <p className="text-white/50 text-xs">AI đang nhận diện món ăn</p>
+                                    {/* Progress bar */}
+                                    <div className="w-36 h-1.5 bg-white/20 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-emerald-400 rounded-full transition-all duration-300"
+                                            style={{ width: `${analyzingProgress}%` }}
+                                        />
+                                    </div>
+                                    <p className="text-white/40 text-[10px]">{Math.round(analyzingProgress)}%</p>
                                 </div>
                             )}
                         </div>
@@ -276,9 +298,8 @@ Người dùng muốn điều chỉnh/thêm: "${adjustment}". Hãy tính lại t
 
                 {/* Buttons */}
                 <div className="grid grid-cols-2 gap-3">
-                    <label className={`flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl font-bold text-sm cursor-pointer transition-all ${
-                        result ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' : 'hoverboard-gradient text-white shadow-lg shadow-emerald-500/20'
-                    }`}>
+                    <label className={`flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl font-bold text-sm cursor-pointer transition-all ${result ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' : 'hoverboard-gradient text-white shadow-lg shadow-emerald-500/20'
+                        }`}>
                         <Camera className="h-4 w-4" />
                         {result ? 'Chụp lại' : 'Chụp ảnh'}
                         <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileInput} aria-label="Chụp ảnh món ăn" />
@@ -362,9 +383,9 @@ Người dùng muốn điều chỉnh/thêm: "${adjustment}". Hãy tính lại t
 
                     {/* Macros — dùng EditableMacro */}
                     <div className="grid grid-cols-3 gap-3">
-                        <EditableMacro icon={Beef}    label="Protein" value={editProtein} onChange={setEditProtein} color="text-blue-500"   bg="bg-blue-50"   />
-                        <EditableMacro icon={Wheat}   label="Carbs"   value={editCarbs}   onChange={setEditCarbs}   color="text-amber-500"  bg="bg-amber-50"  />
-                        <EditableMacro icon={Droplets} label="Fat"    value={editFat}     onChange={setEditFat}     color="text-orange-500" bg="bg-orange-50" />
+                        <EditableMacro icon={Beef} label="Protein" value={editProtein} onChange={setEditProtein} color="text-blue-500" bg="bg-blue-50" />
+                        <EditableMacro icon={Wheat} label="Carbs" value={editCarbs} onChange={setEditCarbs} color="text-amber-500" bg="bg-amber-50" />
+                        <EditableMacro icon={Droplets} label="Fat" value={editFat} onChange={setEditFat} color="text-orange-500" bg="bg-orange-50" />
                     </div>
 
                     {/* Low confidence warning */}
