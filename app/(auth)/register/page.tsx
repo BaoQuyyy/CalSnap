@@ -20,8 +20,8 @@ export default function RegisterPage() {
     const password = (form.elements.namedItem('password') as HTMLInputElement).value
     const confirm = (form.elements.namedItem('confirm_password') as HTMLInputElement).value
     if (password !== confirm) {
-      setError('Passwords do not match')
-      toast.error('Passwords do not match')
+      setError('Mật khẩu nhập lại không khớp')
+      toast.error('Mật khẩu nhập lại không khớp')
       return
     }
     setLoading(true)
@@ -42,8 +42,12 @@ export default function RegisterPage() {
           <Zap className="h-7 w-7" fill="currentColor" />
         </div>
       </div>
-      <h1 className="text-3xl font-black text-slate-800 text-center mb-1">Create Account ✨</h1>
-      <p className="text-slate-400 text-sm text-center mb-8">Track your nutrition with AI</p>
+      <h1 className="text-3xl font-display font-extrabold text-slate-900 text-center mb-1">
+        Tạo tài khoản ✨
+      </h1>
+      <p className="text-slate-500 text-sm text-center mb-8">
+        Đăng ký để bắt đầu theo dõi dinh dưỡng
+      </p>
 
       {error && (
         <div className="glass-card rounded-2xl p-4 mb-6 bg-red-50/50 border border-red-100">
@@ -61,7 +65,7 @@ export default function RegisterPage() {
                 id="full_name"
                 name="full_name"
                 type="text"
-                placeholder="Full Name"
+                placeholder="Họ và tên"
                 required
                 className="pl-12 pr-4 py-3 bg-slate-50 rounded-2xl border-none focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
               />
@@ -89,7 +93,7 @@ export default function RegisterPage() {
                 id="password"
                 name="password"
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Password (min 6 characters)"
+                placeholder="Mật khẩu (tối thiểu 6 ký tự)"
                 minLength={6}
                 required
                 className="pl-12 pr-12 py-3 bg-slate-50 rounded-2xl border-none focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
@@ -112,7 +116,7 @@ export default function RegisterPage() {
                 id="confirm_password"
                 name="confirm_password"
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Confirm Password"
+                placeholder="Nhập lại mật khẩu"
                 minLength={6}
                 required
                 className="pl-12 pr-4 py-3 bg-slate-50 rounded-2xl border-none focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
@@ -125,12 +129,12 @@ export default function RegisterPage() {
           className="w-full mt-6 hoverboard-gradient text-white font-bold rounded-2xl py-4 active:scale-95 transition-all"
           disabled={loading}
         >
-          {loading ? 'Creating…' : 'Create Account'}
+          {loading ? 'Đang tạo…' : 'Tạo tài khoản'}
         </Button>
         <p className="text-sm text-slate-500 text-center mt-6">
-          Already have an account?{' '}
-          <Link href="/login" className="text-emerald-500 font-semibold hover:underline">
-            Sign in
+          Đã có tài khoản?{' '}
+          <Link href="/login" className="text-emerald-600 font-semibold hover:underline">
+            Đăng nhập
           </Link>
         </p>
       </form>

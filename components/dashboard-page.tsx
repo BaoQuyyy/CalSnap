@@ -4,7 +4,6 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { CalorieProgress } from '@/components/calorie-progress'
 import { HabitCards } from '@/components/habit-cards'
 import { WeeklyReport } from '@/components/weekly-report'
 import { WeightCheckin } from '@/components/weight-checkin'
@@ -115,6 +114,8 @@ export default function DashboardPage() {
   const plan = profile?.fitness_plan as any
   const calorieGoal = plan?.daily_calories ?? profile?.daily_calorie_goal ?? 2000
   const calories = totals?.calories ?? 0
+  const remaining = calorieGoal - calories
+  const pct = calorieGoal > 0 ? Math.min(100, Math.round((calories / calorieGoal) * 100)) : 0
 
   // 7 ngày của tuần hiện tại (bắt đầu từ Chủ nhật)
   const today = new Date()
@@ -131,103 +132,192 @@ export default function DashboardPage() {
     !profile?.height_cm || !profile?.age || !profile?.goal || !profile?.activity_level
 
   const todayStr = new Date().toISOString().split('T')[0]
+  const selectedDateObj = new Date(date + 'T12:00:00')
+  const dateLabel = selectedDateObj.toLocaleDateString('vi-VN', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+  const firstName =
+    profile?.full_name?.trim()?.split(' ')?.[0] ??
+    'bạn'
+
+  // Ring chart values
+  const ringSize = 220
+  const ringStroke = 18
+  const r = (ringSize - ringStroke * 2) / 2
+  const circ = 2 * Math.PI * r
+  const dash = (pct / 100) * circ
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto page-enter pb-24">
-      {/* Header + calories */}
-      <div className="grid gap-4 md:grid-cols-[minmax(0,3fr)_minmax(0,2.2fr)]">
-        <div className="hoverboard-card rounded-[2.5rem] p-6 md:p-8 flex flex-col gap-5">
-          {/* Greeting + clickable weekdays */}
-          <div className="flex items-center justify-between gap-4">
+      {/* NutriAI header */}
+      <div className="-mx-4 md:-mx-8 nutri-header">
+        <div className="relative z-10 px-5 md:px-8 pt-12 pb-7">
+          <div className="flex items-center justify-between gap-4 mb-5">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-white/70">
-                Good Morning
+              <p className="text-white/70 text-xs font-semibold tracking-wide">
+                {dateLabel}
               </p>
-              <h1 className="text-2xl md:text-3xl font-black text-white">
-                {profile?.full_name ?? 'CalSnap user'}
+              <h1 className="text-white text-2xl md:text-3xl font-display font-extrabold mt-1">
+                Xin chào, {firstName} 👋
               </h1>
             </div>
-            <div className="flex gap-1.5 bg-black/10 rounded-2xl px-2 py-1.5">
+            <div className="w-11 h-11 rounded-full bg-white/20 flex items-center justify-center text-xl border border-white/25">
+              🧑
+            </div>
+          </div>
+
+          {/* Ring */}
+          <div className="flex justify-center relative">
+            <svg
+              width={ringSize}
+              height={ringSize}
+              viewBox={`0 0 ${ringSize} ${ringSize}`}
+              className="drop-shadow-[0_18px_45px_rgba(0,0,0,0.18)]"
+            >
+              <defs>
+                <linearGradient id="nutriRing" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#A8E063" />
+                  <stop offset="100%" stopColor="#5CB85C" />
+                </linearGradient>
+              </defs>
+              <circle
+                cx={ringSize / 2}
+                cy={ringSize / 2}
+                r={r}
+                fill="none"
+                stroke="rgba(255,255,255,0.20)"
+                strokeWidth={ringStroke}
+              />
+              <circle
+                cx={ringSize / 2}
+                cy={ringSize / 2}
+                r={r}
+                fill="none"
+                stroke="url(#nutriRing)"
+                strokeWidth={ringStroke}
+                strokeLinecap="round"
+                strokeDasharray={`${dash} ${circ}`}
+                strokeDashoffset={circ / 4}
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+              <p className="text-white font-display font-extrabold text-5xl leading-none tabular-nums">
+                {Math.abs(remaining).toLocaleString()}
+              </p>
+              <p className="text-white/75 text-xs font-semibold mt-2">
+                {remaining >= 0 ? 'kcal còn lại' : 'kcal vượt mục tiêu'}
+              </p>
+            </div>
+          </div>
+
+          {/* Mini stats */}
+          <div className="flex justify-around mt-4">
+            {[
+              ['🎯', 'Mục tiêu', calorieGoal],
+              ['🍽️', 'Đã ăn', calories],
+              ['🔥', 'Đã đốt', 0],
+            ].map(([emoji, label, value]) => (
+              <div key={label as string} className="text-center">
+                <div className="text-lg">{emoji}</div>
+                <div className="text-white font-display font-extrabold text-lg tabular-nums">
+                  {(value as number).toLocaleString()}
+                </div>
+                <div className="text-white/65 text-[10px] font-semibold tracking-wide">
+                  {label}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Date strip (keep existing date set logic) */}
+          <div className="mt-5 flex gap-2">
+            <div className="w-full bg-white/15 rounded-2xl p-2 flex gap-1">
               {headerDays.map((d, idx) => {
                 const dStr = d.toISOString().split('T')[0]
                 const isActive = dStr === date
+                const dayLabel = weekdayLabels[d.getDay()]
+                const dayCalories =
+                  weeklyCalories.find((x) => x.date === dStr)?.calories ?? 0
+                const dayPct = calorieGoal > 0 ? Math.min(100, Math.round((dayCalories / calorieGoal) * 100)) : 0
+
                 return (
                   <button
                     key={idx}
                     type="button"
                     onClick={() => setDate(dStr)}
-                    className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-black transition-all ${
+                    className={`flex-1 rounded-xl px-1.5 py-2 transition-all text-center ${
                       isActive
-                        ? 'bg-white text-emerald-500'
-                        : 'bg-white/10 text-white/70 hover:bg-white/20'
+                        ? 'bg-white text-[#2E7D32]'
+                        : 'bg-transparent text-white/80 hover:bg-white/10'
                     }`}
                   >
-                    {weekdayLabels[d.getDay()]}
+                    <div className={`text-[10px] font-semibold ${isActive ? 'text-[#2E7D32]' : 'text-white/80'}`}>
+                      {dayLabel}
+                    </div>
+                    <div
+                      className={`w-7 h-7 rounded-full mx-auto mt-1 flex items-center justify-center text-[10px] font-bold ${
+                        isActive ? 'bg-[#2E7D32] text-white' : 'bg-white/15 text-white'
+                      }`}
+                      title={`${dayCalories.toLocaleString()} kcal`}
+                    >
+                      {dayPct}%
+                    </div>
                   </button>
                 )
               })}
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* Today's Calories card */}
-          <div className="bg-white/10 rounded-[2rem] p-4 md:p-5 space-y-4">
-            {totals && (
-              <CalorieProgress
-                consumed={calories}
-                goal={calorieGoal}
-              />
-            )}
-
-            <div className="flex flex-wrap gap-2">
-              <MacroPill type="protein" value={totals?.protein ?? 0} variant="light" />
-              <MacroPill type="carbs" value={totals?.carbs ?? 0} variant="light" />
-              <MacroPill type="fat" value={totals?.fat ?? 0} variant="light" />
+      {/* Content grid below header */}
+      <div className="grid gap-4 md:grid-cols-[minmax(0,3fr)_minmax(0,2.2fr)]">
+        {/* Left: macros + habits */}
+        <div className="space-y-4">
+          {/* Macros summary */}
+          <div className="glass-card rounded-[2rem] p-5">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Dinh dưỡng hôm nay
+              </p>
+              <span className="text-[11px] font-semibold text-slate-500">
+                {date === todayStr ? 'Hôm nay' : date}
+              </span>
             </div>
-
-            <div className="grid grid-cols-3 gap-2 pt-2">
-              {[
-                { label: 'GOAL', value: calorieGoal },
-                { label: 'FOOD', value: calories },
-                { label: 'EXERCISE', value: 0 },
-              ].map((item) => (
-                <div
-                  key={item.label}
-                  className="rounded-2xl bg-white/10 px-3 py-2.5 text-xs text-white/80"
-                >
-                  <p className="text-[10px] font-semibold uppercase tracking-wide">
-                    {item.label}
-                  </p>
-                  <p className="text-lg font-black mt-0.5">
-                    {item.value.toLocaleString()}
-                    <span className="text-[10px] font-semibold ml-1">kcal</span>
-                  </p>
-                </div>
-              ))}
+            <div className="flex flex-wrap gap-2">
+              <MacroPill type="protein" value={totals?.protein ?? 0} />
+              <MacroPill type="carbs" value={totals?.carbs ?? 0} />
+              <MacroPill type="fat" value={totals?.fat ?? 0} />
             </div>
           </div>
+
+          <HabitCards date={date} initialHabits={habits} />
+          <MonthlySummaryCard />
         </div>
 
-        {/* AI logging */}
+        {/* Right: AI tools + charts + relog */}
         <div className="space-y-4">
+          {/* AI logging */}
           <div className="glass-card rounded-[2rem] p-5 flex flex-col gap-3">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-              AI-Powered Food Logging
+              Trợ lý AI
             </p>
             <p className="text-sm font-black text-slate-800">
-              Trợ lý AI hiểu dữ liệu ăn uống hôm nay của bạn.
+              Hỏi nhanh để log bữa ăn và tối ưu mục tiêu hôm nay.
             </p>
             <div className="mt-1 mb-2">
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2 bg-slate-50 rounded-2xl px-3 py-2">
-                  <span className="text-lg">✨</span>
-                  <p className="text-xs text-slate-500">
-                    Hôm nay bạn đã ăn{' '}
-                    <span className="font-semibold text-slate-700">
-                      {calories.toLocaleString()} / {calorieGoal.toLocaleString()} kcal
-                    </span>
-                    . Bấm để hỏi AI gợi ý bữa tiếp theo.
-                  </p>
-                </div>
+              <div className="flex items-center gap-2 bg-slate-50 rounded-2xl px-3 py-2">
+                <span className="text-lg">✨</span>
+                <p className="text-xs text-slate-500">
+                  Bạn còn{' '}
+                  <span className="font-semibold text-slate-700">
+                    {Math.max(0, remaining).toLocaleString()} kcal
+                  </span>{' '}
+                  để đạt mục tiêu. Thử hỏi AI gợi ý bữa tiếp theo.
+                </p>
               </div>
             </div>
             <Link
@@ -239,14 +329,14 @@ export default function DashboardPage() {
 
             <div className="mt-3 grid grid-cols-3 gap-2">
               {[
-                { label: 'Voice Log', icon: '🎙️', href: '/chat' },
-                { label: 'Meal Scan', icon: '📸', href: '/scan' },
-                { label: 'Barcode', icon: '🔍', href: '/scan' },
+                { label: 'Chat', icon: '💬', href: '/chat' },
+                { label: 'Scan', icon: '📸', href: '/scan' },
+                { label: 'Log', icon: '📓', href: '/log' },
               ].map((tool) => (
                 <Link
                   key={tool.label}
                   href={tool.href}
-                  className="rounded-2xl bg-slate-50 px-3 py-3 text-[11px] font-semibold text-slate-700 flex flex-col gap-1"
+                  className="rounded-2xl bg-slate-50 px-3 py-3 text-[11px] font-semibold text-slate-700 flex flex-col gap-1 hover:bg-white transition-colors"
                 >
                   <span className="text-lg">{tool.icon}</span>
                   <span>{tool.label}</span>
@@ -254,6 +344,73 @@ export default function DashboardPage() {
               ))}
             </div>
           </div>
+
+          {/* Weekly chart */}
+          <div className="glass-card rounded-[2rem] p-5">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Calories 7 ngày gần nhất
+              </h3>
+              <span className="text-[10px] text-slate-400 font-semibold">
+                Goal {calorieGoal.toLocaleString()} kcal
+              </span>
+            </div>
+            {loadingWeekly ? (
+              <div className="h-48 rounded-2xl bg-slate-50 animate-pulse" />
+            ) : weeklyCalories.length === 0 ? (
+              <p className="text-xs text-slate-400">
+                Chưa có dữ liệu tuần này — hãy log vài bữa ăn để thấy biểu đồ nhé.
+              </p>
+            ) : (
+              <WeeklyChart data={weeklyCalories} goal={calorieGoal} />
+            )}
+          </div>
+
+          {/* Quick relog */}
+          <div className="glass-card rounded-[2rem] p-5">
+            <QuickRelog
+              recentMeals={recentMeals}
+              onRelog={async (meal) => {
+                const res = await relogMeal(meal)
+                if ((res as any)?.error) {
+                  toast.error((res as any).error)
+                  return
+                }
+                toast.success(`Đã log lại: ${meal.food_name} (${meal.calories} kcal)`)
+
+                // Nếu đang xem hôm nay thì refresh totals ngay để dashboard "sống"
+                if (date === todayStr) {
+                  const supabase = createClient()
+                  const { data: { user } } = await supabase.auth.getUser()
+                  if (!user) return
+                  const { data: meals } = await supabase.from('meal_logs')
+                    .select('calories, protein, carbs, fat')
+                    .eq('user_id', user.id)
+                    .eq('logged_at', todayStr)
+                  const t = (meals as any[] | null)?.reduce(
+                    (acc, m) => ({
+                      calories: acc.calories + m.calories,
+                      protein: acc.protein + m.protein,
+                      carbs: acc.carbs + m.carbs,
+                      fat: acc.fat + m.fat,
+                    }),
+                    { calories: 0, protein: 0, carbs: 0, fat: 0 }
+                  ) ?? { calories: 0, protein: 0, carbs: 0, fat: 0 }
+                  setTotals(t)
+                }
+              }}
+            />
+          </div>
+
+          {/* Weekly report + weight */}
+          <WeeklyReport data={null} />
+          {profile?.weight_kg && profile?.target_weight_kg && (
+            <WeightCheckin
+              currentWeight={profile.weight_kg}
+              targetWeight={profile.target_weight_kg}
+              history={[]}
+            />
+          )}
         </div>
       </div>
 

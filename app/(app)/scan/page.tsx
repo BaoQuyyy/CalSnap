@@ -270,12 +270,17 @@ Người dùng muốn điều chỉnh/thêm: "${adjustment}". Hãy tính lại t
     }
 
     return (
-        <div className="space-y-6 max-w-lg mx-auto min-w-0 overflow-x-hidden">
-            <div>
-                <h1 className="text-2xl font-bold text-slate-800">Scan món ăn</h1>
-                <p className="text-slate-500 text-sm mt-0.5">
-                    Chụp hoặc chọn ảnh món ăn để AI ước tính calo và dinh dưỡng (tiếng Việt).
-                </p>
+        <div className="space-y-6 max-w-lg mx-auto min-w-0 overflow-x-hidden page-enter">
+            {/* NutriAI header */}
+            <div className="-mx-4 md:-mx-8 nutri-header">
+                <div className="relative z-10 px-5 md:px-8 pt-12 pb-6">
+                    <h1 className="text-white text-2xl md:text-3xl font-display font-extrabold">
+                        Chụp ảnh món ăn 📸
+                    </h1>
+                    <p className="text-white/75 text-sm mt-1">
+                        AI nhận diện món ăn và ước tính dinh dưỡng ngay lập tức.
+                    </p>
+                </div>
             </div>
 
             {/* Image Upload / Preview */}
@@ -288,7 +293,7 @@ Người dùng muốn điều chỉnh/thêm: "${adjustment}". Hãy tính lại t
                                 <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center">
                                     <div className="text-center space-y-3 text-white">
                                         <Loader2 className="h-8 w-8 animate-spin mx-auto text-emerald-400" />
-                                        <p className="text-sm font-medium">Analyzing with AI...</p>
+                                        <p className="text-sm font-medium">Đang phân tích bằng AI...</p>
                                     </div>
                                 </div>
                             )}
@@ -371,7 +376,7 @@ Người dùng muốn điều chỉnh/thêm: "${adjustment}". Hãy tính lại t
                         <div>
                             <p className="font-medium text-sm text-red-700">{errorMsg}</p>
                             <Button variant="ghost" size="sm" className="mt-2 text-slate-600" onClick={() => setState('preview')}>
-                                Try again
+                                Thử lại
                             </Button>
                         </div>
                     </div>
@@ -395,7 +400,7 @@ Người dùng muốn điều chỉnh/thêm: "${adjustment}". Hãy tính lại t
                             type="text"
                             value={editFoodName}
                             onChange={(e) => setEditFoodName(e.target.value)}
-                            placeholder="Enter food name..."
+                            placeholder="Tên món ăn (có thể chỉnh)..."
                             className="text-xl font-black text-slate-800 bg-transparent border-b-2 border-emerald-300 focus:border-emerald-500 outline-none w-full pb-0.5"
                         />
                     </div>
@@ -453,7 +458,7 @@ Người dùng muốn điều chỉnh/thêm: "${adjustment}". Hãy tính lại t
                             </div>
                             <div>
                                 <p className="text-xs font-semibold text-slate-700">
-                                    Tôi thấy bạn vừa scan {result.foodName} 🍽️
+                                    Mình thấy bạn vừa scan {result.foodName} 🍽️
                                 </p>
                                 <p className="text-[11px] text-slate-400">
                                     Muốn điều chỉnh khẩu phần không?
@@ -495,15 +500,15 @@ Người dùng muốn điều chỉnh/thêm: "${adjustment}". Hãy tính lại t
                         <Button className="w-full gap-2 hoverboard-gradient text-white font-bold rounded-2xl py-3.5"
                             onClick={handleSave} disabled={saving}>
                             {saving ? (
-                                <><Loader2 className="h-4 w-4 animate-spin" />Saving...</>
+                                <><Loader2 className="h-4 w-4 animate-spin" />Đang lưu...</>
                             ) : (
-                                <>Save to Log</>
+                                <>Lưu vào nhật ký</>
                             )}
                         </Button>
                     ) : (
                         <div className="flex items-center justify-center gap-2 text-emerald-600 font-semibold py-2">
                             <CheckCircle className="h-5 w-5" />
-                            Saved to your log!
+                            Đã lưu vào nhật ký!
                         </div>
                     )}
                 </div>

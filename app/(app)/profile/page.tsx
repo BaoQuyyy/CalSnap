@@ -7,7 +7,6 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { User, Target, LogOut, ClipboardList, Scale, TrendingDown, TrendingUp, Edit3 } from 'lucide-react'
 import Link from 'next/link'
-import { updateGoals } from '@/app/actions/profile'
 
 export default function ProfilePage() {
   const [email, setEmail] = useState('')
@@ -65,22 +64,21 @@ export default function ProfilePage() {
     <div className="space-y-5 max-w-lg mx-auto page-enter pb-24">
 
       {/* Header */}
-      <div className="hoverboard-card rounded-[2.5rem] p-7 relative overflow-hidden">
-        <div className="relative z-10 flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-white/30 flex items-center justify-center text-white text-2xl font-black shrink-0">
+      <div className="-mx-4 md:-mx-8 nutri-header">
+        <div className="relative z-10 px-5 md:px-8 pt-12 pb-7 flex items-center gap-4">
+          <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center text-white text-2xl font-display font-extrabold shrink-0 border border-white/25">
             {(name || 'U')[0].toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="text-xl font-black text-white truncate">{name}</h2>
-            <p className="text-white/70 text-sm truncate">{email}</p>
+            <h2 className="text-xl font-display font-extrabold text-white truncate">{name}</h2>
+            <p className="text-white/75 text-sm truncate">{email}</p>
             {plan && (
-              <span className="inline-block mt-1 px-3 py-0.5 bg-white/20 text-white text-xs font-bold rounded-full">
+              <span className="inline-block mt-1 px-3 py-0.5 bg-white/15 text-white text-xs font-semibold rounded-full border border-white/15">
                 {plan.bmi_category} · BMI {plan.bmi}
               </span>
             )}
           </div>
         </div>
-        <div className="absolute -right-16 -top-16 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none" />
       </div>
 
       {/* Stats */}
@@ -168,60 +166,34 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Calorie & weight goals — chỉnh nhanh ngay tại Profile */}
-      <form action={updateGoals} className="glass-card rounded-[2rem] p-5 space-y-4">
-        <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
-          <Target className="h-4 w-4 text-emerald-500" /> Mục tiêu nhanh
-        </h3>
-        <p className="text-xs text-slate-400">
-          Điều chỉnh nhẹ mục tiêu mỗi ngày. Nếu muốn thay đổi lớn, hãy dùng lại màn Onboarding để AI tính toán lại.
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {/* Calorie goal — read-only from plan (per NutriAI spec) */}
+      <div className="glass-card rounded-[2rem] p-5">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+            <Target className="h-4 w-4 text-emerald-500" />
+            Mục tiêu calo
+          </h3>
+          <Link
+            href="/onboarding"
+            className="text-xs font-bold text-emerald-600 hover:underline"
+          >
+            Tính lại với AI
+          </Link>
+        </div>
+        <div className="flex items-end justify-between gap-3">
           <div>
-            <label className="text-[11px] font-semibold text-slate-500 mb-1 block">
-              Calories / ngày
-            </label>
-            <div className="flex items-center gap-2">
-              <input
-                type="number"
-                name="daily_calories"
-                defaultValue={profile?.daily_calorie_goal ?? plan?.daily_calories ?? 2000}
-                className="w-full px-3 py-2.5 rounded-2xl border border-slate-200 bg-white text-sm font-semibold text-slate-800 focus:outline-none focus:border-emerald-400"
-                min={900}
-                max={6000}
-              />
-              <span className="text-xs font-semibold text-slate-400">kcal</span>
-            </div>
-          </div>
-          <div>
-            <label className="text-[11px] font-semibold text-slate-500 mb-1 block">
-              Cân nặng mục tiêu
-            </label>
-            <div className="flex items-center gap-2">
-              <input
-                type="number"
-                step="0.1"
-                name="target_weight_kg"
-                defaultValue={profile?.target_weight_kg ?? ''}
-                className="w-full px-3 py-2.5 rounded-2xl border border-slate-200 bg-white text-sm font-semibold text-slate-800 focus:outline-none focus:border-emerald-400"
-                min={35}
-                max={250}
-              />
-              <span className="text-xs font-semibold text-slate-400">kg</span>
-            </div>
+            <p className="text-4xl font-display font-extrabold text-slate-900 tabular-nums">
+              {plan?.daily_calories?.toLocaleString?.() ?? '—'}
+              <span className="text-base font-semibold text-slate-400 ml-1">
+                kcal
+              </span>
+            </p>
+            <p className="text-xs text-slate-400 mt-1">
+              Lấy từ AI fitness plan (không chỉnh tay tại đây).
+            </p>
           </div>
         </div>
-        <p className="text-[11px] text-slate-400">
-          Thay đổi quá cực đoan (calories quá thấp hoặc cân nặng mục tiêu không an toàn) có thể bị từ chối.
-        </p>
-        <Button
-          type="submit"
-          variant="default"
-          className="w-full rounded-2xl text-sm font-bold hover:opacity-90"
-        >
-          Lưu mục tiêu
-        </Button>
-      </form>
+      </div>
 
       {/* Weight history */}
       {profile?.weight_kg && profile?.target_weight_kg && (

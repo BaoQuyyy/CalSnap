@@ -93,7 +93,16 @@ export default function LogPage() {
 
   return (
     <div className="space-y-6 max-w-lg mx-auto page-enter">
-      <PageHeader title="Nhật ký ăn uống 📋" subtitle="Xem bữa ăn theo ngày bạn chọn" />
+      <div className="-mx-4 md:-mx-8 nutri-header">
+        <div className="relative z-10 px-5 md:px-8 pt-12 pb-6">
+          <h1 className="text-white text-2xl md:text-3xl font-display font-extrabold">
+            Nhật ký ăn uống 📓
+          </h1>
+          <p className="text-white/75 text-sm mt-1">
+            Xem lại bữa ăn theo ngày bạn chọn
+          </p>
+        </div>
+      </div>
 
       {/* QuickRelog — chỉ hiện khi xem hôm nay */}
       {date === today && recentMeals.length > 0 && (
@@ -170,14 +179,14 @@ export default function LogPage() {
       </div>
 
       {/* Daily summary */}
-      <div className="hoverboard-card rounded-[2rem] p-6">
-        <h3 className="text-sm font-bold uppercase tracking-wider text-white/80 mb-4">
-          Tổng hôm nay
+      <div className="glass-card rounded-[2rem] p-6">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">
+          Tổng {date === today ? 'hôm nay' : 'trong ngày'}
         </h3>
         <div className="flex items-baseline gap-2 mb-4">
-          <Flame className="h-6 w-6 text-white" />
-          <span className="text-3xl font-black text-white">{Math.round(totals.calories)}</span>
-          <span className="text-white/80">kcal</span>
+          <Flame className="h-6 w-6 text-emerald-600" />
+          <span className="text-3xl font-display font-extrabold text-slate-900 tabular-nums">{Math.round(totals.calories).toLocaleString()}</span>
+          <span className="text-slate-500 font-semibold">kcal</span>
         </div>
         <div className="flex gap-2 flex-wrap">
           <MacroPill type="protein" value={Math.round(totals.protein)} variant="light" />

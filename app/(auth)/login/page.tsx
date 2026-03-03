@@ -8,11 +8,14 @@ import { Label } from '@/components/ui/label'
 import Link from 'next/link'
 import { Zap, Mail, Lock, Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
+import { useSearchParams } from 'next/navigation'
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const searchParams = useSearchParams()
+  const message = searchParams.get('message')
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -34,11 +37,23 @@ export default function LoginPage() {
           <Zap className="h-7 w-7" fill="currentColor" />
         </div>
       </div>
-      <h1 className="text-3xl font-black text-slate-800 text-center mb-1">Welcome back 👋</h1>
-      <p className="text-slate-400 text-sm text-center mb-8">Track your nutrition with AI</p>
+      <h1 className="text-3xl font-display font-extrabold text-slate-900 text-center mb-1">
+        Đăng nhập 👋
+      </h1>
+      <p className="text-slate-500 text-sm text-center mb-8">
+        Theo dõi dinh dưỡng với CalSnap AI
+      </p>
+
+      {message && (
+        <div className="glass-card rounded-2xl p-4 mb-4 bg-emerald-50 border border-emerald-100 text-left">
+          <p className="text-sm text-emerald-700 font-medium">
+            {message}
+          </p>
+        </div>
+      )}
 
       {error && (
-        <div className="glass-card rounded-2xl p-4 mb-6 bg-red-50/50 border border-red-100">
+        <div className="glass-card rounded-2xl p-4 mb-4 bg-red-50/50 border border-red-100">
           <p className="text-sm text-red-700 font-medium">{error}</p>
         </div>
       )}
@@ -67,7 +82,7 @@ export default function LoginPage() {
                 id="password"
                 name="password"
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Password"
+                placeholder="Mật khẩu"
                 required
                 className="pl-12 pr-12 py-3 bg-slate-50 rounded-2xl border-none focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
               />
@@ -87,12 +102,12 @@ export default function LoginPage() {
           className="w-full mt-6 hoverboard-gradient text-white font-bold rounded-2xl py-4 min-h-[44px] active:scale-95 transition-all touch-target"
           disabled={loading}
         >
-          {loading ? 'Signing in…' : 'Sign In'}
+          {loading ? 'Đang đăng nhập…' : 'Đăng nhập'}
         </Button>
         <p className="text-sm text-slate-500 text-center mt-6">
-          Don&apos;t have an account?{' '}
-          <Link href="/register" className="text-emerald-500 font-semibold hover:underline">
-            Create one
+          Chưa có tài khoản?{' '}
+          <Link href="/register" className="text-emerald-600 font-semibold hover:underline">
+            Tạo tài khoản
           </Link>
         </p>
       </form>

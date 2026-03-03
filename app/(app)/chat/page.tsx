@@ -84,23 +84,25 @@ export default function ChatPage() {
   return (
     <div className="flex flex-col h-[calc(100dvh-8rem)] md:h-[calc(100vh-6rem)] max-w-2xl mx-auto page-enter min-h-0 w-full max-w-full overflow-hidden">
       {/* Header */}
-      <div className="glass-card rounded-[2rem] p-4 mb-4 flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-bold text-slate-800">
-            Huấn luyện viên dinh dưỡng AI 🤖
-          </h1>
-          <span className="inline-block mt-1 px-2.5 py-0.5 bg-emerald-100 text-emerald-600 text-xs font-semibold rounded-full">
-            Hoạt động bởi Gemini
-          </span>
+      <div className="-mx-4 md:-mx-8 nutri-header mb-4">
+        <div className="relative z-10 px-5 md:px-8 pt-10 pb-5 flex items-center justify-between gap-3">
+          <div>
+            <h1 className="text-white text-xl font-display font-extrabold">
+              Trợ lý dinh dưỡng AI 🤖
+            </h1>
+            <span className="inline-block mt-1 px-2.5 py-0.5 bg-white/15 text-white text-xs font-semibold rounded-full border border-white/15">
+              Hoạt động bởi Gemini
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={clearChat}
+            className="w-10 h-10 rounded-full bg-white/15 hover:bg-white/20 text-white flex items-center justify-center"
+            aria-label="Clear chat"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={clearChat}
-          className="p-2 min-w-[44px] min-h-[44px] rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors touch-target flex items-center justify-center"
-          aria-label="Clear chat"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
       </div>
 
       {/* Messages */}

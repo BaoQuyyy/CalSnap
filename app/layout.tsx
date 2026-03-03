@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Geist, Geist_Mono, Fraunces, DM_Sans } from 'next/font/google'
 import './globals.css'
 import { Toaster } from '@/components/ui/sonner'
 
@@ -11,6 +11,16 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: '--font-geist-mono',
   subsets: ['latin'],
+})
+
+const fraunces = Fraunces({
+  variable: '--font-display',
+  subsets: ['latin', 'latin-ext'],
+})
+
+const dmSans = DM_Sans({
+  variable: '--font-body',
+  subsets: ['latin', 'latin-ext'],
 })
 
 export const viewport: Viewport = {
@@ -44,7 +54,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen overflow-x-hidden`}
+        className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} ${dmSans.variable} antialiased min-h-screen overflow-x-hidden`}
       >
         {children}
         <Toaster richColors position="top-right" />

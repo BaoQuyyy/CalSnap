@@ -6,11 +6,11 @@ import { Home, BookOpen, Zap, MessageCircle, ClipboardList } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
-  { href: '/', label: 'Home', icon: Home },
-  { href: '/log', label: 'Log', icon: BookOpen },
+  { href: '/', label: 'Trang chủ', icon: Home },
+  { href: '/log', label: 'Nhật ký', icon: BookOpen },
   { href: '/scan', label: 'Scan', icon: Zap },
-  { href: '/chat', label: 'Chat', icon: MessageCircle },
-  { href: '/fitness-plan', label: 'My Plan', icon: ClipboardList },
+  { href: '/chat', label: 'AI', icon: MessageCircle },
+  { href: '/fitness-plan', label: 'Kế hoạch', icon: ClipboardList },
 ]
 
 export function MobileBottomNav() {
@@ -23,7 +23,7 @@ export function MobileBottomNav() {
     >
       <div className="relative max-w-xs w-full flex justify-center">
         {/* Dark pill */}
-        <div className="w-full bg-slate-900/95 backdrop-blur-2xl rounded-full px-3 py-2 shadow-[0_10px_30px_rgba(15,23,42,0.6)] border border-white/10 flex items-center justify-between gap-1">
+        <div className="w-full bg-slate-950/90 backdrop-blur-2xl rounded-full px-3 py-2 shadow-[0_10px_30px_rgba(15,23,42,0.6)] border border-white/10 flex items-center justify-between gap-1">
           {navItems.map(({ href, label, icon: Icon }) => {
             const isActive = pathname === href
             const isCenter = href === '/scan'
@@ -42,7 +42,7 @@ export function MobileBottomNav() {
                   className={cn(
                     'flex items-center justify-center rounded-full transition-all',
                     isCenter
-                      ? 'w-12 h-12 -mt-7 hoverboard-gradient text-white shadow-lg shadow-emerald-500/40'
+                      ? 'w-[52px] h-[52px] -mt-7 hoverboard-gradient text-white shadow-[0_10px_30px_rgba(46,125,50,0.45)]'
                       : 'w-8 h-8',
                     !isCenter &&
                       (isActive ? 'bg-emerald-500/20 text-emerald-400' : 'text-white/60')
