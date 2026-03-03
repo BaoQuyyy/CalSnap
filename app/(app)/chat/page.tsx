@@ -1,3 +1,4 @@
+// app/(app)/chat/page.tsx
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
@@ -33,11 +34,12 @@ export default function ChatPage() {
     setLoading(true)
 
     try {
-      const res = await fetch('/api/chat', {
+      const res = await fetch('/api/assistant', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: [...messages, userMsg].map((m) => ({ role: m.role, content: m.content })),
+          message: trimmed,
+          history: messages.map((m) => ({ role: m.role, content: m.content })),
         }),
       })
 
@@ -55,17 +57,12 @@ export default function ChatPage() {
 
       const assistantMsg: Message = {
         role: 'assistant',
-        content:
-          data.reply ??
-          'Xin lỗi, hiện tại tôi không thể trả lời. Bạn thử lại sau nhé.',
+        content: data.reply ?? 'Xin lỗi, hiện tại tôi không thể trả lời. Bạn thử lại sau nhé.',
         timestamp: new Date(),
       }
       setMessages((m) => [...m, assistantMsg])
     } catch (err) {
-      const msg =
-        err instanceof Error
-          ? err.message
-          : 'Đã xảy ra lỗi, vui lòng thử lại.'
+      const msg = err instanceof Error ? err.message : 'Đã xảy ra lỗi, vui lòng thử lại.'
       toast.error(msg)
     } finally {
       setLoading(false)
@@ -77,12 +74,11 @@ export default function ChatPage() {
     sendMessage(input)
   }
 
-  const clearChat = () => {
-    setMessages([])
-  }
+  const clearChat = () => setMessages([])
 
   return (
     <div className="flex flex-col h-[calc(100dvh-8rem)] md:h-[calc(100vh-6rem)] max-w-2xl mx-auto page-enter min-h-0 w-full max-w-full overflow-hidden">
+
       {/* Header */}
       <div className="nutri-header rounded-[2rem] overflow-hidden mb-4">
         <div className="relative z-10 px-5 md:px-8 pt-10 pb-5 flex items-center justify-between gap-3">
@@ -106,10 +102,7 @@ export default function ChatPage() {
       </div>
 
       {/* Messages */}
-      <div
-        ref={scrollRef}
-        className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 min-h-0"
-      >
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 min-h-0">
         {messages.length === 0 && !loading && (
           <div className="flex-1 flex flex-col items-center justify-center text-center py-12">
             <div className="w-16 h-16 rounded-2xl bg-emerald-100 flex items-center justify-center mb-4">
@@ -134,29 +127,15 @@ export default function ChatPage() {
         )}
 
         {messages.map((m, i) => (
-          <div
-            key={i}
-            className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
-            <div
-              className={`max-w-[80%] p-4 rounded-[1.5rem] text-sm ${
-                m.role === 'user'
-                  ? 'hoverboard-gradient text-white rounded-tr-sm'
-                  : 'glass-card text-slate-800 rounded-tl-sm'
-              }`}
-            >
-              <p className="whitespace-pre-wrap leading-relaxed">
-                {m.content}
-              </p>
-              <p
-                className={`text-[10px] mt-1 ${
-                  m.role === 'user' ? 'text-white/70' : 'text-slate-400'
-                }`}
-              >
-                {m.timestamp.toLocaleTimeString('vi-VN', {
-                  hour: 'numeric',
-                  minute: '2-digit',
-                })}
+          <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div className={`max-w-[80%] p-4 rounded-[1.5rem] text-sm ${
+              m.role === 'user'
+                ? 'hoverboard-gradient text-white rounded-tr-sm'
+                : 'glass-card text-slate-800 rounded-tl-sm'
+            }`}>
+              <p className="whitespace-pre-wrap leading-relaxed">{m.content}</p>
+              <p className={`text-[10px] mt-1 ${m.role === 'user' ? 'text-white/70' : 'text-slate-400'}`}>
+                {m.timestamp.toLocaleTimeString('vi-VN', { hour: 'numeric', minute: '2-digit' })}
               </p>
             </div>
           </div>
