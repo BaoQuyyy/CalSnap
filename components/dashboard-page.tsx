@@ -51,6 +51,7 @@ export default function DashboardPage() {
       .maybeSingle()
     const h = (habitsRow as any) ?? null
     setHabits(h)
+    // Luôn set exerciseCalories từ DB khi load — fix mất data khi F5
     setExerciseCalories(h?.exercise_calories ?? 0)
   }, [])
 
@@ -89,7 +90,6 @@ export default function DashboardPage() {
 
       await loadHabits(date)
 
-      // Load "log lại gần đây" (một lần)
       if (recentMeals.length === 0) {
         try {
           const data = await getMealsForDate('recent')
@@ -121,7 +121,7 @@ export default function DashboardPage() {
   const calorieGoal = plan?.daily_calories ?? profile?.daily_calorie_goal ?? 2000
   const calories = totals?.calories ?? 0
   const remaining = calorieGoal - calories
-  const pct = calorieGoal > 0 ? Math.min(100, Math.round((calories / calorieGoal) * 100)) : 0
+  const isOverGoal = calories > calorieGoal
 
   const estimatedBurnPerSession = Math.round(
     (plan?.workout_duration_minutes ?? 45) * 7 * (profile?.weight_kg ?? 70) / 60
@@ -150,15 +150,15 @@ export default function DashboardPage() {
     year: 'numeric',
   })
   const firstName =
-    profile?.full_name?.trim()?.split(' ')?.[0] ??
-    'bạn'
+    profile?.full_name?.trim()?.split(' ')?.[0] ?? 'bạn'
 
-  // Ring chart values
+  // Ring chart — đỏ + xoay hết khi vượt goal
   const ringSize = 220
   const ringStroke = 18
   const r = (ringSize - ringStroke * 2) / 2
   const circ = 2 * Math.PI * r
-  const dash = (pct / 100) * circ
+  const pct = calorieGoal > 0 ? Math.min(100, Math.round((calories / calorieGoal) * 100)) : 0
+  const dash = isOverGoal ? circ : (pct / 100) * circ
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto page-enter pb-24">
@@ -189,8 +189,17 @@ export default function DashboardPage() {
             >
               <defs>
                 <linearGradient id="nutriRing" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#A8E063" />
-                  <stop offset="100%" stopColor="#5CB85C" />
+                  {isOverGoal ? (
+                    <>
+                      <stop offset="0%" stopColor="#FF5252" />
+                      <stop offset="100%" stopColor="#FF1744" />
+                    </>
+                  ) : (
+                    <>
+                      <stop offset="0%" stopColor="#A8E063" />
+                      <stop offset="100%" stopColor="#5CB85C" />
+                    </>
+                  )}
                 </linearGradient>
               </defs>
               <circle
@@ -248,7 +257,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Date strip (keep existing date set logic) */}
+          {/* Date strip */}
           <div className="mt-5 flex gap-2">
             <div className="w-full bg-white/15 rounded-2xl p-2 flex gap-1">
               {headerDays.map((d, idx) => {
@@ -401,8 +410,6 @@ export default function DashboardPage() {
                   return
                 }
                 toast.success(`Đã log lại: ${meal.food_name} (${meal.calories} kcal)`)
-
-                // Nếu đang xem hôm nay thì refresh totals ngay để dashboard "sống"
                 if (date === todayStr) {
                   const supabase = createClient()
                   const { data: { user } } = await supabase.auth.getUser()
@@ -483,7 +490,6 @@ export default function DashboardPage() {
                   return
                 }
                 toast.success(`Đã log lại: ${meal.food_name} (${meal.calories} kcal)`)
-
                 if (date === todayStr) {
                   const supabase = createClient()
                   const { data: { user } } = await supabase.auth.getUser()
