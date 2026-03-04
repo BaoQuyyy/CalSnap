@@ -30,7 +30,7 @@ export function MealCard({ meal, onToggleFavorite }: MealCardProps) {
 
     const triggerHaptic = () => {
         if (typeof window !== 'undefined' && 'vibrate' in navigator) {
-            navigator.vibrate(10)
+            navigator.vibrate([12])
         }
     }
 

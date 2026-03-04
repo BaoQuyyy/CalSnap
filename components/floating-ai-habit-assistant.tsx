@@ -54,9 +54,8 @@ export function AIAssistantWidget() {
 
   const triggerHaptic = (style: 'light' | 'medium' | 'success' = 'light') => {
     if (typeof window !== 'undefined' && 'vibrate' in navigator) {
-      if (style === 'success') navigator.vibrate([10, 30, 10])
-      else if (style === 'medium') navigator.vibrate(20)
-      else navigator.vibrate(10)
+      const duration = style === 'success' ? [15, 50, 15] : style === 'medium' ? [25] : [12]
+      navigator.vibrate(duration)
     }
   }
 

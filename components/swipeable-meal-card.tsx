@@ -39,9 +39,7 @@ export function SwipeableMealCard({ children, onDelete, onEdit, className = '', 
 
         // Haptic feedback when hitting the edge
         if ((newOffset === 100 || newOffset === -100) && !hasVibrated.current) {
-            if (typeof window !== 'undefined' && 'vibrate' in navigator) {
-                navigator.vibrate(10)
-            }
+            triggerHaptic()
             hasVibrated.current = true
         } else if (newOffset > -100 && newOffset < 100) {
             hasVibrated.current = false
