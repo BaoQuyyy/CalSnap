@@ -119,10 +119,10 @@ export function HabitCards({ date, initialHabits, onUpdate, className }: HabitCa
             </div>
           </div>
         </div>
-        <div className="flex gap-1.5 pl-12">
-          {[1000, 3000, 5000, 10000].map((s) => (
+        <div className="flex gap-1.5 pl-12 flex-wrap">
+          {[1000, 3000, 5000].map((s) => (
             <button key={s} onClick={() => addSteps(s)}
-              className="px-2.5 py-1 rounded-full bg-cyan-50 dark:bg-cyan-900/30 border border-cyan-100 dark:border-cyan-800 text-cyan-600 dark:text-cyan-400 text-[10px] font-bold hover:bg-cyan-100 dark:hover:bg-cyan-800/40 transition-colors">
+              className="px-3.5 py-2 rounded-full bg-cyan-50 dark:bg-cyan-900/30 border border-cyan-100 dark:border-cyan-800 text-cyan-600 dark:text-cyan-400 text-[11px] font-bold hover:bg-cyan-100 dark:hover:bg-cyan-800/40 active:scale-95 transition-all">
               +{s >= 1000 ? `${s / 1000}k` : s}
             </button>
           ))}
@@ -159,16 +159,16 @@ export function HabitCards({ date, initialHabits, onUpdate, className }: HabitCa
             </div>
           </div>
         </div>
-        <div className="flex gap-1.5 pl-12">
-          {[150, 250, 350, 500].map((ml) => (
+        <div className="flex gap-1.5 pl-12 flex-wrap">
+          {[150, 250, 500].map((ml) => (
             <button key={ml} onClick={() => addWater(ml)}
-              className="px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 text-blue-600 dark:text-blue-400 text-[10px] font-bold hover:bg-blue-100 dark:hover:bg-blue-800/40 transition-colors">
+              className="px-3.5 py-2 rounded-full bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 text-blue-600 dark:text-blue-400 text-[11px] font-bold hover:bg-blue-100 dark:hover:bg-blue-800/40 active:scale-95 transition-all">
               +{ml}ml
             </button>
           ))}
           <button onClick={() => addWater(-250)}
-            className="w-7 h-6 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 text-[10px] font-bold hover:bg-slate-200 transition-colors flex items-center justify-center">
-            <Minus size={10} />
+            className="w-9 h-8 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 text-[11px] font-bold hover:bg-slate-200 active:scale-95 transition-all flex items-center justify-center">
+            <Minus size={12} />
           </button>
         </div>
       </div>

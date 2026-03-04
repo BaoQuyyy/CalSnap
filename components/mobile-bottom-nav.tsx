@@ -41,8 +41,8 @@ export function MobileBottomNav() {
                   href={href}
                   aria-label={label}
                   className={cn(
-                    'flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold text-white/60',
-                    isCenter && 'relative'
+                    'flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold text-white/60 ios-tap',
+                    isCenter && 'relative active:scale-95 transition-transform'
                   )}
                 >
                   <span
@@ -52,7 +52,7 @@ export function MobileBottomNav() {
                         ? 'w-[52px] h-[52px] -mt-7 hoverboard-gradient text-white shadow-[0_10px_30px_rgba(46,125,50,0.45)]'
                         : 'w-8 h-8',
                       !isCenter &&
-                        (isActive ? 'bg-emerald-500/20 text-emerald-400' : 'text-white/60')
+                      (isActive ? 'bg-emerald-500/20 text-emerald-400' : 'text-white/60')
                     )}
                   >
                     <Icon className={cn('h-4 w-4', isCenter && 'h-5 w-5')} />

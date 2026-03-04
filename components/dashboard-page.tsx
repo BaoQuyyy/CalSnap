@@ -27,6 +27,17 @@ export default function DashboardPage() {
   const [habits, setHabits] = useState<{ steps: number; water_ml: number; exercise_minutes: number; exercise_calories: number } | null>(null)
   const [exerciseCalories, setExerciseCalories] = useState(0)
   const [habitRefreshKey, setHabitRefreshKey] = useState(0)
+  const [ringSize, setRingSize] = useState(180)
+
+  // Responsive ring size
+  useEffect(() => {
+    const handleResize = () => {
+      setRingSize(window.innerWidth < 400 ? 150 : 180)
+    }
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const todayStr = new Date().toISOString().split('T')[0]
 
@@ -92,7 +103,41 @@ export default function DashboardPage() {
     }
 
     window.addEventListener('calsnap:water-updated', handler as any)
-    return () => window.removeEventListener('calsnap:water-updated', handler as any)
+
+    const mealHandler = async (e: Event) => {
+      const detail = (e as CustomEvent).detail as { date?: string } | undefined
+      if (detail?.date === date || !detail?.date) {
+        // Full refresh of profile, meals and habits
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+
+        const [{ data: prof }, { data: meals }, { data: habitsRow }] = await Promise.all([
+          supabase.from('profiles').select('*').eq('id', user.id).single(),
+          supabase.from('meal_logs').select('calories, protein, carbs, fat').eq('user_id', user.id).eq('logged_at', date),
+          supabase.from('daily_habits').select('steps, water_ml, exercise_minutes, exercise_calories').eq('user_id', user.id).eq('date', date).maybeSingle(),
+        ])
+
+        if (prof) setProfile(prof as DbProfile)
+        const t = (meals as any[] | null)?.reduce(
+          (acc, m) => ({ calories: acc.calories + m.calories, protein: acc.protein + m.protein, carbs: acc.carbs + m.carbs, fat: acc.fat + m.fat }),
+          { calories: 0, protein: 0, carbs: 0, fat: 0 }
+        ) ?? { calories: 0, protein: 0, carbs: 0, fat: 0 }
+        setTotals(t)
+        setHabits((habitsRow as any) ?? null)
+        setExerciseCalories((habitsRow as any)?.exercise_calories ?? 0)
+
+        // Refresh weekly chart too
+        try { setWeeklyCalories((await getWeeklyCalories() as any[]) ?? []) } catch { }
+        setHabitRefreshKey(k => k + 1)
+      }
+    }
+    window.addEventListener('calsnap:meal-updated', mealHandler as any)
+
+    return () => {
+      window.removeEventListener('calsnap:water-updated', handler as any)
+      window.removeEventListener('calsnap:meal-updated', mealHandler as any)
+    }
   }, [date])
 
   const refreshTodayData = async (newExerciseCal?: number) => {
@@ -128,7 +173,7 @@ export default function DashboardPage() {
   const dateLabel = new Date(date + 'T12:00:00').toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
   const firstName = profile?.full_name?.trim()?.split(' ')?.[0] ?? 'bạn'
 
-  const RS = 180; const ST = 14
+  const RS = ringSize; const ST = RS < 160 ? 12 : 14
   const r = (RS - ST * 2) / 2
   const circ = 2 * Math.PI * r
   const pct = calorieGoal > 0 ? Math.min(100, Math.round((calories / calorieGoal) * 100)) : 0
@@ -142,7 +187,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-3 max-w-5xl mx-auto page-enter pb-24">
+    <div className="space-y-3 max-w-5xl mx-auto page-enter pb-40">
 
       {/* ── SKELETON ── */}
       {!profile && !totals && (
@@ -161,7 +206,7 @@ export default function DashboardPage() {
       {/* ══════════════════════════════════════════════════
           HEADER: Ring (trái) + Stats+Macros (phải) + Week strip
       ══════════════════════════════════════════════════ */}
-      <div className={`nutri-header rounded-[2rem] overflow-hidden ${isOverGoal ? 'nutri-header-danger' : 'nutri-header'}`}>
+      <div className={`ios-reveal nutri-header rounded-[2rem] overflow-hidden ${isOverGoal ? 'nutri-header-danger' : 'nutri-header'}`}>
         <div className="relative z-10 px-5 md:px-7 pt-7 pb-5">
 
           {/* Top: greeting + avatar */}
@@ -185,8 +230,9 @@ export default function DashboardPage() {
                 </defs>
                 <circle cx={RS / 2} cy={RS / 2} r={r} fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth={ST} />
                 <circle cx={RS / 2} cy={RS / 2} r={r} fill="none" stroke="url(#nutriRing)" strokeWidth={ST} strokeLinecap="round"
-                  strokeDasharray={isOverGoal ? `${circ} 0` : `${dash} ${circ}`}
-                  strokeDashoffset={isOverGoal ? 0 : circ / 4} />
+                  transform={`rotate(-90 ${RS / 2} ${RS / 2})`}
+                  strokeDasharray={`${dash} ${circ}`}
+                  strokeDashoffset={0} />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
                 <p className="text-white font-display font-extrabold text-3xl leading-none tabular-nums">{Math.abs(remaining).toLocaleString()}</p>
@@ -242,8 +288,8 @@ export default function DashboardPage() {
       <div className="grid gap-3">
         {/* Row 1: HabitCards + Chart (Matching heights) */}
         <div className="grid gap-3 md:grid-cols-2 items-stretch">
-          <HabitCards className="h-full" date={date} initialHabits={habits} onUpdate={(newCal) => refreshTodayData(newCal)} />
-          <div className="glass-card rounded-[2rem] p-5 h-full flex flex-col">
+          <HabitCards className="h-full ios-reveal md:delay-75" date={date} initialHabits={habits} onUpdate={(newCal) => refreshTodayData(newCal)} />
+          <div className="glass-card rounded-[2rem] p-5 h-full flex flex-col ios-reveal md:delay-150">
             <div className="flex items-center justify-between mb-3 border-b border-slate-100 dark:border-slate-800 pb-2">
               <h3 className="text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-300">Calories 7 ngày</h3>
               <span className="text-[11px] text-slate-400 dark:text-slate-400 font-bold">Goal {calorieGoal.toLocaleString()} kcal</span>
@@ -260,7 +306,7 @@ export default function DashboardPage() {
 
         {/* Row 2: AI Assistant + QuickRelog (Matching heights) */}
         <div className="grid gap-3 md:grid-cols-2 items-stretch">
-          <div className="glass-card rounded-[2rem] p-5 flex flex-col justify-between">
+          <div className="glass-card rounded-[2rem] p-5 flex flex-col justify-between ios-reveal md:delay-200">
             <div>
               <div className="flex items-center justify-between mb-3 border-b border-slate-100 dark:border-slate-800 pb-2">
                 <p className="text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-300">Trợ lý AI</p>
@@ -320,7 +366,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="glass-card rounded-[2rem] p-5">
+          <div className="glass-card rounded-[2rem] p-5 ios-reveal md:delay-300">
             <QuickRelog recentMeals={recentMeals} onRelog={relogHandler} />
           </div>
         </div>

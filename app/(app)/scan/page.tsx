@@ -156,21 +156,47 @@ export default function ScanPage() {
         setImageVisible(true)
         if (cameraInputRef.current) cameraInputRef.current.value = ''
         if (galleryInputRef.current) galleryInputRef.current.value = ''
+        window.localStorage.removeItem(LOCAL_SCAN_KEY) // Xóa cache khi reset chủ động
     }
 
     useEffect(() => {
         if (!result) return
         setScanTime((prev) => prev ?? new Date())
-        const timer = setTimeout(() => setImageVisible(false), 5 * 60 * 1000)
+        const timer = setTimeout(() => setImageVisible(false), 10 * 60 * 1000)
         return () => clearTimeout(timer)
     }, [result])
 
     useEffect(() => {
         if (typeof window === 'undefined') return
-        if (!result) { window.localStorage.removeItem(LOCAL_SCAN_KEY); return }
-        const payload = { result, editFoodName, editCalories, editProtein, editCarbs, editFat, savedAt: new Date().toISOString() }
-        try { window.localStorage.setItem(LOCAL_SCAN_KEY, JSON.stringify(payload)) } catch { }
-    }, [result, editFoodName, editCalories, editProtein, editCarbs, editFat])
+        if (!result) return // KHÔNG tự xóa ở đây, chỉ save khi có kết quả
+
+        const saveToCache = async () => {
+            let optimizedImage = imageData
+            // Nén ảnh nếu dung lượng lớn (base64 length > ~500kb)
+            if (imageData && imageData.length > 500000) {
+                try {
+                    optimizedImage = await compressImage(imageData, 800)
+                } catch (e) {
+                    console.error('Compression failed', e)
+                }
+            }
+
+            const payload = {
+                result,
+                editFoodName,
+                editCalories,
+                editProtein,
+                editCarbs,
+                editFat,
+                imageData: optimizedImage,
+                savedAt: new Date().toISOString()
+            }
+            try { window.localStorage.setItem(LOCAL_SCAN_KEY, JSON.stringify(payload)) } catch (e) {
+                console.warn('LocalStorage save failed (likely quota)', e)
+            }
+        }
+        saveToCache()
+    }, [result, editFoodName, editCalories, editProtein, editCarbs, editFat, imageData])
 
     useEffect(() => {
         if (typeof window === 'undefined') return
@@ -184,6 +210,7 @@ export default function ScanPage() {
                 editProtein: number
                 editCarbs: number
                 editFat: number
+                imageData?: string
                 savedAt: string
             }
             if ((Date.now() - new Date(data.savedAt).getTime()) / 3600000 > 24) {
@@ -195,8 +222,9 @@ export default function ScanPage() {
             setEditProtein(data.editProtein)
             setEditCarbs(data.editCarbs)
             setEditFat(data.editFat)
+            if (data.imageData) setImageData(data.imageData)
             setState('result')
-            setImageVisible(false)
+            setImageVisible(true) // Khi phục hồi từ cache thì hiện ảnh luôn
         } catch { }
     }, [])
 
@@ -360,14 +388,14 @@ Người dùng muốn điều chỉnh/thêm: "${adjustment}". Hãy tính lại t
                             value={editFoodName}
                             onChange={(e) => setEditFoodName(e.target.value)}
                             placeholder="Tên món ăn..."
-                            className="text-lg font-black text-slate-800 bg-transparent outline-none w-full"
+                            className="text-lg font-black text-slate-800 dark:text-slate-100 bg-transparent outline-none w-full"
                         />
                     </div>
 
                     {/* Calories */}
-                    <div className="flex items-center gap-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-2xl p-4">
-                        <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center">
-                            <Flame className="h-6 w-6 text-emerald-600" />
+                    <div className="flex items-center gap-4 bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950/40 dark:to-green-950/40 rounded-2xl p-4 border border-emerald-100/50 dark:border-emerald-500/20">
+                        <div className="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center">
+                            <Flame className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
                         </div>
                         <div className="flex items-baseline gap-1.5">
                             <input
@@ -375,9 +403,9 @@ Người dùng muốn điều chỉnh/thêm: "${adjustment}". Hãy tính lại t
                                 value={editCalories}
                                 onChange={(e) => setEditCalories(Number(e.target.value))}
                                 min={0}
-                                className="text-5xl font-black text-slate-800 bg-transparent outline-none w-32 tabular-nums"
+                                className="text-5xl font-black text-slate-800 dark:text-white bg-transparent outline-none w-32 tabular-nums"
                             />
-                            <span className="text-lg font-semibold text-slate-400">kcal</span>
+                            <span className="text-lg font-semibold text-slate-400 dark:text-slate-500">kcal</span>
                         </div>
                     </div>
 
@@ -397,18 +425,18 @@ Người dùng muốn điều chỉnh/thêm: "${adjustment}". Hãy tính lại t
                     )}
 
                     {/* AI Portion Assistant */}
-                    <div className="rounded-2xl bg-slate-50 border border-slate-100 p-4 space-y-3">
+                    <div className="rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 p-4 space-y-3">
                         <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-base shrink-0">🤖</div>
+                            <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center text-base shrink-0">🤖</div>
                             <div>
-                                <p className="text-xs font-bold text-slate-700">Điều chỉnh khẩu phần</p>
-                                <p className="text-[10px] text-slate-400">AI sẽ tính lại dinh dưỡng cho bạn</p>
+                                <p className="text-xs font-bold text-slate-700 dark:text-slate-200">Điều chỉnh khẩu phần</p>
+                                <p className="text-[10px] text-slate-400 dark:text-slate-500">AI sẽ tính lại dinh dưỡng cho bạn</p>
                             </div>
                         </div>
                         <div className="flex flex-wrap gap-2">
                             {['Thêm 1 ly sữa đậu nành', 'Tô lớn hơn', 'Ít cơm hơn'].map((s) => (
                                 <button key={s} type="button" onClick={() => adjustPortion(s)} disabled={portionLoading}
-                                    className="px-3 py-1.5 rounded-full bg-white border border-emerald-200 text-emerald-700 text-xs font-semibold hover:bg-emerald-50 disabled:opacity-60 transition-colors shadow-sm">
+                                    className="px-3 py-1.5 rounded-full bg-white dark:bg-slate-800 border border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-xs font-semibold hover:bg-emerald-50 dark:hover:bg-emerald-500/10 disabled:opacity-60 transition-colors shadow-sm">
                                     {s}
                                 </button>
                             ))}
@@ -419,7 +447,7 @@ Người dùng muốn điều chỉnh/thêm: "${adjustment}". Hãy tính lại t
                                 onChange={(e) => setPortionInput(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && adjustPortion(portionInput)}
                                 placeholder="Nhập thêm món... (vd: thêm trứng)"
-                                className="flex-1 bg-white rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-400/30 border border-slate-200"
+                                className="flex-1 bg-white dark:bg-slate-800 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-400/30 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100"
                             />
                             <button type="button" onClick={() => adjustPortion(portionInput)}
                                 disabled={portionLoading || !portionInput.trim()}
@@ -458,21 +486,53 @@ function EditableMacro({
     bg: string
 }) {
     return (
-        <div className="rounded-2xl border border-slate-100 bg-white p-3.5 flex flex-col items-center gap-1.5 shadow-sm">
-            <div className={`w-8 h-8 rounded-xl ${bg} flex items-center justify-center`}>
-                <Icon className={`h-4 w-4 ${color}`} />
+        <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900/80 p-3.5 flex flex-col items-center gap-2 shadow-sm transition-all hover:border-emerald-500/30 group">
+            <div className={`w-9 h-9 rounded-xl ${bg} dark:bg-emerald-500/10 flex items-center justify-center transition-transform group-hover:scale-110`}>
+                <Icon className={`h-4.5 w-4.5 ${color}`} />
             </div>
-            <div className="flex items-baseline gap-0.5">
-                <input
-                    type="number"
-                    value={value}
-                    onChange={(e) => onChange(Math.max(0, Number(e.target.value)))}
-                    min={0}
-                    className={`w-14 text-center text-xl font-black ${color} bg-transparent focus:outline-none tabular-nums`}
-                />
-                <span className="text-xs font-bold text-slate-400">g</span>
+            <div className="flex flex-col items-center">
+                <div className="relative group/input">
+                    <input
+                        type="number"
+                        value={value}
+                        onChange={(e) => onChange(Math.max(0, Number(e.target.value)))}
+                        min={0}
+                        className={`w-16 text-center text-xl font-black ${color} bg-slate-50 dark:bg-slate-800/50 rounded-lg py-1 px-1 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 tabular-nums border border-transparent focus:border-emerald-500/30`}
+                    />
+                    <span className="absolute -right-4 bottom-1.5 text-[10px] font-bold text-slate-400 dark:text-slate-500">g</span>
+                </div>
+                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1.5">{label}</p>
             </div>
-            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">{label}</p>
         </div>
     )
+}
+
+/**
+ * Nén ảnh bằng Canvas để tiết kiệm localStorage (giới hạn 5MB)
+ */
+async function compressImage(base64: string, maxWidth: number): Promise<string> {
+    if (typeof window === 'undefined') return base64
+    return new Promise((resolve, reject) => {
+        const img = new window.Image()
+        img.src = base64
+        img.onload = () => {
+            const canvas = document.createElement('canvas')
+            let width = img.width
+            let height = img.height
+
+            if (width > maxWidth) {
+                height = (height * maxWidth) / width
+                width = maxWidth
+            }
+
+            canvas.width = width
+            canvas.height = height
+            const ctx = canvas.getContext('2d')
+            if (!ctx) return resolve(base64)
+
+            ctx.drawImage(img, 0, 0, width, height)
+            resolve(canvas.toDataURL('image/jpeg', 0.7)) // Nén thành JPEG 70%
+        }
+        img.onerror = reject
+    })
 }

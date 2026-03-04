@@ -216,19 +216,34 @@ export default function ProfilePage() {
               <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">mục tiêu</p>
             </div>
           </div>
-          {weightHistory.length > 1 && (
-            <div className="flex items-end gap-1 h-12 mt-3">
-              {weightHistory.map((w, i) => {
-                const max = Math.max(...weightHistory.map((x: any) => x.weight_kg))
-                const min = Math.min(...weightHistory.map((x: any) => x.weight_kg))
-                const range = max - min || 1
-                const h = Math.max(15, ((w.weight_kg - min) / range) * 100)
-                return <div key={i} className="flex-1 bg-emerald-200 rounded-t-lg" style={{ height: `${h}%` }} />
-              })}
+          {weightHistory.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-slate-50 dark:border-slate-800/50">
+              <div className="flex items-end gap-1.5 h-16">
+                {weightHistory.map((w, i) => {
+                  const maxVal = Math.max(...weightHistory.map((x: any) => x.weight_kg))
+                  const minVal = Math.min(...weightHistory.map((x: any) => x.weight_kg))
+                  const r = maxVal - minVal || 1
+                  const h = Math.max(15, ((w.weight_kg - minVal) / r) * 100)
+                  const dayStr = new Date(w.date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })
+
+                  return (
+                    <div key={i} className="flex-1 flex flex-col items-center justify-end h-full group">
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[8px] font-bold text-emerald-500 mb-0.5">
+                        {w.weight_kg}
+                      </span>
+                      <div
+                        className="w-full bg-emerald-100 dark:bg-emerald-500/20 rounded-t-md hover:bg-emerald-400 transition-all"
+                        style={{ height: `${h}%` }}
+                      />
+                      <span className="text-[7px] font-black text-slate-400 mt-1">{dayStr}</span>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           )}
           {weightHistory.length === 0 && (
-            <p className="text-xs text-slate-400 text-center py-2">Chưa có lịch sử — check-in từ dashboard!</p>
+            <p className="text-xs text-slate-400 text-center py-2 italic">Chưa có lịch sử — check-in từ dashboard!</p>
           )}
         </div>
       )}

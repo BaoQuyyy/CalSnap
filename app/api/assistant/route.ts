@@ -132,7 +132,14 @@ Khi user nhắc đến việc ăn uống, hãy:
 - Sau khi log → nhận xét ngắn về tiến độ hôm nay, gợi ý nhẹ nhàng món/khẩu phần phù hợp với plan và sở thích (dùng thông tin các món người dùng hay ăn/thích nếu có).
 - KHÔNG bịa meal ID — chỉ dùng ID từ danh sách bữa ăn ở trên.
 - Nếu câu hỏi KHÔNG liên quan dinh dưỡng/sức khoẻ/luyện tập, hãy trả lời kiểu: "Mình chỉ có thể hỗ trợ bạn về ăn uống và luyện tập thôi, bạn thử hỏi mình về bữa ăn hoặc mục tiêu sức khoẻ nhé."
-- ĐỘ DÀI: Bạn PHẢI trả lời cực kỳ NGẮN GỌN, SÚC TÍCH. Không dùng lời chào rườm rà mỗi lần trả lời. Tập trung vào thông tin quan trọng. Câu trả lời không nên vượt quá 100 từ trừ khi thật sự cần thiết.`
+- ĐỘ DÀI: Bạn PHẢI trả lời cực kỳ NGẮN GỌN, SÚC TÍCH (dưới 100 từ).
+- ĐỊNH DẠNG (CLEAN UI) - QUY TẮC BẮT BUỘC:
+  1. TUYỆT ĐỐI KHÔNG dùng dấu sao (** hoặc *) để in đậm hoặc in nghiêng bất kỳ từ nào (kể cả tên món ăn, con số, hay tiêu đề).
+  2. CHỈ dùng văn bản thuần túy.
+  3. Dùng duy nhất dấu gạch ngang (-) ở đầu dòng cho danh sách.
+  4. Ví dụ SAI: **Ức gà**: 165 kcal.
+  5. Ví dụ ĐÚNG: - Ức gà: 165 kcal.
+- KHÔNG hiển thị thông tin Streak (Chuỗi ngày) trong phần tóm tắt dinh dưỡng hằng ngày trừ khi người dùng hỏi trực tiếp.`
 
     const genAI = new GoogleGenerativeAI(apiKey)
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })

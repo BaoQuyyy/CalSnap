@@ -39,9 +39,9 @@ export default function LogPage() {
   const dateObj = new Date(date + 'T12:00:00')
   const dayName = DAYS[dateObj.getDay()]
 
-  const sevenDays = Array.from({ length: 14 }, (_, i) => {
+  const sevenDays = Array.from({ length: 7 }, (_, i) => {
     const d = new Date()
-    d.setDate(d.getDate() - 13 + i)
+    d.setDate(d.getDate() - 6 + i)
     return d.toISOString().split('T')[0]
   })
 
@@ -103,9 +103,9 @@ export default function LogPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-lg mx-auto page-enter">
+    <div className="space-y-6 max-w-lg mx-auto page-enter pb-40">
       <div className="-mx-4 md:-mx-8 nutri-header">
-        <div className="relative z-10 px-5 md:px-8 pt-12 pb-6">
+        <div className="ios-reveal relative z-10 px-6 md:px-8 pt-12 pb-6">
           <h1 className="text-white text-2xl md:text-3xl font-display font-extrabold">
             Nhật ký ăn uống 📓
           </h1>
@@ -152,12 +152,14 @@ export default function LogPage() {
             </div>
           )}
 
-          <QuickRelog recentMeals={recentMeals} onRelog={handleRelog} />
+          <div className="ios-reveal delay-100">
+            <QuickRelog recentMeals={recentMeals} onRelog={handleRelog} />
+          </div>
         </div>
       )}
 
       {/* Date selector */}
-      <div className="space-y-3">
+      <div className="space-y-3 ios-reveal delay-200">
         <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 scrollbar-hide">
           {sevenDays.map((d) => {
             const isActive = d === date
@@ -189,7 +191,7 @@ export default function LogPage() {
       </div>
 
       {/* Daily summary */}
-      <div className="glass-card rounded-[2rem] p-6">
+      <div className="glass-card rounded-[2rem] p-6 ios-reveal delay-300">
         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">
           Tổng {date === today ? 'hôm nay' : 'trong ngày'}
         </h3>
@@ -236,18 +238,7 @@ export default function LogPage() {
               onDelete={() => handleDelete(meal.id, meal.food_name)}
               className="relative"
             >
-              <MealCard meal={meal} />
-              <button
-                onClick={() => handleToggleFavorite(meal.id)}
-                title={meal.is_favorite ? 'Bỏ yêu thích' : 'Lưu vào yêu thích'}
-                className="absolute top-3 right-12 w-8 h-8 flex items-center justify-center rounded-full bg-white/80 shadow-sm hover:scale-110 transition-transform z-30"
-                aria-label="Toggle favorite"
-              >
-                <Heart
-                  size={15}
-                  className={meal.is_favorite ? 'text-red-500 fill-red-500' : 'text-slate-300'}
-                />
-              </button>
+              <MealCard meal={meal} onToggleFavorite={handleToggleFavorite} />
             </SwipeableMealCard>
           ))
         )}

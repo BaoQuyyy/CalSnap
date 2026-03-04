@@ -15,7 +15,22 @@ interface WeeklyChartProps {
 }
 
 export function WeeklyChart({ data, goal = 2000 }: WeeklyChartProps) {
+    const [chartConfig, setChartConfig] = useState({ fontSizeX: 12, fontSizeY: 11, marginLeft: -20 })
     const [isDark, setIsDark] = useState(false)
+
+    useEffect(() => {
+        const handleResize = () => {
+            const isMobile = window.innerWidth < 400
+            setChartConfig({
+                fontSizeX: isMobile ? 10 : 12,
+                fontSizeY: isMobile ? 9 : 11,
+                marginLeft: isMobile ? -30 : -20
+            })
+        }
+        handleResize()
+        window.addEventListener('resize', handleResize)
+        return () => window.removeEventListener('resize', handleResize)
+    }, [])
 
     useEffect(() => {
         const check = () => setIsDark(document.documentElement.classList.contains('dark'))
@@ -39,16 +54,16 @@ export function WeeklyChart({ data, goal = 2000 }: WeeklyChartProps) {
     return (
         <div className="w-full h-48">
             <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                <BarChart data={data} margin={{ top: 0, right: 0, left: chartConfig.marginLeft, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
                     <XAxis
                         dataKey="label"
-                        tick={{ fill: axisColor, fontSize: 12 }}
+                        tick={{ fill: axisColor, fontSize: chartConfig.fontSizeX }}
                         axisLine={false}
                         tickLine={false}
                     />
                     <YAxis
-                        tick={{ fill: axisColor, fontSize: 11 }}
+                        tick={{ fill: axisColor, fontSize: chartConfig.fontSizeY }}
                         axisLine={false}
                         tickLine={false}
                     />

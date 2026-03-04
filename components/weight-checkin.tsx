@@ -101,9 +101,8 @@ export function WeightCheckin({
 
       {/* Badge + thời gian */}
       <div className="flex items-center justify-between mb-4">
-        <div className={`flex items-center gap-1.5 px-3 py-1 rounded-2xl ${
-          isLosing ? 'bg-orange-50 text-orange-600' : 'bg-emerald-50 text-emerald-600'
-        }`}>
+        <div className={`flex items-center gap-1.5 px-3 py-1 rounded-2xl ${isLosing ? 'bg-orange-50 text-orange-600' : 'bg-emerald-50 text-emerald-600'
+          }`}>
           {isLosing ? <TrendingDown size={12} /> : <TrendingUp size={12} />}
           <span className="text-xs font-black">
             {Math.abs(diff).toFixed(1)}kg {isLosing ? 'cần giảm' : 'cần tăng'}
@@ -115,19 +114,30 @@ export function WeightCheckin({
         </p>
       </div>
 
-      {/* Mini chart */}
-      {recentHistory.length > 1 && (
-        <div className="flex items-end gap-1 h-10 mb-4">
-          {recentHistory.map((h, i) => {
-            const pct = ((h.weight_kg - min) / range) * 100
-            return (
-              <div
-                key={i}
-                className="flex-1 bg-emerald-200 rounded-t"
-                style={{ height: `${Math.max(10, pct)}%` }}
-              />
-            )
-          })}
+      {/* Mini chart with Labels */}
+      {recentHistory.length > 0 && (
+        <div className="pt-4 mt-2 border-t border-slate-50 dark:border-slate-800/50">
+          <div className="flex items-end gap-1.5 h-20 mb-1">
+            {recentHistory.map((h, i) => {
+              const pct = ((h.weight_kg - min) / range) * 100
+              const dayStr = new Date(h.date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })
+              return (
+                <div key={i} className="flex-1 flex flex-col items-center justify-end h-full group">
+                  <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[9px] font-bold text-emerald-600 mb-1">
+                    {h.weight_kg}
+                  </span>
+                  <div
+                    className="w-full bg-emerald-200 dark:bg-emerald-500/30 rounded-t-lg transition-all hover:bg-emerald-400 group-hover:scale-y-105"
+                    style={{ height: `${Math.max(15, pct)}%` }}
+                  />
+                  <span className="text-[8px] font-bold text-slate-400 dark:text-slate-500 mt-1.5">
+                    {dayStr}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+          <p className="text-center text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-2">Lịch sử cân nặng (8 lần gần nhất)</p>
         </div>
       )}
 

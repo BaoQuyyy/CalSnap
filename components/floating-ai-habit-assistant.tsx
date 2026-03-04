@@ -2,7 +2,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Sparkles, X, Minus, Send, Paperclip, Trash2 } from 'lucide-react'
+import { Sparkles, X, Minus, Send, Paperclip, Trash } from 'lucide-react'
 import { toast } from '@/components/toast'
 
 interface Message {
@@ -27,7 +27,8 @@ const toBase64 = (file: File): Promise<string> =>
     reader.readAsDataURL(file)
   })
 
-export function FloatingAIAssistant() {
+// CACHE_BUST: 1741076826
+export function AIAssistantWidget() {
   const [open, setOpen] = useState(false)
   const [minimized, setMinimized] = useState(false)
   const [messages, setMessages] = useState<Message[]>(() => {
@@ -138,6 +139,13 @@ export function FloatingAIAssistant() {
             )
           }
         }
+
+        // Dispatch meal update event for all these actions to sync dashboard
+        if (ok && ['LOG_MEAL', 'UPDATE_MEAL', 'DELETE_MEAL', 'UPDATE_GOAL'].includes(actionType)) {
+          window.dispatchEvent(new CustomEvent('calsnap:meal-updated', {
+            detail: { date: new Date().toISOString().split('T')[0] }
+          }))
+        }
       }
 
       setMessages(prev => [...prev, { role: 'assistant', content: cleanReply }])
@@ -161,7 +169,7 @@ export function FloatingAIAssistant() {
   return (
     <>
       {/* Floating button */}
-      <div className="fixed bottom-24 right-4 md:right-6 z-50">
+      <div className="fixed bottom-28 right-4 md:right-6 z-50">
         {!open && (
           <div className="relative group">
             {/* Pulse ring */}
@@ -201,9 +209,6 @@ export function FloatingAIAssistant() {
                   <Sparkles size={14} className="text-white" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="font-semibold text-emerald-50 text-xs tracking-wide uppercase">
-                    CalSnap AI
-                  </span>
                   <span className="font-semibold text-slate-50 text-sm">
                     Trợ lý dinh dưỡng cá nhân
                   </span>
@@ -224,7 +229,7 @@ export function FloatingAIAssistant() {
                   title="Xóa lịch sử"
                   className="w-7 h-7 rounded-lg hover:bg-red-500/10 flex items-center justify-center text-slate-400 hover:text-red-400 transition-colors"
                 >
-                  <Trash2 size={14} />
+                  <Trash size={14} />
                 </button>
                 <button
                   onClick={() => setOpen(false)}
@@ -264,8 +269,8 @@ export function FloatingAIAssistant() {
                     >
                       <div
                         className={`max-w-[85%] px-4 py-3 text-sm leading-relaxed ${m.role === 'user'
-                            ? 'bg-gradient-to-br from-emerald-400 to-teal-400 text-white rounded-2xl rounded-br-sm shadow-[0_10px_30px_rgba(16,185,129,0.55)]'
-                            : 'bg-slate-900/80 text-slate-50 rounded-2xl rounded-bl-sm border border-slate-800'
+                          ? 'bg-gradient-to-br from-emerald-400 to-teal-400 text-white rounded-2xl rounded-br-sm shadow-[0_10px_30px_rgba(16,185,129,0.55)]'
+                          : 'bg-slate-900/80 text-slate-50 rounded-2xl rounded-bl-sm border border-slate-800'
                           }`}
                       >
                         {m.image && (

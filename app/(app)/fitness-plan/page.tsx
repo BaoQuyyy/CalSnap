@@ -79,7 +79,7 @@ export default async function FitnessPlanPage() {
   const weightDiff = Math.abs((profile.weight_kg ?? 0) - (profile.target_weight_kg ?? 0))
 
   return (
-    <div className="bg-background min-h-screen p-4 lg:p-8">
+    <div className="bg-slate-50 dark:bg-slate-950 min-h-screen p-4 lg:p-8">
       <div className="max-w-2xl mx-auto flex flex-col gap-5">
         <Link href="/" className="flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 font-semibold text-sm w-fit">
           <ChevronLeft size={18} /> Back to Dashboard

@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState, useCallback } from 'react'
+import { Trash, Loader2 } from 'lucide-react'
 
 interface Props {
     children: React.ReactNode
@@ -34,7 +35,7 @@ export function SwipeableMealCard({ children, onDelete, className = '' }: Props)
     const handleTouchEnd = useCallback(() => {
         setIsDragging(false)
         if (offset < -SWIPE_THRESHOLD) {
-            setOffset(-80)
+            setOffset(-100) // Increase reveal width for better visibility
             setIsOpen(true)
         } else {
             setOffset(0)
@@ -43,6 +44,7 @@ export function SwipeableMealCard({ children, onDelete, className = '' }: Props)
     }, [offset])
 
     const handleDelete = async () => {
+        if (deleting) return
         setDeleting(true)
         await onDelete()
         setDeleting(false)
@@ -54,38 +56,40 @@ export function SwipeableMealCard({ children, onDelete, className = '' }: Props)
     }
 
     return (
-        <div className={`relative overflow-hidden rounded-[2rem] ${className}`}>
-            {/* Delete button revealed on swipe */}
-            <div className="absolute inset-y-0 right-0 flex items-center justify-center w-20 bg-red-500 rounded-r-[2rem]">
+        <div className={`relative overflow-hidden rounded-[2rem] group/swipe ${className}`}>
+            {/* Delete button revealed on swipe - Increased width and Z-index */}
+            <div className="absolute inset-y-0 right-0 flex items-center justify-end w-[100px] bg-red-600 dark:bg-red-500 rounded-r-[2rem] z-10">
                 <button
                     onClick={handleDelete}
                     disabled={deleting}
                     aria-label="Xóa bữa ăn"
-                    className="flex flex-col items-center gap-1 text-white font-bold text-xs px-3 disabled:opacity-70"
+                    className="flex flex-col items-center justify-center h-full w-full pr-2 gap-1 text-white disabled:opacity-70 transition-colors active:bg-red-700"
                 >
                     {deleting ? (
-                        <span className="text-lg animate-spin">⏳</span>
+                        <Loader2 className="h-5 w-5 animate-spin" />
                     ) : (
                         <>
-                            <span className="text-lg">🗑️</span>
-                            <span>Xóa</span>
+                            <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center mb-0.5 shadow-sm">
+                                <Trash className="h-4.5 w-4.5" />
+                            </div>
+                            <span className="text-[10px] font-bold uppercase tracking-wider">Xóa</span>
                         </>
                     )}
                 </button>
             </div>
 
-            {/* Overlay to close when tapping */}
+            {/* Overlay to close when tapping outside */}
             {isOpen && (
                 <div
-                    className="absolute inset-0 z-10"
-                    style={{ right: 80 }}
+                    className="absolute inset-0 z-30"
+                    style={{ right: 100 }}
                     onClick={close}
                 />
             )}
 
-            {/* Swipeable card */}
+            {/* Swipeable card - Increased Z-index to stay above delete but below FAB */}
             <div
-                className={`relative z-20 ${isDragging ? '' : 'transition-transform duration-200'}`}
+                className={`relative z-20 ${isDragging ? '' : 'transition-transform duration-300 var(--ios-bezier)'}`}
                 style={{ transform: `translateX(${offset}px)` }}
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}

@@ -2,7 +2,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Sparkles, Send, Trash2 } from 'lucide-react'
+import { Sparkles, Send, Trash } from 'lucide-react'
 import { toast } from '@/components/toast'
 
 type Message = { role: 'user' | 'assistant'; content: string; timestamp: string }
@@ -141,9 +141,8 @@ export default function ChatPage() {
             if (ok) toast.success(`Mục tiêu mới: ${actionData.daily_calorie_goal} kcal/ngày`)
           } else if (actionType === 'LOG_WATER') {
             const total = json?.total as number | undefined
-            cleanReply += `\n\n💧 Đã ghi nhận thêm ${actionData.amount_ml}ml nước${
-              typeof total === 'number' ? ` (tổng hôm nay ~${(total / 1000).toFixed(1)}L)` : ''
-            }`
+            cleanReply += `\n\n💧 Đã ghi nhận thêm ${actionData.amount_ml}ml nước${typeof total === 'number' ? ` (tổng hôm nay ~${(total / 1000).toFixed(1)}L)` : ''
+              }`
             if (ok) toast.success('Đã cập nhật lượng nước hôm nay')
             if (ok && typeof window !== 'undefined') {
               window.dispatchEvent(
@@ -254,7 +253,7 @@ export default function ChatPage() {
             aria-label="Xóa lịch sử chat"
             title="Xóa lịch sử chat"
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash className="h-4 w-4" />
           </button>
         </div>
       </div>
