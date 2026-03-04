@@ -88,7 +88,7 @@ export function MealCard({ meal, onToggleFavorite, onUpdate }: MealCardProps) {
             calories: num,
             protein: Math.round(meal.protein * ratio),
             carbs: Math.round(meal.carbs * ratio),
-            fat: Math.round(meal.fat * ratio)
+            fats: Math.round(meal.fats * ratio)
         })
     }
 
@@ -136,7 +136,7 @@ export function MealCard({ meal, onToggleFavorite, onUpdate }: MealCardProps) {
         editData.calories !== meal.calories ||
         editData.protein !== meal.protein ||
         editData.carbs !== meal.carbs ||
-        editData.fat !== meal.fat
+        editData.fats !== meal.fats
 
     const time = new Date(meal.created_at).toLocaleTimeString('en-US', {
         hour: 'numeric',
@@ -211,7 +211,7 @@ export function MealCard({ meal, onToggleFavorite, onUpdate }: MealCardProps) {
                             {[
                                 { label: 'P', field: 'protein', color: 'blue', icon: Beef },
                                 { label: 'C', field: 'carbs', color: 'amber', icon: Wheat },
-                                { label: 'F', field: 'fat', color: 'orange', icon: Droplets }
+                                { label: 'F', field: 'fats', color: 'orange', icon: Droplets }
                             ].map((macro) => (
                                 <div key={macro.field} className="space-y-1">
                                     <label className={`text-[9px] font-black uppercase text-${macro.color}-500 ml-1 flex items-center`}>
@@ -221,11 +221,11 @@ export function MealCard({ meal, onToggleFavorite, onUpdate }: MealCardProps) {
                                         <input
                                             type="number"
                                             inputMode="numeric"
-                                            value={editData[macro.field as 'protein' | 'carbs' | 'fat']}
-                                            onChange={e => handleMacroChange(macro.field as 'protein' | 'carbs' | 'fat', e.target.value)}
+                                            value={editData[macro.field as 'protein' | 'carbs' | 'fats']}
+                                            onChange={e => handleMacroChange(macro.field as 'protein' | 'carbs' | 'fats', e.target.value)}
                                             className={`w-full bg-${macro.color}-50/30 dark:bg-${macro.color}-900/10 text-sm font-bold text-${macro.color}-600 dark:text-${macro.color}-400 px-3 py-2.5 rounded-xl border border-${macro.color}-100 dark:border-${macro.color}-900/30 focus:outline-none`}
                                         />
-                                        <DiffIndicator val={editData[macro.field as 'protein' | 'carbs' | 'fat']} original={meal[macro.field as 'protein' | 'carbs' | 'fat']} unit="g" />
+                                        <DiffIndicator val={editData[macro.field as 'protein' | 'carbs' | 'fats']} original={meal[macro.field as 'protein' | 'carbs' | 'fats']} unit="g" />
                                     </div>
                                 </div>
                             ))}

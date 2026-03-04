@@ -242,7 +242,7 @@ export async function updateMealNutrition(mealId: string, data: {
     // 3. Calculate new totals for the day
     const { data: dayMeals } = await supabase
         .from('meal_logs')
-        .select('calories, protein, carbs, fat')
+        .select('calories, protein, carbs, fats')
         .eq('user_id', user.id)
         .eq('logged_at', date)
 
@@ -250,8 +250,8 @@ export async function updateMealNutrition(mealId: string, data: {
         calories: acc.calories + (m.calories || 0),
         protein: acc.protein + (m.protein || 0),
         carbs: acc.carbs + (m.carbs || 0),
-        fat: acc.fat + (m.fats || 0),
-    }), { calories: 0, protein: 0, carbs: 0, fat: 0 })
+        fats: acc.fats + (m.fats || 0),
+    }), { calories: 0, protein: 0, carbs: 0, fats: 0 })
 
     // 4. Update adherence/progress
     await updateDailyAdherence(date)
@@ -268,7 +268,7 @@ export async function updateMealNutrition(mealId: string, data: {
             calories: Math.round(newTotals.calories),
             protein: Math.round(newTotals.protein),
             carbs: Math.round(newTotals.carbs),
-            fat: Math.round(newTotals.fat)
+            fat: Math.round(newTotals.fats) // Keep 'fat' as key for frontend if dashboard expects it, but map from 'fats'
         }
     }
 }
