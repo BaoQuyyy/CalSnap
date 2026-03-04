@@ -84,17 +84,15 @@ export function AIAssistantWidget() {
         body: JSON.stringify({ type, data }),
       })
       const ok = res.ok
-      const json = ok ? await res.json().catch(() => null) : null
+      const dataJson = ok ? await res.json().catch(() => null) : null
 
       if (ok) {
         triggerHaptic('success')
-        const label = type === 'LOG_MEAL' ? 'Đã thêm' : type === 'UPDATE_MEAL' ? 'Đã cập nhật' : type === 'DELETE_MEAL' ? 'Đã xoá' : type === 'UPDATE_GOAL' ? 'Mục tiêu mới' : 'Đã cập nhật'
-        const foodName = data.foodName || 'món ăn'
-        const record = json?.data
-        const targetId = record?.id || data.mealId
-        const targetDate = record?.logged_at || new Date().toISOString().split('T')[0]
+        const json = dataJson?.data
+        const targetId = json?.id || data.mealId
+        const targetDate = json?.logged_at || new Date().toISOString().split('T')[0]
 
-        toast.success(`${label}: ${foodName}`, {
+        toast.success('Hành động hoàn tất!', {
           onClick: () => {
             if (targetId) {
               router.push(`/log?highlight=${targetId}`)
@@ -151,13 +149,15 @@ export function AIAssistantWidget() {
       })
       const data = await res.json()
 
-      const errorMsg = data?.error ?? 'Hệ thống AI đang bận, vui lòng thử lại sau.'
-      setMessages(prev => [...prev, { role: 'assistant', content: errorMsg }])
+      if (!res.ok) {
+        const errorMsg = data?.error ?? 'Hệ thống AI đang bận, vui lòng thử lại sau.'
+        setMessages(prev => [...prev, { role: 'assistant', content: errorMsg }])
+        return
+      }
 
       const reply = data.reply ?? '...'
       const actionMatch = reply.match(/\[ACTION:(\w+):(\{[\s\S]*?\})\]/)
-      // DO NOT strip [ID:...] from the content stored in state (useful for AI history/memory)
-      // We only strip [ACTION:...]
+      // DO NOT strip [ID:...] from state (useful for AI history/memory)
       const msgForState = reply.replace(/\[ACTION:[\s\S]*?\]/g, '').trim()
 
       if (actionMatch) {
@@ -183,8 +183,9 @@ export function AIAssistantWidget() {
       } else {
         setMessages(prev => [...prev, { role: 'assistant', content: msgForState }])
       }
-    } catch {
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Lỗi AI.' }])
+    } catch (err) {
+      console.error("Assistant error:", err)
+      setMessages(prev => [...prev, { role: 'assistant', content: 'Lỗi AI. Vui lòng thử lại sau.' }])
     } finally {
       setLoading(false)
     }
