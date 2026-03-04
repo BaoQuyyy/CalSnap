@@ -17,21 +17,39 @@ const BodySchema = z.union([TextBodySchema, ImageBodySchema])
 
 const IMAGE_PROMPT = `Bạn là chuyên gia dinh dưỡng, trả lời bằng tiếng Việt.
 Phân tích món ăn trong bức ảnh và TRẢ VỀ DUY NHẤT một JSON với cấu trúc:
-{ "foodName": string, "calories": number, "protein": number, "carbs": number, "fat": number, "confidence": "high" | "medium" | "low" }.
+{ 
+  "foodName": string, 
+  "calories": number, 
+  "protein": number, 
+  "carbs": number, 
+  "fat": number, 
+  "confidence": "high" | "medium" | "low",
+  "suggestions": string[] 
+}.
 
 YÊU CẦU:
 - "foodName" phải là tên món ăn tiếng Việt nếu có thể (ví dụ: "Bánh xèo", "Phở bò", "Cơm tấm sườn").
+- "suggestions" phải là mảng 3 chuỗi gợi ý điều chỉnh khẩu phần THỰC TẾ và CỤ THỂ theo trọng lượng hoặc đơn vị phổ biến (ví dụ: "100g cơm trắng", "Thêm 1 quả trứng", "Tô lớn hơn", "Bớt mỡ/dầu"). Ưu tiên các đơn vị gram (g) nếu là món tinh bột/đạm.
 - Không thêm bất kỳ giải thích, markdown hoặc text nào ngoài JSON.
 - Nếu không phát hiện được món ăn, trả về: { "error": "No food detected" }.`
 
 const TEXT_PROMPT_PREFIX = `Bạn là chuyên gia dinh dưỡng, trả lời bằng tiếng Việt.
-Người dùng sẽ mô tả bữa ăn HOẶC điều chỉnh thêm món/khẩu phần (ví dụ: "Bánh xèo thêm 1 ly sữa đậu nành", "tô phở lớn hơn", "ít cơm hơn").
-Dựa trên mô tả đó, hãy ƯỚC TÍNH LẠI toạ bộ giá trị dinh dưỡng CHO CẢ BỮA (sau khi đã cộng/trừ món mới) và TRẢ VỀ DUY NHẤT một JSON với cấu trúc:
-{ "foodName": string, "calories": number, "protein": number, "carbs": number, "fat": number, "confidence": "high" | "medium" | "low" }.
+Người dùng sẽ mô tả bữa ăn HOẶC điều chỉnh thêm món/khẩu phần.
+Dựa trên mô tả đó, hãy ƯỚC TÍNH LẠI toàn bộ giá trị dinh dưỡng CHO CẢ BỮA và TRẢ VỀ DUY NHẤT một JSON với cấu trúc:
+{ 
+  "foodName": string, 
+  "calories": number, 
+  "protein": number, 
+  "carbs": number, 
+  "fat": number, 
+  "confidence": "high" | "medium" | "low",
+  "suggestions": string[]
+}.
 
 YÊU CẦU:
-- "foodName" nên là mô tả tiếng Việt rõ ràng của bữa ăn sau khi điều chỉnh.
-- Không thêm bất kỳ giải thích hay markdown nào, CHỈ JSON.
+- "foodName" là mô tả bữa ăn sau khi điều chỉnh.
+- "suggestions" là 2-3 gợi ý điều chỉnh tiếp theo cực kỳ cụ thể (ví dụ: "Thêm 50g ức gà", "Ít đường hơn").
+- Không thêm giải thích hay markdown, CHỈ JSON.
 
 Mô tả từ người dùng: `
 
@@ -95,7 +113,7 @@ export async function POST(req: NextRequest) {
                 return NextResponse.json({ error: parsed.error })
             }
 
-            const { foodName, calories, protein, carbs, fat, confidence } = parsed
+            const { foodName, calories, protein, carbs, fat, confidence, suggestions } = parsed
             if (typeof foodName !== 'string') {
                 return NextResponse.json({ error: 'AI khong the tinh du thong tin dinh duong.' }, { status: 500 })
             }
@@ -108,6 +126,7 @@ export async function POST(req: NextRequest) {
                     carbs: Math.round((Number(carbs) || 0) * 10) / 10,
                     fat: Math.round((Number(fat) || 0) * 10) / 10,
                     confidence: confidence ?? 'medium',
+                    suggestions: Array.isArray(suggestions) ? suggestions : [],
                 },
             })
         }
@@ -169,7 +188,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: aiJson.error })
         }
 
-        const { foodName, calories, protein, carbs, fat, confidence } = aiJson
+        const { foodName, calories, protein, carbs, fat, confidence, suggestions } = aiJson
 
         if (typeof foodName !== 'string') {
             console.error('[/api/analyze] Incomplete data:', aiJson)
@@ -184,6 +203,7 @@ export async function POST(req: NextRequest) {
                 carbs: Math.round((Number(carbs) || 0) * 10) / 10,
                 fat: Math.round((Number(fat) || 0) * 10) / 10,
                 confidence: confidence ?? 'medium',
+                suggestions: Array.isArray(suggestions) ? suggestions : [],
             },
         })
     } catch (err: any) {

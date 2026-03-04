@@ -447,7 +447,10 @@ Người dùng muốn điều chỉnh/thêm: "${adjustment}". Hãy tính lại t
                             </div>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                            {['Thêm 1 ly sữa đậu nành', 'Tô lớn hơn', 'Ít cơm hơn'].map((s) => (
+                            {(result.suggestions && result.suggestions.length > 0
+                                ? result.suggestions
+                                : ['Thêm 1 ly sữa đậu nành', 'Tô lớn hơn', 'Ít cơm hơn']
+                            ).map((s) => (
                                 <button key={s} type="button" onClick={() => adjustPortion(s)} disabled={portionLoading}
                                     className="px-3 py-1.5 rounded-full bg-white dark:bg-slate-800 border border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-xs font-semibold hover:bg-emerald-50 dark:hover:bg-emerald-500/10 disabled:opacity-60 transition-colors shadow-sm">
                                     {s}

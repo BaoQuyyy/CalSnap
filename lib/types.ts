@@ -258,6 +258,7 @@ export interface NutritionResult {
   carbs: number
   fat: number
   confidence: 'high' | 'medium' | 'low'
+  suggestions?: string[]
 }
 
 export interface AnalyzeResponse {
