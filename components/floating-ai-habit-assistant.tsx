@@ -3,7 +3,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Sparkles, Send, Paperclip, Trash, ChevronDown, MessageCircle, MoreVertical } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from '@/components/toast'
 import confetti from 'canvas-confetti'
@@ -47,8 +47,11 @@ export function AIAssistantWidget() {
   const [pendingAction, setPendingAction] = useState<{ type: string; data: any; messageIndex: number } | null>(null)
 
   const router = useRouter()
+  const pathname = usePathname()
   const fileRef = useRef<HTMLInputElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+
+  if (pathname === '/chat') return null
 
   const triggerHaptic = (style: 'light' | 'medium' | 'success' = 'light') => {
     if (typeof window !== 'undefined' && 'vibrate' in navigator) {

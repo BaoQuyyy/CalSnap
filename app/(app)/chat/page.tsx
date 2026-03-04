@@ -302,21 +302,21 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="font-sans flex flex-col h-[calc(100dvh-5rem)] md:h-[calc(100vh-4rem)] max-w-2xl mx-auto page-enter min-h-0 w-full overflow-hidden bg-slate-50/50 dark:bg-[#0d1117]">
+    <div className="flex flex-col h-[calc(100dvh-3.5rem)] md:h-[calc(100vh-4rem)] w-full max-w-2xl mx-auto overflow-hidden bg-slate-50/50 dark:bg-slate-950/50 backdrop-blur-3xl animate-in fade-in duration-500">
 
-      {/* Header - iOS Compact Style */}
-      <div className="ios-blur sticky top-0 z-30 px-6 py-4 flex items-center justify-between border-b border-slate-200/50 dark:border-slate-800/50 bg-white/70 dark:bg-slate-900/70">
+      {/* Header - Fixed Top */}
+      <div className="ios-blur z-30 px-6 py-4 flex items-center justify-between border-b border-slate-200/50 dark:border-slate-800/50 bg-white/70 dark:bg-slate-900/70 shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl hoverboard-gradient flex items-center justify-center shadow-lg shadow-emerald-500/20">
             <Sparkles className="text-white h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-slate-900 dark:text-white text-lg font-bold tracking-tight">
+            <h1 className="text-slate-900 dark:text-white text-lg font-extrabold tracking-tight">
               CalSnap AI
             </h1>
             <div className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[10px] uppercase tracking-widest font-bold text-emerald-600 dark:text-emerald-400">
+              <span className="text-[10px] uppercase tracking-widest font-black text-emerald-600 dark:text-emerald-400">
                 Online
               </span>
             </div>
@@ -325,119 +325,135 @@ export default function ChatPage() {
         <button
           type="button"
           onClick={clearChat}
-          className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-red-50 hover:text-red-500 transition-all active:scale-90 flex items-center justify-center"
+          className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-red-50 hover:text-red-500 transition-all active:scale-90 flex items-center justify-center"
         >
-          <Trash className="h-4 w-4" />
+          <Trash className="h-4.5 w-4.5" />
         </button>
       </div>
 
-      {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-4 scroll-smooth">
-        {messages.length === 0 && !loading && (
-          <div className="flex-1 flex flex-col items-center justify-center text-center py-12">
-            <div className="w-16 h-16 rounded-2xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-4">
-              <Sparkles className="h-8 w-8 text-emerald-500" />
+      {/* Messages - Scrollable Middle */}
+      <motion.div
+        ref={scrollRef}
+        variants={containerVariants}
+        initial="hidden"
+        animate="show"
+        className="flex-1 overflow-y-auto px-4 py-8 flex flex-col gap-5 scroll-smooth scrollbar-hide"
+      >
+        {hydrated && messages.length === 0 && !loading && (
+          <motion.div
+            variants={messageVariants}
+            className="flex-1 flex flex-col items-center justify-center text-center py-20 opacity-60"
+          >
+            <div className="w-20 h-20 rounded-[2rem] bg-emerald-500/10 flex items-center justify-center mb-6 shadow-xl shadow-emerald-500/5">
+              <Sparkles className="text-emerald-500 h-10 w-10 animate-pulse" />
             </div>
-            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">
-              Hỏi mình bất cứ điều gì về dinh dưỡng!
-            </h2>
-            <div className="flex flex-wrap gap-2 justify-center mt-4">
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">Chào anh! 👋</h2>
+            <p className="text-slate-500 dark:text-slate-400 max-w-[250px] leading-relaxed text-sm font-medium">
+              Em đã sẵn sàng hỗ trợ anh ghi log bữa ăn và tính calo rồi ạ.
+            </p>
+            <div className="flex flex-wrap gap-2 justify-center mt-8 px-4">
               {SUGGESTIONS.map((s) => (
                 <button
                   key={s}
-                  type="button"
                   onClick={() => sendMessage(s)}
-                  className="px-4 py-3 min-h-[44px] glass-card rounded-2xl text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-white/80 transition-colors touch-target flex items-center"
+                  className="px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:border-emerald-500 transition-colors shadow-sm active:scale-95"
                 >
                   {s}
                 </button>
               ))}
             </div>
-          </div>
+          </motion.div>
         )}
 
-        {messages.map((m, i) => (
-          <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'} ios-spring-enter`} style={{ animationDelay: `${Math.min(i * 0.05, 0.5)}s` }}>
-            <div className={`max-w-[85%] md:max-w-[80%] p-4 text-[15px] leading-relaxed break-words shadow-sm ${m.role === 'user'
-              ? 'ios-bubble-user'
-              : 'ios-bubble-ai text-slate-800 dark:text-slate-100'
-              }`}>
-              {m.role === 'assistant' ? (
-                <>
+        <AnimatePresence mode="popLayout">
+          {messages.map((m, i) => (
+            <motion.div
+              key={`${m.timestamp}-${i}`}
+              variants={messageVariants}
+              layout
+              className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}
+            >
+              <div className={`max-w-[85%] md:max-w-[80%] p-4 text-[15.5px] leading-relaxed break-words shadow-sm ${m.role === 'user'
+                ? 'ios-bubble-user'
+                : 'ios-bubble-ai text-slate-800 dark:text-slate-100'
+                }`}>
+                {m.role === 'assistant' ? (
                   <div
-                    className="[&_strong]:font-bold [&_strong]:text-emerald-700 dark:[&_strong]:text-emerald-400 [&_em]:italic [&_ol]:my-2 [&_ul]:my-2 [&_li]:leading-relaxed"
+                    className="[&_strong]:font-black [&_strong]:text-emerald-600 dark:[&_strong]:text-emerald-400 [&_em]:italic [&_ol]:my-2 [&_ul]:my-2 [&_li]:leading-relaxed"
                     dangerouslySetInnerHTML={{ __html: renderContent(m.content) }}
                   />
+                ) : (
+                  <p className="whitespace-pre-wrap leading-relaxed font-medium">{m.content}</p>
+                )}
 
-                  {/* Confirmation Buttons for DELETE */}
-                  {pendingAction?.messageIndex === i && (
-                    <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-200 dark:border-slate-700/50">
-                      <button
-                        onClick={() => handleAction(pendingAction.type, pendingAction.data)}
-                        className="px-4 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 text-white text-xs font-bold transition-all active:scale-95"
-                      >
-                        Xác nhận xóa
-                      </button>
-                      <button
-                        onClick={() => setPendingAction(null)}
-                        className="px-4 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 text-xs font-bold transition-all active:scale-95"
-                      >
-                        Hủy
-                      </button>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <p className="whitespace-pre-wrap leading-relaxed">{m.content}</p>
-              )}
-              <p className={`text-[10px] mt-2 font-medium uppercase tracking-tighter ${m.role === 'user' ? 'text-white/60' : 'text-slate-400 dark:text-slate-500'}`}>
-                {formatTime(m.timestamp)}
-              </p>
-            </div>
-          </div>
-        ))}
+                {pendingAction?.messageIndex === i && (
+                  <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-200/50 dark:border-white/10">
+                    <button
+                      onClick={() => handleAction(pendingAction.type, pendingAction.data)}
+                      className="flex-1 py-2 rounded-xl bg-red-500 text-white text-xs font-black shadow-lg shadow-red-500/20 active:scale-95 transition-all"
+                    >
+                      XÁC NHẬN XÓA
+                    </button>
+                    <button
+                      onClick={() => setPendingAction(null)}
+                      className="flex-1 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 text-xs font-black active:scale-95 transition-all"
+                    >
+                      HỦY
+                    </button>
+                  </div>
+                )}
+
+                <p className={`text-[10px] mt-2 font-black opacity-40 uppercase tracking-tighter ${m.role === 'user' ? 'text-white' : 'text-slate-500'}`}>
+                  {formatTime(m.timestamp)}
+                </p>
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
 
         {loading && (
-          <div className="flex justify-start items-end gap-2">
-            <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center animate-pulse">
-              <Sparkles size={14} className="text-emerald-500" />
-            </div>
-            <div className="glass-card px-4 py-3 rounded-[1.5rem] rounded-tl-sm flex items-center justify-center">
-              <div className="typing-container">
-                <div className="typing-dot" style={{ animationDelay: '0s' }} />
-                <div className="typing-dot" style={{ animationDelay: '0.2s' }} />
-                <div className="typing-dot" style={{ animationDelay: '0.4s' }} />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex justify-start"
+          >
+            <div className="ios-bubble-ai px-5 py-3">
+              <div className="flex gap-1.5 h-4 items-center">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/40 animate-bounce" />
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/40 animate-bounce [animation-delay:0.2s]" />
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/40 animate-bounce [animation-delay:0.4s]" />
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
-      </div>
+      </motion.div>
 
-      {/* Input - iOS Elevated Style */}
-      <div className="ios-input-container p-4 pb-8 md:pb-4 border-t border-slate-200/50 dark:border-slate-800/50">
+      {/* Input Area - Fixed Bottom */}
+      <div className="p-4 bg-white/50 dark:bg-slate-900/50 border-t border-slate-200/50 dark:border-slate-800/50 ios-blur shrink-0">
         <form onSubmit={handleSubmit} className="flex items-center gap-2 max-w-4xl mx-auto">
           <div className="flex-1 relative group">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Nhắn cho trợ lý..."
+              placeholder="Nhắn cho trợ lý CalSnap..."
               disabled={loading}
-              className="w-full bg-slate-100/80 dark:bg-slate-800/80 rounded-2xl px-5 py-3.5 text-[16px] text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all border-none"
+              className="w-full bg-white/80 dark:bg-slate-800/80 rounded-[1.25rem] px-5 py-3.5 text-[16px] text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all border border-slate-200/50 dark:border-slate-800/50 shadow-sm"
             />
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+            <div className="absolute right-4 top-1/2 -translate-y-1/2">
               <Sparkles className={`h-4 w-4 transition-colors ${input.trim() ? 'text-emerald-500' : 'text-slate-300 dark:text-slate-600'}`} />
             </div>
           </div>
           <button
             type="submit"
             disabled={loading || !input.trim()}
-            className="w-12 h-12 rounded-2xl hoverboard-gradient text-white flex items-center justify-center shrink-0 disabled:opacity-40 transition-all active:scale-90 shadow-lg shadow-emerald-500/20 touch-target"
+            className="w-12 h-12 rounded-[1.25rem] hoverboard-gradient text-white flex items-center justify-center shrink-0 disabled:opacity-40 transition-all active:scale-90 shadow-lg shadow-emerald-500/20"
           >
             <Send className="h-5 w-5" />
           </button>
         </form>
       </div>
     </div>
+  )
   )
 }
