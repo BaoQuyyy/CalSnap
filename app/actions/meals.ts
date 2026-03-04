@@ -199,3 +199,33 @@ export async function updateCalorieGoal(goal: number) {
     revalidatePath('/profile')
     return { success: true }
 }
+export async function updateMealNutrition(id: string, data: {
+    calories?: number
+    protein?: number
+    carbs?: number
+    fat?: number
+    food_name?: string
+}) {
+    const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) return { error: 'Not authenticated' }
+
+    const { data: record, error } = await supabase
+        .from('meal_logs')
+        .update(data as never)
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .select()
+        .maybeSingle()
+
+    if (error) return { error: error.message }
+
+    // Get the logged_at date for revalidation
+    const loggedAt = record?.logged_at || new Date().toISOString().split('T')[0]
+    await updateDailyAdherence(loggedAt)
+    await updateJourneyProgress()
+
+    revalidatePath('/log')
+    revalidatePath('/')
+    return { success: true, data: record }
+}

@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { deleteMeal } from '@/app/actions/meals'
+import { deleteMeal, updateMealNutrition } from '@/app/actions/meals'
 import { Button } from '@/components/ui/button'
-import { Trash, Flame, Beef, Wheat, Droplets, Heart } from 'lucide-react'
+import { Trash, Flame, Beef, Wheat, Droplets, Heart, Check, X as CloseIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
@@ -24,6 +24,15 @@ interface MealCardProps {
 export function MealCard({ meal, onToggleFavorite }: MealCardProps) {
     const [deleting, setDeleting] = useState(false)
     const [highlight, setHighlight] = useState(false)
+    const [editingField, setEditingField] = useState<string | null>(null)
+    const [editValue, setEditValue] = useState('')
+    const [isSaving, setIsSaving] = useState(false)
+
+    const triggerHaptic = () => {
+        if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+            navigator.vibrate(10)
+        }
+    }
 
     useEffect(() => {
         const handler = (e: Event) => {
@@ -37,6 +46,45 @@ export function MealCard({ meal, onToggleFavorite }: MealCardProps) {
         window.addEventListener('calsnap:meal-highlight', handler)
         return () => window.removeEventListener('calsnap:meal-highlight', handler)
     }, [meal.id, meal.food_name])
+
+    const startEditing = (field: string, value: number | string) => {
+        setEditingField(field)
+        setEditValue(value.toString())
+        triggerHaptic()
+    }
+
+    const cancelEditing = () => {
+        setEditingField(null)
+        setEditValue('')
+    }
+
+    const saveEdit = async () => {
+        if (!editingField || isSaving) return
+
+        setIsSaving(true)
+        const numericValue = Math.round(Number(editValue) || 0)
+
+        try {
+            const res = await updateMealNutrition(meal.id, {
+                [editingField]: numericValue
+            })
+
+            if (res.success) {
+                triggerHaptic()
+                setEditingField(null)
+                // Notify parent to refresh totals
+                window.dispatchEvent(new CustomEvent('calsnap:meal-updated', {
+                    detail: { date: meal.created_at.split('T')[0] }
+                }))
+            } else {
+                toast.error('Không thể cập nhật')
+            }
+        } catch (err) {
+            toast.error('Lỗi kết nối')
+        } finally {
+            setIsSaving(false)
+        }
+    }
 
     const time = new Date(meal.created_at).toLocaleTimeString('en-US', {
         hour: 'numeric',
@@ -76,17 +124,84 @@ export function MealCard({ meal, onToggleFavorite }: MealCardProps) {
                         )}
                     </div>
                     <div className="flex items-center gap-3 flex-wrap">
-                        <span className="flex items-center gap-1 text-sm font-bold text-emerald-600 dark:text-emerald-400">
-                            <Flame className="h-3.5 w-3.5" />
-                            {meal.calories} kcal
-                        </span>
-                        <MacroBadge icon={Beef} label="P" value={meal.protein} unit="g" color="text-blue-500 dark:text-blue-400" />
-                        <MacroBadge icon={Wheat} label="C" value={meal.carbs} unit="g" color="text-amber-600 dark:text-amber-400" />
-                        <MacroBadge icon={Droplets} label="F" value={meal.fat} unit="g" color="text-orange-500 dark:text-orange-400" />
+                        {editingField === 'calories' ? (
+                            <div className="flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg px-1 py-0.5 border border-emerald-200 dark:border-emerald-800 animate-in fade-in zoom-in-95 duration-200">
+                                <input
+                                    autoFocus
+                                    type="number"
+                                    value={editValue}
+                                    onChange={e => setEditValue(e.target.value)}
+                                    onBlur={saveEdit}
+                                    onKeyDown={e => e.key === 'Enter' && saveEdit()}
+                                    className="w-16 bg-transparent text-sm font-bold text-emerald-600 dark:text-emerald-400 focus:outline-none"
+                                />
+                                <Check size={14} className="text-emerald-500" />
+                            </div>
+                        ) : (
+                            <button
+                                onClick={() => startEditing('calories', meal.calories)}
+                                className="flex items-center gap-1 text-sm font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 px-2 py-0.5 rounded-lg transition-colors"
+                            >
+                                <Flame className="h-3.5 w-3.5" />
+                                {meal.calories} kcal
+                            </button>
+                        )}
+
+                        <MacroEditable badgeProps={{ icon: Beef, label: "P", value: meal.protein, unit: "g", color: "text-blue-500 dark:text-blue-400" }} field="protein" editingField={editingField} editValue={editValue} setEditValue={setEditValue} onStart={startEditing} onSave={saveEdit} onCancel={cancelEditing} />
+                        <MacroEditable badgeProps={{ icon: Wheat, label: "C", value: meal.carbs, unit: "g", color: "text-amber-600 dark:text-amber-400" }} field="carbs" editingField={editingField} editValue={editValue} setEditValue={setEditValue} onStart={startEditing} onSave={saveEdit} onCancel={cancelEditing} />
+                        <MacroEditable badgeProps={{ icon: Droplets, label: "F", value: meal.fat, unit: "g", color: "text-orange-500 dark:text-orange-400" }} field="fat" editingField={editingField} editValue={editValue} setEditValue={setEditValue} onStart={startEditing} onSave={saveEdit} onCancel={cancelEditing} />
                     </div>
                 </div>
             </div>
         </div>
+    )
+}
+
+function MacroEditable({
+    badgeProps,
+    field,
+    editingField,
+    editValue,
+    setEditValue,
+    onStart,
+    onSave,
+    onCancel
+}: {
+    badgeProps: any,
+    field: string,
+    editingField: string | null,
+    editValue: string,
+    setEditValue: (v: string) => void,
+    onStart: (f: string, v: number) => void,
+    onSave: () => void,
+    onCancel: () => void
+}) {
+    const isEditing = editingField === field
+
+    if (isEditing) {
+        return (
+            <div className="flex items-center gap-0.5 bg-slate-50 dark:bg-slate-900 rounded-lg px-1 animate-in fade-in scale-95 duration-200">
+                <input
+                    autoFocus
+                    type="number"
+                    value={editValue}
+                    onChange={e => setEditValue(e.target.value)}
+                    onBlur={onSave}
+                    onKeyDown={e => e.key === 'Enter' && onSave()}
+                    className={cn('w-10 bg-transparent text-xs font-bold focus:outline-none', badgeProps.color)}
+                />
+                <span className={cn('text-[10px] font-bold', badgeProps.color)}>{badgeProps.unit}</span>
+            </div>
+        )
+    }
+
+    return (
+        <button
+            onClick={() => onStart(field, badgeProps.value)}
+            className={cn('hover:bg-slate-50 dark:hover:bg-slate-950/40 px-1.5 py-0.5 rounded-lg transition-colors')}
+        >
+            <MacroBadge {...badgeProps} />
+        </button>
     )
 }
 
