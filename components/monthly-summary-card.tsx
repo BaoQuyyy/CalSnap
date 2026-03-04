@@ -35,7 +35,7 @@ function formatMonth(year: number, month: number) {
   return `${month.toString().padStart(2, '0')}/${year}`
 }
 
-export function MonthlySummaryCard() {
+export function MonthlySummaryCard({ refreshKey = 0 }: { refreshKey?: number }) {
   const today = new Date()
   const [year, setYear] = useState(today.getFullYear())
   const [month, setMonth] = useState(today.getMonth() + 1)
@@ -48,7 +48,8 @@ export function MonthlySummaryCard() {
       setLoading(true)
       try {
         const res = await fetch(
-          `/api/monthly-summary?year=${year}&month=${month}`,
+          `/api/monthly-summary?year=${year}&month=${month}&t=${Date.now()}`,
+          { cache: 'no-store' }
         )
         if (!res.ok) {
           throw new Error('Không tải được tổng kết tháng.')
@@ -62,7 +63,7 @@ export function MonthlySummaryCard() {
       }
     }
     load()
-  }, [year, month])
+  }, [year, month, refreshKey])
 
   const changeMonth = (delta: number) => {
     const d = new Date(year, month - 1 + delta, 1)
@@ -173,8 +174,8 @@ export function MonthlySummaryCard() {
                   type="button"
                   onClick={() => setMetric(m.id as any)}
                   className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors ${metric === m.id
-                      ? 'bg-emerald-500 text-white shadow-sm'
-                      : 'text-slate-500 hover:text-slate-800'
+                    ? 'bg-emerald-500 text-white shadow-sm'
+                    : 'text-slate-500 hover:text-slate-800'
                     }`}
                 >
                   {m.label}
@@ -273,45 +274,7 @@ export function MonthlySummaryCard() {
             </ResponsiveContainer>
           </div>
 
-          <div className="mt-3 max-h-44 overflow-y-auto rounded-2xl border border-slate-100 bg-slate-50/80">
-            <table className="w-full text-[11px]">
-              <thead className="text-slate-400 text-left sticky top-0 bg-slate-50/90 backdrop-blur">
-                <tr>
-                  <th className="px-3 py-2 font-semibold">Ngày</th>
-                  <th className="px-3 py-2 font-semibold">Kcal</th>
-                  <th className="px-3 py-2 font-semibold">Protein</th>
-                  <th className="px-3 py-2 font-semibold hidden md:table-cell">
-                    Steps
-                  </th>
-                  <th className="px-3 py-2 font-semibold hidden md:table-cell">
-                    Nước
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.days.map((d) => (
-                  <tr
-                    key={d.date}
-                    className="border-t border-slate-100 text-slate-700"
-                  >
-                    <td className="px-3 py-1.5 font-semibold">
-                      {new Date(d.date).getDate().toString().padStart(2, '0')}
-                    </td>
-                    <td className="px-3 py-1.5">
-                      {Math.round(d.calories).toLocaleString()}
-                    </td>
-                    <td className="px-3 py-1.5">{Math.round(d.protein)}g</td>
-                    <td className="px-3 py-1.5 hidden md:table-cell">
-                      {d.steps.toLocaleString()}
-                    </td>
-                    <td className="px-3 py-1.5 hidden md:table-cell">
-                      {(d.water_ml / 1000).toFixed(1)}L
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+
         </>
       )}
     </div>

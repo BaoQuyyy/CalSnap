@@ -1,14 +1,10 @@
-export default function ProfileLoading() {
+export default function Loading() {
   return (
-    <div className="space-y-6 max-w-lg mx-auto animate-pulse">
-      <div className="h-8 w-32 bg-slate-200 rounded-xl" />
-      <div className="h-32 bg-slate-200 rounded-[2.5rem]" />
-      <div className="grid grid-cols-3 gap-4">
-        <div className="h-20 bg-slate-200 rounded-[2rem]" />
-        <div className="h-20 bg-slate-200 rounded-[2rem]" />
-        <div className="h-20 bg-slate-200 rounded-[2rem]" />
-      </div>
-      <div className="h-24 bg-slate-200 rounded-[2rem]" />
+    <div className="max-w-lg mx-auto p-4 space-y-4 animate-pulse pb-24">
+      <div className="h-24 rounded-[2rem] bg-slate-200 dark:bg-slate-800" />
+      {[1, 2, 3, 4].map(i => (
+        <div key={i} className="h-16 rounded-[2rem] bg-slate-200 dark:bg-slate-800" />
+      ))}
     </div>
   )
 }

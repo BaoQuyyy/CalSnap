@@ -1,6 +1,7 @@
 'use client'
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { useEffect, useState } from 'react'
 
 interface WeeklyData {
     date: string
@@ -14,42 +15,65 @@ interface WeeklyChartProps {
 }
 
 export function WeeklyChart({ data, goal = 2000 }: WeeklyChartProps) {
+    const [isDark, setIsDark] = useState(false)
+
+    useEffect(() => {
+        const check = () => setIsDark(document.documentElement.classList.contains('dark'))
+        check()
+        const observer = new MutationObserver(check)
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+        return () => observer.disconnect()
+    }, [])
+
+    const barColors = {
+        over: '#f87171',        // red-400
+        normal: '#34d399',      // emerald-400
+        empty: isDark ? '#1e293b' : '#e2e8f0',  // slate-800 dark / slate-200 light
+    }
+    const axisColor = isDark ? '#94a3b8' : '#94a3b8'   // slate-400
+    const gridColor = isDark ? 'rgba(148,163,184,0.15)' : 'rgba(148,163,184,0.3)'
+    const tooltipBg = isDark ? '#1e293b' : '#ffffff'
+    const tooltipBorder = isDark ? '#334155' : '#e2e8f0'
+    const tooltipColor = isDark ? '#f1f5f9' : '#0f172a'
+
     return (
         <div className="w-full h-48">
             <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border)/40%)" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
                     <XAxis
                         dataKey="label"
-                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                        tick={{ fill: axisColor, fontSize: 12 }}
                         axisLine={false}
                         tickLine={false}
                     />
                     <YAxis
-                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+                        tick={{ fill: axisColor, fontSize: 11 }}
                         axisLine={false}
                         tickLine={false}
                     />
                     <Tooltip
                         contentStyle={{
-                            background: 'hsl(var(--card))',
-                            border: '1px solid hsl(var(--border))',
+                            background: tooltipBg,
+                            border: `1px solid ${tooltipBorder}`,
                             borderRadius: '8px',
-                            color: 'hsl(var(--foreground))',
+                            color: tooltipColor,
                             fontSize: '13px',
                         }}
-                        cursor={{ fill: 'hsl(var(--accent)/30%)' }}
+                        cursor={{ fill: isDark ? 'rgba(148,163,184,0.08)' : 'rgba(148,163,184,0.15)' }}
                         formatter={(value) => [`${value ?? 0} kcal`, 'Calories']}
                     />
                     <Bar dataKey="calories" radius={[6, 6, 0, 0]}>
                         {data.map((entry, index) => (
                             <Cell
                                 key={`cell-${index}`}
-                                fill={entry.calories >= goal
-                                    ? 'hsl(var(--destructive))'
-                                    : entry.calories > 0
-                                        ? 'hsl(var(--primary))'
-                                        : 'hsl(var(--muted))'}
+                                fill={
+                                    entry.calories >= goal
+                                        ? barColors.over
+                                        : entry.calories > 0
+                                            ? barColors.normal
+                                            : barColors.empty
+                                }
                             />
                         ))}
                     </Bar>

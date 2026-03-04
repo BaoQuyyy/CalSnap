@@ -1,9 +1,9 @@
-export default function ScanLoading() {
+export default function Loading() {
   return (
-    <div className="space-y-6 max-w-lg mx-auto animate-pulse">
-      <div className="h-8 w-40 bg-slate-200 rounded-xl" />
-      <div className="h-64 bg-slate-200 rounded-[2rem]" />
-      <div className="h-12 w-full bg-slate-200 rounded-2xl" />
+    <div className="max-w-lg mx-auto p-4 space-y-4 animate-pulse pb-24">
+      <div className="h-48 rounded-[2rem] bg-slate-200 dark:bg-slate-800" />
+      <div className="h-24 rounded-[2rem] bg-slate-200 dark:bg-slate-800" />
+      <div className="h-24 rounded-[2rem] bg-slate-200 dark:bg-slate-800" />
     </div>
   )
 }

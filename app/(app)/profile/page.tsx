@@ -90,15 +90,15 @@ export default function ProfilePage() {
         ].map(({ label, value, icon }) => (
           <div key={label} className="glass-card rounded-[2rem] p-4 text-center">
             <p className="text-lg mb-0.5">{icon}</p>
-            <p className="text-xl font-black text-slate-800">{value}</p>
-            <p className="text-[10px] text-slate-400 font-semibold">{label}</p>
+            <p className="text-xl font-black text-slate-800 dark:text-slate-100">{value}</p>
+            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">{label}</p>
           </div>
         ))}
       </div>
 
       {/* Personal info prompt if missing core fields */}
       {(!profile?.height_cm || !profile?.age) && (
-        <div className="glass-card rounded-[2rem] p-5 border-2 border-dashed border-emerald-200 bg-emerald-50/40">
+        <div className="glass-card rounded-[2rem] p-5 border-2 border-dashed border-emerald-200 dark:border-emerald-800/50 bg-emerald-50/40 dark:bg-emerald-900/10">
           <h3 className="text-sm font-black text-slate-800 mb-1">Hoàn thiện hồ sơ 📝</h3>
           <p className="text-xs text-slate-500 mb-3">
             Thêm tuổi, chiều cao và giới tính để AI tạo plan chính xác hơn cho bạn.
@@ -122,13 +122,13 @@ export default function ProfilePage() {
         <div className="glass-card rounded-[2rem] p-5">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Hành Trình</h3>
           <div className="flex gap-3">
-            <div className="flex-1 bg-orange-50 rounded-2xl p-3 text-center">
+            <div className="flex-1 bg-orange-50 dark:bg-orange-900/20 rounded-2xl p-3 text-center">
               <p className="text-2xl font-black text-orange-500">🔥 {journeyStreak}</p>
-              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">ngày streak</p>
+              <p className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold mt-0.5">ngày streak</p>
             </div>
-            <div className="flex-1 bg-emerald-50 rounded-2xl p-3 text-center">
-              <p className="text-2xl font-black text-emerald-600">{journeyScore}%</p>
-              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">tuần này</p>
+            <div className="flex-1 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl p-3 text-center">
+              <p className="text-2xl font-black text-emerald-600 dark:text-emerald-500">{journeyScore}%</p>
+              <p className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold mt-0.5">tuần này</p>
             </div>
           </div>
         </div>
@@ -150,11 +150,11 @@ export default function ProfilePage() {
               { label: 'Workouts', value: `${plan.weekly_workouts}x/tuần`, icon: '🏋️' },
               { label: 'Mục tiêu', value: profile.goal === 'lose_weight' ? 'Giảm cân' : profile.goal === 'gain_muscle' ? 'Tăng cơ' : 'Duy trì', icon: '🎯' },
             ].map(({ label, value, icon }) => (
-              <div key={label} className="bg-slate-50 rounded-2xl p-3 flex items-center gap-2">
+              <div key={label} className="bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-3 flex items-center gap-2">
                 <span className="text-base">{icon}</span>
                 <div>
-                  <p className="text-xs text-slate-400 font-semibold">{label}</p>
-                  <p className="text-sm font-black text-slate-800">{value}</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 font-semibold">{label}</p>
+                  <p className="text-sm font-black text-slate-800 dark:text-slate-100">{value}</p>
                 </div>
               </div>
             ))}
@@ -182,9 +182,9 @@ export default function ProfilePage() {
         </div>
         <div className="flex items-end justify-between gap-3">
           <div>
-            <p className="text-4xl font-display font-extrabold text-slate-900 tabular-nums">
+            <p className="text-4xl font-display font-extrabold text-slate-900 dark:text-slate-100 tabular-nums">
               {plan?.daily_calories?.toLocaleString?.() ?? '—'}
-              <span className="text-base font-semibold text-slate-400 ml-1">
+              <span className="text-base font-semibold text-slate-400 dark:text-slate-500 ml-1">
                 kcal
               </span>
             </p>
@@ -204,16 +204,16 @@ export default function ProfilePage() {
           </div>
           <div className="flex items-center justify-between mb-3">
             <div>
-              <p className="text-3xl font-black text-slate-800">{profile.weight_kg}<span className="text-base font-semibold text-slate-400">kg</span></p>
-              <p className="text-[10px] text-slate-400 mt-0.5">hiện tại</p>
+              <p className="text-3xl font-black text-slate-800 dark:text-slate-100">{profile.weight_kg}<span className="text-base font-semibold text-slate-400 dark:text-slate-500">kg</span></p>
+              <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">hiện tại</p>
             </div>
-            <div className={`flex items-center gap-1 px-3 py-1.5 rounded-2xl ${profile.weight_kg > profile.target_weight_kg ? 'bg-orange-50 text-orange-600' : 'bg-emerald-50 text-emerald-600'}`}>
+            <div className={`flex items-center gap-1 px-3 py-1.5 rounded-2xl ${profile.weight_kg > profile.target_weight_kg ? 'bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400' : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400'}`}>
               {profile.weight_kg > profile.target_weight_kg ? <TrendingDown size={14} /> : <TrendingUp size={14} />}
               <span className="text-sm font-black">{weightDiff?.toFixed(1)}kg</span>
             </div>
             <div className="text-right">
-              <p className="text-3xl font-black text-emerald-600">{profile.target_weight_kg}<span className="text-base font-semibold text-slate-400">kg</span></p>
-              <p className="text-[10px] text-slate-400 mt-0.5">mục tiêu</p>
+              <p className="text-3xl font-black text-emerald-600 dark:text-emerald-500">{profile.target_weight_kg}<span className="text-base font-semibold text-slate-400 dark:text-slate-500">kg</span></p>
+              <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">mục tiêu</p>
             </div>
           </div>
           {weightHistory.length > 1 && (
@@ -238,8 +238,8 @@ export default function ProfilePage() {
         <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2 mb-3">
           <User className="h-4 w-4 text-emerald-500" /> Tài khoản
         </h3>
-        <p className="font-semibold text-slate-800">{loading ? '...' : email}</p>
-        <span className="inline-block mt-1.5 px-2.5 py-0.5 bg-emerald-100 text-emerald-600 text-xs font-semibold rounded-full">Đã kết nối</span>
+        <p className="font-semibold text-slate-800 dark:text-slate-100">{loading ? '...' : email}</p>
+        <span className="inline-block mt-1.5 px-2.5 py-0.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-xs font-semibold rounded-full">Đã kết nối</span>
         <Link
           href="/safety"
           className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 hover:text-slate-800 mt-2"

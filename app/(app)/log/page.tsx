@@ -133,20 +133,20 @@ export default function LogPage() {
 
           {/* Hint box */}
           {showHint && (
-            <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 space-y-2.5">
-              <p className="text-xs font-black text-emerald-700">Cách sử dụng:</p>
+            <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/50 rounded-2xl p-4 space-y-2.5">
+              <p className="text-xs font-black text-emerald-700 dark:text-emerald-400">Cách sử dụng:</p>
               <div className="flex items-start gap-2.5">
                 <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center shrink-0 mt-0.5">
                   <span className="text-white text-xs font-black">+</span>
                 </div>
-                <p className="text-xs text-slate-600">
-                  <span className="font-bold text-slate-700">Nút cộng xanh</span> — Log lại món ăn này vào hôm nay chỉ với 1 chạm. Không cần scan lại!
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  <span className="font-bold text-slate-700 dark:text-slate-200">Nút cộng xanh</span> — Log lại món ăn này vào hôm nay chỉ với 1 chạm. Không cần scan lại!
                 </p>
               </div>
               <div className="flex items-start gap-2.5">
                 <Heart size={16} className="text-red-400 fill-red-400 shrink-0 mt-0.5" />
-                <p className="text-xs text-slate-600">
-                  <span className="font-bold text-slate-700">Trái tim</span> — Đánh dấu yêu thích. Món yêu thích sẽ hiện đầu tiên để bạn log lại nhanh hơn.
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  <span className="font-bold text-slate-700 dark:text-slate-200">Trái tim</span> — Đánh dấu yêu thích. Món yêu thích sẽ hiện đầu tiên để bạn log lại nhanh hơn.
                 </p>
               </div>
             </div>
@@ -194,9 +194,9 @@ export default function LogPage() {
           Tổng {date === today ? 'hôm nay' : 'trong ngày'}
         </h3>
         <div className="flex items-baseline gap-2 mb-4">
-          <Flame className="h-6 w-6 text-emerald-600" />
-          <span className="text-3xl font-display font-extrabold text-slate-900 tabular-nums">{Math.round(totals.calories).toLocaleString()}</span>
-          <span className="text-slate-500 font-semibold">kcal</span>
+          <Flame className="h-6 w-6 text-emerald-600 dark:text-emerald-500" />
+          <span className="text-3xl font-display font-extrabold text-slate-900 dark:text-slate-100 tabular-nums">{Math.round(totals.calories).toLocaleString()}</span>
+          <span className="text-slate-500 dark:text-slate-400 font-semibold">kcal</span>
         </div>
         <div className="flex gap-2 flex-wrap">
           <MacroPill type="protein" value={Math.round(totals.protein)} variant="light" />

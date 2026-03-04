@@ -31,12 +31,12 @@ function MacroBar({ label, actual, goal, unit, color }: {
   return (
     <div>
       <div className="flex justify-between items-center mb-1">
-        <span className="text-xs font-bold text-slate-600">{label}</span>
+        <span className="text-xs font-bold text-slate-600 dark:text-slate-300">{label}</span>
         <span className={`text-xs font-bold ${over ? 'text-red-500' : 'text-slate-500'}`}>
           {Math.round(actual)}{unit} / {goal}{unit} {over ? '⚠️' : ''}
         </span>
       </div>
-      <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+      <div className="h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
         <div className={`h-full rounded-full transition-all ${over ? 'bg-red-400' : color}`}
           style={{ width: `${Math.min(100, pct)}%` }} />
       </div>
@@ -79,9 +79,9 @@ export default async function FitnessPlanPage() {
   const weightDiff = Math.abs((profile.weight_kg ?? 0) - (profile.target_weight_kg ?? 0))
 
   return (
-    <div className="bg-[#F8FAFC] min-h-screen p-4 lg:p-8">
+    <div className="bg-background min-h-screen p-4 lg:p-8">
       <div className="max-w-2xl mx-auto flex flex-col gap-5">
-        <Link href="/" className="flex items-center gap-2 text-slate-500 hover:text-slate-700 font-semibold text-sm w-fit">
+        <Link href="/" className="flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 font-semibold text-sm w-fit">
           <ChevronLeft size={18} /> Back to Dashboard
         </Link>
 
@@ -122,7 +122,7 @@ export default async function FitnessPlanPage() {
           <div className="flex items-end justify-between mb-3">
             <div>
               <div className="flex items-baseline gap-1.5">
-                <span className={`text-4xl font-black ${isOverCalories ? 'text-red-500' : 'text-slate-800'}`}>
+                <span className={`text-4xl font-black ${isOverCalories ? 'text-red-500' : 'text-slate-800 dark:text-slate-100'}`}>
                   {actual.calories.toLocaleString()}
                 </span>
                 <span className="text-slate-400 font-semibold text-sm">/ {plan.daily_calories.toLocaleString()} kcal</span>
@@ -130,15 +130,15 @@ export default async function FitnessPlanPage() {
               <p className={`text-sm font-semibold mt-0.5 ${isOverCalories ? 'text-red-500' : actual.calories === 0 ? 'text-slate-400' : 'text-emerald-500'}`}>
                 {isOverCalories ? `⚠️ Dư ${Math.abs(caloriesLeft)} kcal`
                   : actual.calories === 0 ? 'Chưa log bữa nào hôm nay'
-                  : `Còn ${caloriesLeft} kcal`}
+                    : `Còn ${caloriesLeft} kcal`}
               </p>
             </div>
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${isOverCalories ? 'bg-red-100' : 'bg-orange-100'}`}>
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${isOverCalories ? 'bg-red-100 dark:bg-red-900/30' : 'bg-orange-100 dark:bg-orange-900/30'}`}>
               <Flame size={22} className={isOverCalories ? 'text-red-500' : 'text-orange-500'} />
             </div>
           </div>
 
-          <div className="h-3 bg-slate-100 rounded-full overflow-hidden mb-5">
+          <div className="h-3 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden mb-5">
             <div className={`h-full rounded-full transition-all duration-500 ${isOverCalories ? 'bg-red-400' : 'hoverboard-gradient'}`}
               style={{ width: `${caloriesPct}%` }} />
           </div>
@@ -150,8 +150,8 @@ export default async function FitnessPlanPage() {
           </div>
 
           {isOverCalories && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-2xl">
-              <p className="text-sm font-semibold text-red-700">
+            <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl">
+              <p className="text-sm font-semibold text-red-700 dark:text-red-400">
                 ⚠️ Bạn đã vượt {Math.abs(caloriesLeft)} kcal so với plan. Thử đi bộ 30–45 phút hoặc giảm bữa tối.
               </p>
             </div>
@@ -178,10 +178,11 @@ export default async function FitnessPlanPage() {
               { label: 'Carbs', g: plan.daily_carbs_g, pct: carbsPct, color: 'text-orange-600' },
               { label: 'Fat', g: plan.daily_fat_g, pct: fatPct, color: 'text-blue-600' },
             ].map(({ label, g, pct, color }) => (
-              <div key={label} className="flex flex-col items-center gap-2 p-3 bg-slate-50 rounded-2xl">
+              <div key={label} className="flex flex-col items-center gap-2 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl">
                 <div className="relative w-12 h-12">
                   <svg className="w-12 h-12 -rotate-90" viewBox="0 0 56 56">
-                    <circle cx="28" cy="28" r="22" fill="none" stroke="#e2e8f0" strokeWidth="6" />
+                    <circle cx="28" cy="28" r="22" fill="none" stroke="#334155" strokeWidth="6" className="dark:block hidden" />
+                    <circle cx="28" cy="28" r="22" fill="none" stroke="#e2e8f0" strokeWidth="6" className="dark:hidden" />
                     <circle cx="28" cy="28" r="22" fill="none" stroke="currentColor" strokeWidth="6"
                       strokeDasharray={`${2 * Math.PI * 22}`}
                       strokeDashoffset={`${2 * Math.PI * 22 * (1 - pct / 100)}`}
@@ -189,16 +190,16 @@ export default async function FitnessPlanPage() {
                   </svg>
                   <span className={`absolute inset-0 flex items-center justify-center text-[10px] font-black ${color}`}>{pct}%</span>
                 </div>
-                <p className="font-black text-slate-800">{Math.round(g)}g</p>
+                <p className="font-black text-slate-800 dark:text-slate-100">{Math.round(g)}g</p>
                 <p className="text-[10px] font-bold text-slate-400">{label}</p>
               </div>
             ))}
           </div>
 
-          <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-2xl">
+          <div className="flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl">
             <Droplets className="text-blue-500 shrink-0" size={20} />
             <div>
-              <p className="font-bold text-slate-800 text-sm">{plan.water_liters}L water / day</p>
+              <p className="font-bold text-slate-800 dark:text-slate-100 text-sm">{plan.water_liters}L water / day</p>
               <p className="text-xs text-slate-400">{Array.from({ length: Math.round(plan.water_liters / 0.25) }, (_, i) => <span key={i}>💧</span>)}</p>
             </div>
           </div>
@@ -209,12 +210,12 @@ export default async function FitnessPlanPage() {
           <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-5">Workout Plan</h2>
           <div className="grid grid-cols-2 gap-3 mb-5">
             {[
-              { icon: <Dumbbell size={18} className="text-emerald-600" />, bg: 'bg-emerald-100', value: `${plan.weekly_workouts}x`, label: 'per week' },
-              { icon: <Clock size={18} className="text-orange-600" />, bg: 'bg-orange-100', value: `${plan.workout_duration_minutes}min`, label: 'per session' },
+              { icon: <Dumbbell size={18} className="text-emerald-600" />, bg: 'bg-emerald-100 dark:bg-emerald-900/30', value: `${plan.weekly_workouts}x`, label: 'per week' },
+              { icon: <Clock size={18} className="text-orange-600" />, bg: 'bg-orange-100 dark:bg-orange-900/30', value: `${plan.workout_duration_minutes}min`, label: 'per session' },
             ].map(({ icon, bg, value, label }) => (
-              <div key={label} className="p-4 bg-slate-50 rounded-2xl flex items-center gap-3">
+              <div key={label} className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center`}>{icon}</div>
-                <div><p className="font-black text-slate-800 text-lg">{value}</p><p className="text-xs text-slate-400">{label}</p></div>
+                <div><p className="font-black text-slate-800 dark:text-slate-100 text-lg">{value}</p><p className="text-xs text-slate-400">{label}</p></div>
               </div>
             ))}
           </div>
@@ -223,9 +224,9 @@ export default async function FitnessPlanPage() {
               <span key={t} className="px-4 py-1.5 bg-emerald-100 text-emerald-700 rounded-2xl text-sm font-bold">{t}</span>
             ))}
           </div>
-          <div className="flex items-center gap-3 p-4 bg-purple-50 rounded-2xl">
+          <div className="flex items-center gap-3 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-2xl">
             <Target className="text-purple-500 shrink-0" size={20} />
-            <p className="font-semibold text-slate-700 text-sm">
+            <p className="font-semibold text-slate-700 dark:text-slate-200 text-sm">
               Estimated <span className="font-black text-purple-600">{plan.estimated_weeks_to_goal} weeks</span> to reach your goal
             </p>
           </div>
@@ -236,15 +237,15 @@ export default async function FitnessPlanPage() {
           <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">Personalized Tips</h2>
           <div className="flex flex-col gap-3">
             {plan.tips?.map((tip: string, i: number) => (
-              <div key={i} className="flex items-start gap-3 p-4 bg-slate-50 rounded-2xl">
+              <div key={i} className="flex items-start gap-3 p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl">
                 <CheckCircle2 size={18} className="text-emerald-500 shrink-0 mt-0.5" />
-                <p className="text-sm font-medium text-slate-700">{tip}</p>
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{tip}</p>
               </div>
             ))}
           </div>
           {plan.summary && (
-            <div className="mt-4 p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
-              <p className="text-sm font-medium text-emerald-800">{plan.summary}</p>
+            <div className="mt-4 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-800">
+              <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">{plan.summary}</p>
             </div>
           )}
         </div>
@@ -283,8 +284,8 @@ export default async function FitnessPlanPage() {
           <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">🎯 Calorie Goal</h2>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-3xl font-black text-slate-800">{plan.daily_calories?.toLocaleString()}</p>
-              <p className="text-xs text-slate-400 mt-1">kcal / ngày · từ AI fitness plan</p>
+              <p className="text-3xl font-black text-slate-800 dark:text-slate-100">{plan.daily_calories?.toLocaleString()}</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">kcal / ngày · từ AI fitness plan</p>
             </div>
             <Link href="/onboarding"
               className="px-5 py-3 rounded-2xl hoverboard-gradient text-white text-sm font-bold hover:opacity-90 transition-opacity">
@@ -294,7 +295,7 @@ export default async function FitnessPlanPage() {
         </div>
 
         <Link href="/onboarding"
-          className="w-full py-4 rounded-2xl bg-slate-100 text-slate-600 font-bold text-center hover:bg-slate-200 transition-colors block">
+          className="w-full py-4 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-center hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors block">
           🔄 Recalculate Plan
         </Link>
         <div className="h-8" />

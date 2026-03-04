@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Footprints, Droplets, Dumbbell } from 'lucide-react'
+import { Footprints, Droplets, Dumbbell, Plus, Minus } from 'lucide-react'
 import { upsertSteps, upsertWater, upsertExercise, type ExerciseType } from '@/app/actions/habits'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 
 const GLASS_ML = 250
 const STEPS_GOAL = 10000
@@ -18,9 +19,10 @@ interface HabitCardsProps {
     exercise_calories: number
   } | null
   onUpdate?: (newExerciseCalories?: number) => void
+  className?: string
 }
 
-export function HabitCards({ date, initialHabits, onUpdate }: HabitCardsProps) {
+export function HabitCards({ date, initialHabits, onUpdate, className }: HabitCardsProps) {
   const [steps, setSteps] = useState(initialHabits?.steps ?? 0)
   const [waterMl, setWaterMl] = useState(initialHabits?.water_ml ?? 0)
   const [exerciseMinutes, setExerciseMinutes] = useState(initialHabits?.exercise_minutes ?? 0)
@@ -31,7 +33,6 @@ export function HabitCards({ date, initialHabits, onUpdate }: HabitCardsProps) {
   const [exMinutes, setExMinutes] = useState('')
   const [exType, setExType] = useState<ExerciseType>('Walking')
 
-  // Sync lại khi initialHabits thay đổi (ví dụ khi date thay đổi hoặc dashboard fetch lại)
   useEffect(() => {
     setSteps(initialHabits?.steps ?? 0)
     setWaterMl(initialHabits?.water_ml ?? 0)
@@ -51,162 +52,166 @@ export function HabitCards({ date, initialHabits, onUpdate }: HabitCardsProps) {
     setEditingSteps(false)
     const res = await upsertSteps(date, val)
     if (res.error) toast.error(res.error)
-    else {
-      setSteps(val)
-      toast.success('Steps updated!')
-      onUpdate?.()
-    }
-  }
-
-  const toggleWaterGlass = async (index: number) => {
-    const newGlasses = waterGlasses === index + 1 ? index : index + 1
-    const newMl = newGlasses * GLASS_ML
-    const res = await upsertWater(date, newMl)
-    if (res.error) toast.error(res.error)
-    else {
-      setWaterMl(newMl)
-      toast.success('Water updated!')
-      onUpdate?.()
-    }
+    else { setSteps(val); onUpdate?.() }
   }
 
   const handleSaveExercise = async () => {
     const mins = parseInt(exMinutes, 10)
     if (isNaN(mins) || mins <= 0) return
     setEditingExercise(false)
-
     const res = await upsertExercise(date, mins, exType)
-    if ((res as any).error) {
-      toast.error((res as any).error)
-    } else {
-      // Dùng newCalories từ server — chính xác tuyệt đối
-      const newCal = (res as any).newCalories ?? (exerciseCalories + mins * { Walking: 4, Running: 10, Gym: 7, Cycling: 8 }[exType])
-      setExerciseMinutes((p) => p + mins)
-      setExerciseCalories(newCal)
-      setExMinutes('')
-      toast.success('Exercise logged!')
-      onUpdate?.(newCal) // Báo lên dashboard số từ server
-    }
+    if ((res as any).error) { toast.error((res as any).error); return }
+    const newCal = (res as any).newCalories ?? exerciseCalories
+    setExerciseMinutes((p) => p + mins)
+    setExerciseCalories(newCal)
+    setExMinutes('')
+    onUpdate?.(newCal)
+  }
+
+  const addSteps = async (s: number) => {
+    const newVal = steps + s
+    const res = await upsertSteps(date, newVal)
+    if (res.error) toast.error(res.error)
+    else { setSteps(newVal); onUpdate?.() }
+  }
+
+  const addWater = async (ml: number) => {
+    const newMl = Math.max(0, waterMl + ml)
+    const res = await upsertWater(date, newMl)
+    if (res.error) toast.error(res.error)
+    else { setWaterMl(newMl); onUpdate?.() }
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className={cn("glass-card rounded-[2rem] p-5 flex flex-col gap-5", className)}>
       <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Daily Habits</h3>
 
-      {/* Steps */}
-      <div
-        className="glass-card rounded-[2rem] p-5 cursor-pointer"
-        onClick={() => !editingSteps && (setStepsInput(String(steps)), setEditingSteps(true))}
-      >
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-cyan-50 text-cyan-500 flex items-center justify-center">
-            <Footprints size={22} />
+      {/* ── STEPS ── */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-cyan-50 dark:bg-cyan-900/30 flex items-center justify-center shrink-0">
+            <Footprints size={18} className="text-cyan-500" />
           </div>
           <div className="flex-1 min-w-0">
-            <h4 className="font-bold text-slate-800">Steps</h4>
-            {editingSteps ? (
-              <div className="flex items-center gap-2 mt-1" onClick={(e) => e.stopPropagation()}>
-                <input
-                  type="number"
-                  value={stepsInput}
-                  onChange={(e) => setStepsInput(e.target.value)}
-                  className="w-24 px-3 py-1.5 bg-slate-50 rounded-xl text-sm font-semibold focus:outline-none"
-                  autoFocus
-                  onKeyDown={(e) => e.key === 'Enter' && handleSaveSteps()}
-                />
-                <button onClick={handleSaveSteps} className="text-xs font-bold text-emerald-600">Save</button>
-                <button onClick={() => setEditingSteps(false)} className="text-xs font-bold text-slate-400">Cancel</button>
-              </div>
-            ) : (
-              <p className="text-sm text-slate-600 mt-0.5">
-                {steps.toLocaleString()} / {STEPS_GOAL.toLocaleString()} · ~{stepsCalories} kcal
-              </p>
-            )}
+            <div className="flex items-baseline justify-between">
+              <span className="text-sm font-bold text-slate-800 dark:text-slate-100">Steps</span>
+              {editingSteps ? (
+                <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                  <input
+                    type="number" value={stepsInput}
+                    onChange={(e) => setStepsInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSaveSteps()}
+                    className="w-20 px-2 py-1 bg-slate-100 dark:bg-slate-700 dark:text-slate-100 rounded-lg text-xs font-semibold focus:outline-none"
+                    autoFocus
+                  />
+                  <button onClick={handleSaveSteps} className="text-[11px] font-black text-emerald-600">✓</button>
+                  <button onClick={() => setEditingSteps(false)} className="text-[11px] font-bold text-slate-400">✕</button>
+                </div>
+              ) : (
+                <button onClick={() => { setStepsInput(String(steps)); setEditingSteps(true) }}
+                  className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 tabular-nums">
+                  {steps.toLocaleString()}<span className="text-slate-400">/{STEPS_GOAL.toLocaleString()} · ~{stepsCalories}kcal</span>
+                </button>
+              )}
+            </div>
+            <div className="mt-1.5 h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+              <div className="h-full bg-cyan-400 rounded-full transition-all duration-500" style={{ width: `${stepsPercent}%` }} />
+            </div>
           </div>
         </div>
-        <div className="mt-3 h-2 bg-slate-100 rounded-full overflow-hidden">
-          <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${stepsPercent}%` }} />
-        </div>
-      </div>
-
-      {/* Water */}
-      <div className="glass-card rounded-[2rem] p-5">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center">
-            <Droplets size={22} />
-          </div>
-          <div className="flex-1">
-            <h4 className="font-bold text-slate-800">Water</h4>
-            <p className="text-sm text-slate-600 mt-0.5">{waterGlasses} / {WATER_GLASSES} glasses</p>
-          </div>
-        </div>
-        <div className="flex gap-1.5 mt-3 flex-wrap">
-          {Array.from({ length: WATER_GLASSES }, (_, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => toggleWaterGlass(i)}
-              className={`w-8 h-8 rounded-lg transition-all ${
-                i < waterGlasses ? 'bg-blue-400 text-white' : 'bg-slate-100 text-slate-300 hover:bg-slate-200'
-              }`}
-            >
-              <Droplets className="w-4 h-4 mx-auto" />
+        <div className="flex gap-1.5 pl-12">
+          {[1000, 3000, 5000, 10000].map((s) => (
+            <button key={s} onClick={() => addSteps(s)}
+              className="px-2.5 py-1 rounded-full bg-cyan-50 dark:bg-cyan-900/30 border border-cyan-100 dark:border-cyan-800 text-cyan-600 dark:text-cyan-400 text-[10px] font-bold hover:bg-cyan-100 dark:hover:bg-cyan-800/40 transition-colors">
+              +{s >= 1000 ? `${s / 1000}k` : s}
             </button>
           ))}
         </div>
-        <div className="mt-3 h-2 bg-slate-100 rounded-full overflow-hidden">
-          <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${waterPercent}%` }} />
+      </div>
+
+      <div className="h-px bg-slate-100 dark:bg-slate-800" />
+
+      {/* ── WATER ── */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+            <Droplets size={18} className="text-blue-500" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-baseline justify-between">
+              <span className="text-sm font-bold text-slate-800 dark:text-slate-100">Water</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">{waterGlasses}/{WATER_GLASSES} ly · {waterMl}ml</span>
+            </div>
+            {/* Glass toggles */}
+            <div className="flex gap-1 mt-1.5">
+              {Array.from({ length: WATER_GLASSES }, (_, i) => (
+                <button key={i} type="button"
+                  onClick={async () => {
+                    const newGlasses = waterGlasses === i + 1 ? i : i + 1
+                    const newMl = newGlasses * GLASS_ML
+                    const res = await upsertWater(date, newMl)
+                    if (res.error) toast.error(res.error)
+                    else { setWaterMl(newMl); onUpdate?.() }
+                  }}
+                  className={`flex-1 h-2 rounded-full transition-all ${i < waterGlasses ? 'bg-blue-400' : 'bg-slate-200 dark:bg-slate-700'}`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="flex gap-1.5 pl-12">
+          {[150, 250, 350, 500].map((ml) => (
+            <button key={ml} onClick={() => addWater(ml)}
+              className="px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 text-blue-600 dark:text-blue-400 text-[10px] font-bold hover:bg-blue-100 dark:hover:bg-blue-800/40 transition-colors">
+              +{ml}ml
+            </button>
+          ))}
+          <button onClick={() => addWater(-250)}
+            className="w-7 h-6 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 text-[10px] font-bold hover:bg-slate-200 transition-colors flex items-center justify-center">
+            <Minus size={10} />
+          </button>
         </div>
       </div>
 
-      {/* Exercise */}
-      <div
-        className="glass-card rounded-[2rem] p-5 cursor-pointer"
-        onClick={() => !editingExercise && (setExMinutes(''), setEditingExercise(true))}
-      >
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-orange-50 text-orange-500 flex items-center justify-center">
-            <Dumbbell size={22} />
+      <div className="h-px bg-slate-100 dark:bg-slate-800" />
+
+      {/* ── EXERCISE ── */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-orange-50 dark:bg-orange-900/30 flex items-center justify-center shrink-0">
+            <Dumbbell size={18} className="text-orange-500" />
           </div>
           <div className="flex-1 min-w-0">
-            <h4 className="font-bold text-slate-800">Exercise</h4>
-            {editingExercise ? (
-              <div className="mt-2 space-y-2" onClick={(e) => e.stopPropagation()}>
-                <div className="flex gap-2">
-                  <input
-                    type="number"
-                    value={exMinutes}
-                    onChange={(e) => setExMinutes(e.target.value)}
-                    placeholder="Minutes"
-                    className="w-20 px-3 py-1.5 bg-slate-50 rounded-xl text-sm font-semibold focus:outline-none"
-                    autoFocus
-                  />
-                  <select
-                    value={exType}
-                    onChange={(e) => setExType(e.target.value as ExerciseType)}
-                    className="px-3 py-1.5 bg-slate-50 rounded-xl text-sm font-semibold focus:outline-none"
-                  >
-                    <option value="Walking">Walking</option>
-                    <option value="Running">Running</option>
-                    <option value="Gym">Gym</option>
-                    <option value="Cycling">Cycling</option>
-                  </select>
-                </div>
-                <div className="flex gap-2">
-                  <button onClick={handleSaveExercise} className="text-xs font-bold text-emerald-600">Save</button>
-                  <button onClick={() => setEditingExercise(false)} className="text-xs font-bold text-slate-400">Cancel</button>
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-slate-600 mt-0.5">
-                {exerciseMinutes} min · {exerciseCalories} kcal burned
-              </p>
-            )}
+            <div className="flex items-baseline justify-between">
+              <span className="text-sm font-bold text-slate-800 dark:text-slate-100">Exercise</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">{exerciseMinutes}min · {exerciseCalories}kcal</span>
+            </div>
+            <div className="mt-1.5 h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+              <div className="h-full bg-orange-400 rounded-full transition-all duration-500" style={{ width: `${exercisePercent}%` }} />
+            </div>
           </div>
         </div>
-        <div className="mt-3 h-2 bg-slate-100 rounded-full overflow-hidden">
-          <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${exercisePercent}%` }} />
-        </div>
+        {editingExercise ? (
+          <div className="flex items-center gap-2 pl-12" onClick={(e) => e.stopPropagation()}>
+            <input type="number" value={exMinutes} onChange={(e) => setExMinutes(e.target.value)}
+              placeholder="Phút" autoFocus
+              className="w-16 px-2 py-1 bg-slate-100 dark:bg-slate-700 dark:text-slate-100 rounded-lg text-xs font-semibold focus:outline-none" />
+            <select value={exType} onChange={(e) => setExType(e.target.value as ExerciseType)}
+              className="flex-1 px-2 py-1 bg-slate-100 dark:bg-slate-700 dark:text-slate-100 rounded-lg text-xs font-semibold focus:outline-none">
+              <option value="Walking">Walking</option>
+              <option value="Running">Running</option>
+              <option value="Gym">Gym</option>
+              <option value="Cycling">Cycling</option>
+            </select>
+            <button onClick={handleSaveExercise} className="text-[11px] font-black text-emerald-600">✓</button>
+            <button onClick={() => setEditingExercise(false)} className="text-[11px] font-bold text-slate-400">✕</button>
+          </div>
+        ) : (
+          <button onClick={() => { setExMinutes(''); setEditingExercise(true) }}
+            className="ml-12 flex items-center gap-1.5 text-[11px] font-bold text-orange-500 hover:text-orange-600 transition-colors w-fit">
+            <Plus size={12} /> Log exercise
+          </button>
+        )}
       </div>
     </div>
   )

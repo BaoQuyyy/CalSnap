@@ -122,15 +122,23 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
   /* Prevent zoom on input focus (iOS) - min 16px */
-  input, select, textarea {
+  input,
+  select,
+  textarea {
     font-size: 16px !important;
   }
+
   @media (min-width: 768px) {
-    input, select, textarea {
+
+    input,
+    select,
+    textarea {
       font-size: 14px !important;
     }
   }
@@ -147,6 +155,7 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
@@ -165,11 +174,12 @@ body {
 }
 
 .nutri-header {
-  background: linear-gradient(145deg,#2E7D32 0%,#43A047 60%,#66BB6A 100%);
+  background: linear-gradient(145deg, #2E7D32 0%, #43A047 60%, #66BB6A 100%);
   border-radius: 0 0 32px 32px;
   position: relative;
   overflow: hidden;
 }
+
 .nutri-header::before {
   content: "";
   position: absolute;
@@ -178,9 +188,10 @@ body {
   width: 160px;
   height: 160px;
   border-radius: 9999px;
-  background: rgba(255,255,255,0.07);
+  background: rgba(255, 255, 255, 0.07);
   pointer-events: none;
 }
+
 .nutri-header::after {
   content: "";
   position: absolute;
@@ -189,7 +200,7 @@ body {
   width: 100px;
   height: 100px;
   border-radius: 9999px;
-  background: rgba(255,255,255,0.05);
+  background: rgba(255, 255, 255, 0.05);
   pointer-events: none;
 }
 
@@ -198,19 +209,20 @@ body {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .hoverboard-gradient {
-  background: linear-gradient(145deg,#2E7D32 0%,#43A047 60%,#66BB6A 100%);
+  background: linear-gradient(145deg, #2E7D32 0%, #43A047 60%, #66BB6A 100%);
 }
 
 /* Animated hoverboard card — glowing green like in screenshot */
 .hoverboard-card {
-  background: linear-gradient(145deg,#2E7D32 0%,#43A047 60%,#66BB6A 100%);
+  background: linear-gradient(145deg, #2E7D32 0%, #43A047 60%, #66BB6A 100%);
   box-shadow: 0 20px 60px rgba(46, 125, 50, 0.28), 0 8px 24px rgba(46, 125, 50, 0.18);
   transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
+
 .hoverboard-card:hover {
   box-shadow: 0 28px 80px rgba(46, 125, 50, 0.36), 0 12px 32px rgba(46, 125, 50, 0.24);
   transform: translateY(-2px);
@@ -219,10 +231,19 @@ body {
 .page-enter {
   animation: fadeInUp 0.3s ease-out;
 }
+
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
+
 .nutri-header-danger {
   background: linear-gradient(145deg, #d4856a 0%, #e8967a 50%, #f2b09a 100%);
 }
@@ -244,4 +265,38 @@ body {
 
 .dark .nutri-header {
   background: linear-gradient(145deg, #166534 0%, #15803d 60%, #16a34a 100%);
+}
+
+.dark .nutri-header-danger {
+  background: linear-gradient(145deg, #3d1a1a 0%, #4a2020 50%, #5c2d2d 100%);
+}
+
+/* Inputs inside dark glass-card without explicit dark: class */
+.dark .glass-card input:not([class*='dark:']),
+.dark .glass-card select:not([class*='dark:']),
+.dark .glass-card textarea:not([class*='dark:']) {
+  background: rgba(30, 41, 59, 0.8);
+  color: oklch(0.92 0.005 155);
+}
+
+/* Batch text color fix for components without explicit dark: variants */
+.dark [class~='text-slate-800']:not([class*='dark:text-']) {
+  color: oklch(0.92 0.005 155);
+}
+
+.dark [class~='text-slate-700']:not([class*='dark:text-']) {
+  color: oklch(0.85 0.008 200);
+}
+
+.dark [class~='text-slate-600']:not([class*='dark:text-']) {
+  color: oklch(0.75 0.01 220);
+}
+
+/* bg-slate-50 and bg-white for non-dark-variant elements */
+.dark [class~='bg-slate-50']:not([class*='dark:bg-']) {
+  background-color: rgba(30, 41, 59, 0.55);
+}
+
+.dark [class~='bg-white']:not([class*='dark:bg-']) {
+  background-color: rgba(30, 41, 59, 0.8);
 }
