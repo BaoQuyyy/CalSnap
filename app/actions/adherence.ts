@@ -30,7 +30,7 @@ export async function updateDailyAdherence(date: string) {
 
   const { data: meals } = await supabase
     .from('meal_logs')
-    .select('calories, protein, carbs, fats')
+    .select('calories, protein, carbs, fat')
     .eq('user_id', user.id)
     .eq('logged_at', date)
 
@@ -38,7 +38,7 @@ export async function updateDailyAdherence(date: string) {
     calories: meals?.reduce((s, m) => s + (m.calories ?? 0), 0) ?? 0,
     protein: meals?.reduce((s, m) => s + (m.protein ?? 0), 0) ?? 0,
     carbs: meals?.reduce((s, m) => s + (m.carbs ?? 0), 0) ?? 0,
-    fat: meals?.reduce((s, m) => s + (m.fats ?? 0), 0) ?? 0,
+    fat: meals?.reduce((s, m) => s + (m.fat ?? 0), 0) ?? 0,
   }
 
   const waterActual =

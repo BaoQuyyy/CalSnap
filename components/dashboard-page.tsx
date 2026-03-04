@@ -61,12 +61,12 @@ export default function DashboardPage() {
       if (!user) return
       const [{ data: prof }, { data: meals }, { data: habitsRow }] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', user.id).single(),
-        supabase.from('meal_logs').select('calories, protein, carbs, fats').eq('user_id', user.id).eq('logged_at', date),
+        supabase.from('meal_logs').select('calories, protein, carbs, fat').eq('user_id', user.id).eq('logged_at', date),
         supabase.from('daily_habits').select('steps, water_ml, exercise_minutes, exercise_calories').eq('user_id', user.id).eq('date', date).maybeSingle(),
       ])
       if (prof) setProfile(prof as DbProfile)
       const t = (meals as any[] | null)?.reduce(
-        (acc, m) => ({ calories: acc.calories + m.calories, protein: acc.protein + m.protein, carbs: acc.carbs + m.carbs, fat: acc.fat + (m.fats || 0) }),
+        (acc, m) => ({ calories: acc.calories + m.calories, protein: acc.protein + m.protein, carbs: acc.carbs + m.carbs, fat: acc.fat + (m.fat || 0) }),
         { calories: 0, protein: 0, carbs: 0, fat: 0 }
       ) ?? { calories: 0, protein: 0, carbs: 0, fat: 0 }
       setTotals(t)
@@ -157,7 +157,7 @@ export default function DashboardPage() {
         // Fetch everything to ensure UI is in sync
         const [{ data: prof }, { data: meals }, { data: habitsRow }] = await Promise.all([
           supabase.from('profiles').select('*').eq('id', user.id).single(),
-          supabase.from('meal_logs').select('calories, protein, carbs, fats').eq('user_id', user.id).eq('logged_at', targetDate),
+          supabase.from('meal_logs').select('calories, protein, carbs, fat').eq('user_id', user.id).eq('logged_at', targetDate),
           supabase.from('daily_habits').select('steps, water_ml, exercise_minutes, exercise_calories').eq('user_id', user.id).eq('date', targetDate).maybeSingle(),
         ])
 
@@ -166,7 +166,7 @@ export default function DashboardPage() {
         // Update totals if on the current date
         if (targetDate === date) {
           const t = (meals as any[] | null)?.reduce(
-            (acc, m) => ({ calories: acc.calories + m.calories, protein: acc.protein + m.protein, carbs: acc.carbs + m.carbs, fat: acc.fat + (m.fats || 0) }),
+            (acc, m) => ({ calories: acc.calories + m.calories, protein: acc.protein + m.protein, carbs: acc.carbs + m.carbs, fat: acc.fat + (m.fat || 0) }),
             { calories: 0, protein: 0, carbs: 0, fat: 0 }
           ) ?? { calories: 0, protein: 0, carbs: 0, fat: 0 }
           setTotals(t)
@@ -198,9 +198,9 @@ export default function DashboardPage() {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    const { data: meals } = await supabase.from('meal_logs').select('calories, protein, carbs, fats').eq('user_id', user.id).eq('logged_at', todayStr)
+    const { data: meals } = await supabase.from('meal_logs').select('calories, protein, carbs, fat').eq('user_id', user.id).eq('logged_at', todayStr)
     const t = (meals as any[] | null)?.reduce(
-      (acc, m) => ({ calories: acc.calories + m.calories, protein: acc.protein + m.protein, carbs: acc.carbs + m.carbs, fat: acc.fat + (m.fats || 0) }),
+      (acc, m) => ({ calories: acc.calories + m.calories, protein: acc.protein + m.protein, carbs: acc.carbs + m.carbs, fat: acc.fat + (m.fat || 0) }),
       { calories: 0, protein: 0, carbs: 0, fat: 0 }
     ) ?? { calories: 0, protein: 0, carbs: 0, fat: 0 }
     setTotals(t)

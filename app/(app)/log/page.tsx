@@ -21,7 +21,7 @@ type Meal = {
   calories: number
   protein: number
   carbs: number
-  fats: number
+  fat: number
   created_at: string
   logged_at: string
   is_favorite?: boolean
@@ -113,7 +113,7 @@ export default function LogPage() {
       calories: acc.calories + (m.calories || 0),
       protein: acc.protein + (m.protein || 0),
       carbs: acc.carbs + (m.carbs || 0),
-      fat: acc.fat + (m.fats || 0),
+      fat: acc.fat + (m.fat || 0),
     }),
     { calories: 0, protein: 0, carbs: 0, fat: 0 }
   )

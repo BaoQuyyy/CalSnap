@@ -14,7 +14,7 @@ interface MealCardProps {
         calories: number
         protein: number
         carbs: number
-        fats: number
+        fat: number
         created_at: string
         logged_at: string
         is_favorite?: boolean
@@ -32,7 +32,7 @@ export function MealCard({ meal, onToggleFavorite, onUpdate }: MealCardProps) {
         calories: meal.calories || 0,
         protein: meal.protein || 0,
         carbs: meal.carbs || 0,
-        fats: meal.fats || 0
+        fat: meal.fat || 0
     })
 
     const triggerHaptic = (duration = 10) => {
@@ -67,7 +67,7 @@ export function MealCard({ meal, onToggleFavorite, onUpdate }: MealCardProps) {
             calories: meal.calories || 0,
             protein: meal.protein || 0,
             carbs: meal.carbs || 0,
-            fats: meal.fats || 0
+            fat: meal.fat || 0
         })
         setIsEditing(true)
         triggerHaptic(15)
@@ -88,31 +88,25 @@ export function MealCard({ meal, onToggleFavorite, onUpdate }: MealCardProps) {
             calories: num,
             protein: Math.round((meal.protein || 0) * ratio),
             carbs: Math.round((meal.carbs || 0) * ratio),
-            fats: Math.round((meal.fats || 0) * ratio)
+            fat: Math.round((meal.fat || 0) * ratio)
         })
     }
 
-    const handleMacroChange = (field: 'protein' | 'carbs' | 'fats', val: string) => {
+    const handleMacroChange = (field: 'protein' | 'carbs' | 'fat', val: string) => {
         const num = Math.max(0, Math.round(Number(val)))
         setEditData(prev => ({ ...prev, [field]: num }))
     }
 
     const saveEdit = async () => {
         if (isSaving) return
-        if (editData.calories < 0 || editData.protein < 0 || editData.carbs < 0 || editData.fats < 0) {
+        if (editData.calories < 0 || editData.protein < 0 || editData.carbs < 0 || editData.fat < 0) {
             toast.error('Giá trị không được âm!')
             return
         }
 
         setIsSaving(true)
         try {
-            // Map 'fats' back to 'fat' for the action input if needed, 
-            // but let's check the action signature first.
-            // Based on my change to meals.ts, the action expects 'fat'.
-            const res = await updateMealNutrition(meal.id, {
-                ...editData,
-                fat: editData.fats
-            })
+            const res = await updateMealNutrition(meal.id, editData)
             if (res.success) {
                 triggerHaptic(20)
                 setIsEditing(false)
@@ -136,7 +130,7 @@ export function MealCard({ meal, onToggleFavorite, onUpdate }: MealCardProps) {
         editData.calories !== meal.calories ||
         editData.protein !== meal.protein ||
         editData.carbs !== meal.carbs ||
-        editData.fats !== meal.fats
+        editData.fat !== meal.fat
 
     const time = new Date(meal.created_at).toLocaleTimeString('en-US', {
         hour: 'numeric',
@@ -211,7 +205,7 @@ export function MealCard({ meal, onToggleFavorite, onUpdate }: MealCardProps) {
                             {[
                                 { label: 'P', field: 'protein', color: 'blue', icon: Beef },
                                 { label: 'C', field: 'carbs', color: 'amber', icon: Wheat },
-                                { label: 'F', field: 'fats', color: 'orange', icon: Droplets }
+                                { label: 'F', field: 'fat', color: 'orange', icon: Droplets }
                             ].map((macro) => (
                                 <div key={macro.field} className="space-y-1">
                                     <label className={`text-[9px] font-black uppercase text-${macro.color}-500 ml-1 flex items-center`}>
@@ -222,7 +216,7 @@ export function MealCard({ meal, onToggleFavorite, onUpdate }: MealCardProps) {
                                             type="number"
                                             inputMode="numeric"
                                             value={editData[macro.field as keyof typeof editData] ?? ''}
-                                            onChange={e => handleMacroChange(macro.field as 'protein' | 'carbs' | 'fats', e.target.value)}
+                                            onChange={e => handleMacroChange(macro.field as 'protein' | 'carbs' | 'fat', e.target.value)}
                                             className={`w-full bg-${macro.color}-50/30 dark:bg-${macro.color}-900/10 text-sm font-bold text-${macro.color}-600 dark:text-${macro.color}-400 px-3 py-2.5 rounded-xl border border-${macro.color}-100 dark:border-${macro.color}-900/30 focus:outline-none`}
                                         />
                                         <DiffIndicator val={editData[macro.field as keyof typeof editData] ?? 0} original={meal[macro.field as keyof typeof meal] ?? 0} unit="g" />

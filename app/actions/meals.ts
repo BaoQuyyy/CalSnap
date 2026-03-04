@@ -26,7 +26,7 @@ export async function saveMeal(data: {
         calories: data.calories,
         protein: data.protein,
         carbs: data.carbs,
-        fats: data.fat,
+        fat: data.fat,
         image_url: data.imageUrl ?? null,
         logged_at: loggedAt,
     } as never).select().maybeSingle()
@@ -106,7 +106,7 @@ export async function relogMeal(meal: {
         calories: meal.calories,
         protein: meal.protein,
         carbs: meal.carbs,
-        fats: meal.fat,
+        fat: meal.fat,
         image_url: null,
         logged_at: today,
     } as never).select().maybeSingle()
@@ -230,7 +230,7 @@ export async function updateMealNutrition(mealId: string, data: {
             calories: Math.round(Number(data.calories)),
             protein: Math.round(Number(data.protein)),
             carbs: Math.round(Number(data.carbs)),
-            fats: Math.round(Number(data.fat)),
+            fat: Math.round(Number(data.fat)),
             food_name: data.food_name || undefined
         } as never)
         .eq('id', mealId)
@@ -242,7 +242,7 @@ export async function updateMealNutrition(mealId: string, data: {
     // 3. Calculate new totals for the day
     const { data: dayMeals } = await supabase
         .from('meal_logs')
-        .select('calories, protein, carbs, fats')
+        .select('calories, protein, carbs, fat')
         .eq('user_id', user.id)
         .eq('logged_at', date)
 
@@ -250,8 +250,8 @@ export async function updateMealNutrition(mealId: string, data: {
         calories: acc.calories + (m.calories || 0),
         protein: acc.protein + (m.protein || 0),
         carbs: acc.carbs + (m.carbs || 0),
-        fats: acc.fats + (m.fats || 0),
-    }), { calories: 0, protein: 0, carbs: 0, fats: 0 })
+        fat: acc.fat + (m.fat || 0),
+    }), { calories: 0, protein: 0, carbs: 0, fat: 0 })
 
     // 4. Update adherence/progress
     await updateDailyAdherence(date)
@@ -268,7 +268,7 @@ export async function updateMealNutrition(mealId: string, data: {
             calories: Math.round(newTotals.calories),
             protein: Math.round(newTotals.protein),
             carbs: Math.round(newTotals.carbs),
-            fat: Math.round(newTotals.fats) // Keep 'fat' as key for frontend if dashboard expects it, but map from 'fats'
+            fat: Math.round(newTotals.fat)
         }
     }
 }
