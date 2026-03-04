@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Trash, Flame, Beef, Wheat, Droplets, Heart, Check, X as CloseIcon } from 'lucide-react'
 import { toast } from '@/components/toast'
 import { cn } from '@/lib/utils'
+import { motion, AnimatePresence } from 'framer-motion'
 
 interface MealCardProps {
     meal: {
@@ -160,7 +161,7 @@ export function MealCard({ meal, onToggleFavorite, onUpdate }: MealCardProps) {
                 isEditing && 'border-emerald-500/40 shadow-xl shadow-emerald-500/10'
             )}
         >
-            <div className="flex flex-col gap-4">
+            <motion.div layout className="flex flex-col gap-4">
                 {/* Name & Time */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 min-w-0">
@@ -177,100 +178,116 @@ export function MealCard({ meal, onToggleFavorite, onUpdate }: MealCardProps) {
                     )}
                 </div>
 
-                {isEditing ? (
-                    <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                        {/* Main Calories Input */}
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400 ml-1 flex items-center">
-                                <Flame size={12} className="mr-1" /> CALORIES
-                            </label>
-                            <div className="relative">
-                                <input
-                                    autoFocus
-                                    type="number"
-                                    inputMode="numeric"
-                                    value={editData.calories}
-                                    onChange={e => handleCaloriesChange(e.target.value)}
-                                    className="w-full bg-emerald-50/50 dark:bg-emerald-950/20 text-3xl font-black text-emerald-700 dark:text-emerald-300 px-4 py-4 rounded-2xl border-2 border-emerald-100 dark:border-emerald-900/50 focus:border-emerald-500 focus:outline-none transition-all"
-                                />
-                                <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col items-end">
-                                    <span className="text-[10px] font-black text-emerald-500/50">KCAL</span>
-                                    <DiffIndicator val={editData.calories} original={meal.calories} />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Macro Grid */}
-                        <div className="grid grid-cols-3 gap-2">
-                            {[
-                                { label: 'P', field: 'protein', color: 'blue', icon: Beef },
-                                { label: 'C', field: 'carbs', color: 'amber', icon: Wheat },
-                                { label: 'F', field: 'fat', color: 'orange', icon: Droplets }
-                            ].map((macro) => (
-                                <div key={macro.field} className="space-y-1">
-                                    <label className={`text-[9px] font-black uppercase text-${macro.color}-500 ml-1 flex items-center`}>
-                                        <macro.icon size={10} className="mr-1" /> {macro.label}
-                                    </label>
-                                    <div className="relative">
-                                        <input
-                                            type="number"
-                                            inputMode="numeric"
-                                            value={editData[macro.field as keyof typeof editData] ?? ''}
-                                            onChange={e => handleMacroChange(macro.field as 'protein' | 'carbs' | 'fat', e.target.value)}
-                                            className={`w-full bg-${macro.color}-50/30 dark:bg-${macro.color}-900/10 text-sm font-bold text-${macro.color}-600 dark:text-${macro.color}-400 px-3 py-2.5 rounded-xl border border-${macro.color}-100 dark:border-${macro.color}-900/30 focus:outline-none`}
-                                        />
-                                        <DiffIndicator val={editData[macro.field as keyof typeof editData] ?? 0} original={meal[macro.field as keyof typeof meal] ?? 0} unit="g" />
+                <AnimatePresence mode="wait">
+                    {isEditing ? (
+                        <motion.div
+                            key="editing"
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                            className="space-y-4 overflow-hidden"
+                        >
+                            {/* Main Calories Input */}
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400 ml-1 flex items-center">
+                                    <Flame size={12} className="mr-1" /> CALORIES
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        autoFocus
+                                        type="number"
+                                        inputMode="numeric"
+                                        value={editData.calories}
+                                        onChange={e => handleCaloriesChange(e.target.value)}
+                                        className="w-full bg-emerald-50/50 dark:bg-emerald-950/20 text-3xl font-black text-emerald-700 dark:text-emerald-300 px-4 py-4 rounded-2xl border-2 border-emerald-100 dark:border-emerald-900/50 focus:border-emerald-500 focus:outline-none transition-all"
+                                    />
+                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col items-end">
+                                        <span className="text-[10px] font-black text-emerald-500/50">KCAL</span>
+                                        <DiffIndicator val={editData.calories} original={meal.calories} />
                                     </div>
                                 </div>
-                            ))}
-                        </div>
+                            </div>
 
-                        {/* Action Buttons */}
-                        <div className="flex items-center gap-2 pt-1">
-                            <Button
-                                onClick={saveEdit}
-                                disabled={isSaving || !hasChanged}
-                                className="flex-1 hoverboard-gradient text-white rounded-2xl h-12 font-black shadow-lg shadow-emerald-500/20 active:scale-95 transition-all disabled:opacity-50"
-                            >
-                                {isSaving ? "ĐANG LƯU..." : "LƯU THAY ĐỔI"}
-                            </Button>
-                            <button
-                                onClick={cancelEditing}
-                                className="w-12 h-12 flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-2xl active:scale-90 transition-all border border-slate-200 dark:border-slate-700"
-                            >
-                                <CloseIcon size={20} />
-                            </button>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="flex items-center gap-5">
-                        <button
-                            onClick={startEditing}
-                            className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-all active:scale-95"
+                            {/* Macro Grid */}
+                            <div className="grid grid-cols-3 gap-2">
+                                {[
+                                    { label: 'P', field: 'protein', color: 'blue', icon: Beef },
+                                    { label: 'C', field: 'carbs', color: 'amber', icon: Wheat },
+                                    { label: 'F', field: 'fat', color: 'orange', icon: Droplets }
+                                ].map((macro) => (
+                                    <div key={macro.field} className="space-y-1">
+                                        <label className={`text-[9px] font-black uppercase text-${macro.color}-500 ml-1 flex items-center`}>
+                                            <macro.icon size={10} className="mr-1" /> {macro.label}
+                                        </label>
+                                        <div className="relative">
+                                            <input
+                                                type="number"
+                                                inputMode="numeric"
+                                                value={editData[macro.field as keyof typeof editData] ?? ''}
+                                                onChange={e => handleMacroChange(macro.field as 'protein' | 'carbs' | 'fat', e.target.value)}
+                                                className={`w-full bg-${macro.color}-50/30 dark:bg-${macro.color}-900/10 text-sm font-bold text-${macro.color}-600 dark:text-${macro.color}-400 px-3 py-2.5 rounded-xl border border-${macro.color}-100 dark:border-${macro.color}-900/30 focus:outline-none`}
+                                            />
+                                            <DiffIndicator val={editData[macro.field as keyof typeof editData] ?? 0} original={meal[macro.field as keyof typeof meal] ?? 0} unit="g" />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex items-center gap-2 pt-1">
+                                <Button
+                                    onClick={saveEdit}
+                                    disabled={isSaving || !hasChanged}
+                                    className="flex-1 hoverboard-gradient text-white rounded-2xl h-12 font-black shadow-lg shadow-emerald-500/20 active:scale-95 transition-all disabled:opacity-50"
+                                >
+                                    {isSaving ? "ĐANG LƯU..." : "LƯU THAY ĐỔI"}
+                                </Button>
+                                <button
+                                    onClick={cancelEditing}
+                                    className="w-12 h-12 flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-2xl active:scale-90 transition-all border border-slate-200 dark:border-slate-700"
+                                >
+                                    <CloseIcon size={20} />
+                                </button>
+                            </div>
+                        </motion.div>
+                    ) : (
+                        <motion.div
+                            key="view"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="flex items-center gap-5"
                         >
-                            <Flame className="h-4 w-4 fill-emerald-500/20" />
-                            <span className="font-black text-base">{meal.calories}</span>
-                            <span className="text-[10px] font-bold opacity-70">KCAL</span>
-                        </button>
+                            <button
+                                onClick={startEditing}
+                                className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-all active:scale-95"
+                            >
+                                <Flame className="h-4 w-4 fill-emerald-500/20" />
+                                <span className="font-black text-base tabular-nums">{meal.calories}</span>
+                                <span className="text-[10px] font-bold opacity-70">KCAL</span>
+                            </button>
 
-                        <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-1.5">
-                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
-                                <span className="text-xs font-bold text-slate-600 dark:text-slate-400">{meal.protein}g</span>
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+                                    <span className="text-xs font-bold text-slate-600 dark:text-slate-400 tabular-nums">{meal.protein}g</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
+                                    <span className="text-xs font-bold text-slate-600 dark:text-slate-400 tabular-nums">{meal.carbs}g</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]" />
+                                    <span className="text-xs font-bold text-slate-600 dark:text-slate-400 tabular-nums">{meal.fat}g</span>
+                                </div>
                             </div>
-                            <div className="flex items-center gap-1.5">
-                                <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
-                                <span className="text-xs font-bold text-slate-600 dark:text-slate-400">{meal.carbs}g</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                                <div className="w-1.5 h-1.5 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]" />
-                                <span className="text-xs font-bold text-slate-600 dark:text-slate-400">{meal.fat}g</span>
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </motion.div>
         </div>
+        </div >
     )
 }
 

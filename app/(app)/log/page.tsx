@@ -156,12 +156,12 @@ export default function LogPage() {
   }
 
   const handleUpdateMeal = (updatedMeal: Meal) => {
-    // 1. Update meals array
+    // 1. Update meals array (force new reference)
     const newMeals = meals.map(m => m.id === updatedMeal.id ? updatedMeal : m)
-    setMeals(newMeals)
+    setMeals([...newMeals])
 
     // 2. Also update recent meals
-    setRecentMeals(prev => prev.map(m => m.id === updatedMeal.id ? updatedMeal : m))
+    setRecentMeals(prev => [...prev.map(m => m.id === updatedMeal.id ? updatedMeal : m)])
 
     // 3. Recalculate totals immediately for UI consistency
     // Note: totals state is derived from 'meals', but if we have a separate totals state or want to force it
@@ -271,13 +271,20 @@ export default function LogPage() {
       </div>
 
       {/* Daily summary */}
-      <div className="glass-card rounded-[2rem] p-6 ios-reveal delay-300">
+      <motion.div layout className="glass-card rounded-[2rem] p-6 ios-reveal delay-300">
         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">
           Tổng {date === today ? 'hôm nay' : 'trong ngày'}
         </h3>
         <div className="flex items-baseline gap-2 mb-4">
           <Flame className="h-6 w-6 text-emerald-600 dark:text-emerald-500" />
-          <span className="text-3xl font-display font-extrabold text-slate-900 dark:text-slate-100 tabular-nums">{Math.round(totals.calories).toLocaleString()}</span>
+          <motion.span
+            key={totals.calories}
+            initial={{ scale: 1.1, color: '#10b981' }}
+            animate={{ scale: 1, color: 'inherit' }}
+            className="text-3xl font-display font-extrabold text-slate-900 dark:text-slate-100 tabular-nums"
+          >
+            {Math.round(totals.calories).toLocaleString()}
+          </motion.span>
           <span className="text-slate-500 dark:text-slate-400 font-semibold">kcal</span>
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -285,7 +292,7 @@ export default function LogPage() {
           <MacroPill type="carbs" value={Math.round(totals.carbs)} variant="light" />
           <MacroPill type="fat" value={Math.round(totals.fat)} variant="light" />
         </div>
-      </div>
+      </motion.div>
 
       {/* Hint nhỏ cho meal cards */}
       {meals.length > 0 && (
