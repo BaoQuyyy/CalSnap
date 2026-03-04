@@ -280,33 +280,37 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="font-sans flex flex-col h-[calc(100dvh-8rem)] md:h-[calc(100vh-6rem)] max-w-2xl mx-auto page-enter min-h-0 w-full max-w-full overflow-hidden">
+    <div className="font-sans flex flex-col h-[calc(100dvh-5rem)] md:h-[calc(100vh-4rem)] max-w-2xl mx-auto page-enter min-h-0 w-full overflow-hidden bg-slate-50/50 dark:bg-[#0d1117]">
 
-      {/* Header */}
-      <div className="nutri-header rounded-[2rem] overflow-hidden mb-4">
-        <div className="relative z-10 px-5 md:px-8 pt-10 pb-5 flex items-center justify-between gap-3">
-          <div>
-            <h1 className="text-white text-xl font-display font-extrabold">
-              Trợ lý dinh dưỡng AI 🤖
-            </h1>
-            <span className="inline-block mt-1 px-2.5 py-0.5 bg-white/15 text-white text-xs font-semibold rounded-full border border-white/15">
-              Hoạt động bởi Gemini
-            </span>
+      {/* Header - iOS Compact Style */}
+      <div className="ios-blur sticky top-0 z-30 px-6 py-4 flex items-center justify-between border-b border-slate-200/50 dark:border-slate-800/50 bg-white/70 dark:bg-slate-900/70">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl hoverboard-gradient flex items-center justify-center shadow-lg shadow-emerald-500/20">
+            <Sparkles className="text-white h-5 w-5" />
           </div>
-          <button
-            type="button"
-            onClick={clearChat}
-            className="w-10 h-10 rounded-full bg-white/15 hover:bg-white/20 text-white flex items-center justify-center"
-            aria-label="Xóa lịch sử chat"
-            title="Xóa lịch sử chat"
-          >
-            <Trash className="h-4 w-4" />
-          </button>
+          <div>
+            <h1 className="text-slate-900 dark:text-white text-lg font-bold tracking-tight">
+              CalSnap AI
+            </h1>
+            <div className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] uppercase tracking-widest font-bold text-emerald-600 dark:text-emerald-400">
+                Online
+              </span>
+            </div>
+          </div>
         </div>
+        <button
+          type="button"
+          onClick={clearChat}
+          className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-red-50 hover:text-red-500 transition-all active:scale-90 flex items-center justify-center"
+        >
+          <Trash className="h-4 w-4" />
+        </button>
       </div>
 
       {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 min-h-0">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-4 scroll-smooth">
         {messages.length === 0 && !loading && (
           <div className="flex-1 flex flex-col items-center justify-center text-center py-12">
             <div className="w-16 h-16 rounded-2xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-4">
@@ -331,15 +335,15 @@ export default function ChatPage() {
         )}
 
         {messages.map((m, i) => (
-          <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
-            <div className={`max-w-[85%] md:max-w-[75%] p-4 rounded-[1.5rem] text-sm break-words ${m.role === 'user'
-              ? 'hoverboard-gradient text-white rounded-tr-sm'
-              : 'glass-card rounded-tl-sm'
+          <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'} ios-spring-enter`} style={{ animationDelay: `${Math.min(i * 0.05, 0.5)}s` }}>
+            <div className={`max-w-[85%] md:max-w-[80%] p-4 text-[15px] leading-relaxed break-words shadow-sm ${m.role === 'user'
+              ? 'ios-bubble-user'
+              : 'ios-bubble-ai text-slate-800 dark:text-slate-100'
               }`}>
               {m.role === 'assistant' ? (
                 <>
                   <div
-                    className="leading-relaxed text-slate-800 dark:text-slate-100/90 [&_strong]:font-bold [&_strong]:text-current [&_em]:italic [&_em]:text-current [&_ol]:my-2 [&_ul]:my-2 [&_li]:leading-relaxed"
+                    className="[&_strong]:font-bold [&_strong]:text-emerald-700 dark:[&_strong]:text-emerald-400 [&_em]:italic [&_ol]:my-2 [&_ul]:my-2 [&_li]:leading-relaxed"
                     dangerouslySetInnerHTML={{ __html: renderContent(m.content) }}
                   />
 
@@ -364,7 +368,7 @@ export default function ChatPage() {
               ) : (
                 <p className="whitespace-pre-wrap leading-relaxed">{m.content}</p>
               )}
-              <p className={`text-[10px] mt-1 ${m.role === 'user' ? 'text-white/70' : 'text-slate-400 dark:text-slate-500'}`}>
+              <p className={`text-[10px] mt-2 font-medium uppercase tracking-tighter ${m.role === 'user' ? 'text-white/60' : 'text-slate-400 dark:text-slate-500'}`}>
                 {formatTime(m.timestamp)}
               </p>
             </div>
@@ -387,22 +391,26 @@ export default function ChatPage() {
         )}
       </div>
 
-      {/* Input */}
-      <div className="glass-card rounded-[2rem] p-4 mt-4">
-        <form onSubmit={handleSubmit} className="flex items-center gap-3">
-          <Sparkles className="h-5 w-5 text-emerald-500 shrink-0" />
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Hỏi về dinh dưỡng, bữa ăn, kế hoạch tập luyện..."
-            disabled={loading}
-            className="flex-1 min-w-0 bg-slate-50 dark:bg-slate-800 rounded-2xl px-4 py-3 text-base font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 border-none"
-          />
+      {/* Input - iOS Elevated Style */}
+      <div className="ios-input-container p-4 pb-8 md:pb-4 border-t border-slate-200/50 dark:border-slate-800/50">
+        <form onSubmit={handleSubmit} className="flex items-center gap-2 max-w-4xl mx-auto">
+          <div className="flex-1 relative group">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Nhắn cho trợ lý..."
+              disabled={loading}
+              className="w-full bg-slate-100/80 dark:bg-slate-800/80 rounded-2xl px-5 py-3.5 text-[16px] text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all border-none"
+            />
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+              <Sparkles className={`h-4 w-4 transition-colors ${input.trim() ? 'text-emerald-500' : 'text-slate-300 dark:text-slate-600'}`} />
+            </div>
+          </div>
           <button
             type="submit"
             disabled={loading || !input.trim()}
-            className="w-12 h-12 min-w-[44px] min-h-[44px] rounded-full hoverboard-gradient text-white flex items-center justify-center shrink-0 disabled:opacity-50 transition-opacity touch-target"
+            className="w-12 h-12 rounded-2xl hoverboard-gradient text-white flex items-center justify-center shrink-0 disabled:opacity-40 transition-all active:scale-90 shadow-lg shadow-emerald-500/20 touch-target"
           >
             <Send className="h-5 w-5" />
           </button>
