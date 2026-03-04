@@ -13,7 +13,7 @@ interface Props {
 
 const SWIPE_THRESHOLD = 60
 
-export function SwipeableMealCard({ children, onDelete, className = '', mealId }: Props) {
+export function SwipeableMealCard({ children, onDelete, onEdit, className = '', mealId }: Props) {
     const [offset, setOffset] = useState(0)
     const [isDragging, setIsDragging] = useState(false)
     const [isOpen, setIsOpen] = useState(false)
@@ -32,8 +32,8 @@ export function SwipeableMealCard({ children, onDelete, className = '', mealId }
     const onDragMove = useCallback((clientX: number) => {
         if (!isDragging) return
         const delta = clientX - startX.current
-        // Allow swiping between -160 and 0
-        const newOffset = Math.min(0, Math.max(-160, startOffset.current + delta))
+        // Allow swiping between -100 (Delete) and 100 (Edit)
+        const newOffset = Math.min(100, Math.max(-100, startOffset.current + delta))
         setOffset(newOffset)
     }, [isDragging])
 
@@ -41,11 +41,17 @@ export function SwipeableMealCard({ children, onDelete, className = '', mealId }
         if (!isDragging) return
         setIsDragging(false)
 
-        // If we swiped left past threshold
+        // If we swiped left past threshold -> Delete (Right side)
         if (offset < -SWIPE_THRESHOLD) {
-            setOffset(-160) // Show both buttons
+            setOffset(-100)
             setIsOpen(true)
-        } else {
+        }
+        // If we swiped right past threshold -> Edit (Left side)
+        else if (offset > SWIPE_THRESHOLD) {
+            setOffset(100)
+            setIsOpen(true)
+        }
+        else {
             setOffset(0)
             setIsOpen(false)
         }
@@ -112,9 +118,8 @@ export function SwipeableMealCard({ children, onDelete, className = '', mealId }
             id={mealId ? `meal-${mealId}` : undefined}
             className={`relative overflow-hidden rounded-[2rem] group/swipe transition-all duration-500 ${className}`}
         >
-            {/* Buttons revealed on swipe */}
-            <div className="absolute inset-y-0 right-0 flex items-center justify-end w-[160px] rounded-r-[2rem] z-10 overflow-hidden">
-                {/* Edit Button */}
+            {/* Edit Button (Revealed on Swipe Right) - sits at LEFT */}
+            <div className="absolute inset-y-0 left-0 flex items-center justify-start w-[100px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-l-[2rem] z-10">
                 <button
                     onClick={(e) => {
                         e.stopPropagation()
@@ -122,22 +127,24 @@ export function SwipeableMealCard({ children, onDelete, className = '', mealId }
                         setIsOpen(false)
                         onEdit?.()
                     }}
-                    className="flex flex-col items-center justify-center h-full w-1/2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors active:bg-slate-200"
+                    className="flex flex-col items-center justify-center h-full w-full pl-2 gap-1 transition-colors active:bg-slate-200"
                 >
                     <div className="w-9 h-9 rounded-full bg-slate-200/50 dark:bg-slate-700/50 flex items-center justify-center mb-0.5">
                         <Pencil className="h-4.5 w-4.5" />
                     </div>
                     <span className="text-[10px] font-bold uppercase tracking-wider">Sửa</span>
                 </button>
+            </div>
 
-                {/* Delete Button */}
+            {/* Delete Button (Revealed on Swipe Left) - sits at RIGHT */}
+            <div className="absolute inset-y-0 right-0 flex items-center justify-end w-[100px] bg-red-600 dark:bg-red-500 rounded-r-[2rem] z-10">
                 <button
                     onClick={(e) => {
                         e.stopPropagation()
                         handleDelete()
                     }}
                     disabled={deleting}
-                    className="flex flex-col items-center justify-center h-full w-1/2 bg-red-600 dark:bg-red-500 text-white disabled:opacity-70 transition-colors active:bg-red-700"
+                    className="flex flex-col items-center justify-center h-full w-full pr-2 gap-1 text-white disabled:opacity-70 transition-colors active:bg-red-700"
                 >
                     {deleting ? (
                         <Loader2 className="h-5 w-5 animate-spin" />
