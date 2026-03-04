@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { deleteMeal, updateMealNutrition } from '@/app/actions/meals'
 import { Button } from '@/components/ui/button'
 import { Trash, Flame, Beef, Wheat, Droplets, Heart, Check, X as CloseIcon } from 'lucide-react'
-import { toast } from 'sonner'
+import { toast } from '@/components/toast'
 import { cn } from '@/lib/utils'
 
 interface MealCardProps {
