@@ -151,12 +151,8 @@ export function AIAssistantWidget() {
       })
       const data = await res.json()
 
-      if (!res.ok) {
-        const errorMsg = data?.error ?? 'Hệ thống bận.'
-        const details = data?.details ? ` (${data.details})` : ''
-        setMessages(prev => [...prev, { role: 'assistant', content: `${errorMsg}${details}` }])
-        return
-      }
+      const errorMsg = data?.error ?? 'Hệ thống AI đang bận, vui lòng thử lại sau.'
+      setMessages(prev => [...prev, { role: 'assistant', content: errorMsg }])
 
       const reply = data.reply ?? '...'
       const actionMatch = reply.match(/\[ACTION:(\w+):(\{[\s\S]*?\})\]/)

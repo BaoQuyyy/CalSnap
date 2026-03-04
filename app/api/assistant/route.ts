@@ -162,8 +162,8 @@ ${recentMeals?.map((m: any) => `[ID:${m.id}] ${m.food_name} (${m.logged_at}): ${
 
     if (message.includes('safety') || message.includes('blocked')) {
       return NextResponse.json(
-        { error: 'Phản hồi bị chặn bởi bộ lọc an toàn của AI.' },
-        { status: 500 }
+        { error: 'Lỗi hệ thống AI. Vui lòng thử lại sau ít phút.', details: errorDetail },
+        { status: 500 },
       )
     }
 
