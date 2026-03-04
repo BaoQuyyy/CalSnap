@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { deleteMeal } from '@/app/actions/meals'
 import { Button } from '@/components/ui/button'
 import { Trash, Flame, Beef, Wheat, Droplets, Heart } from 'lucide-react'
@@ -23,17 +23,20 @@ interface MealCardProps {
 
 export function MealCard({ meal, onToggleFavorite }: MealCardProps) {
     const [deleting, setDeleting] = useState(false)
+    const [highlight, setHighlight] = useState(false)
 
-    async function handleDelete() {
-        setDeleting(true)
-        const result = await deleteMeal(meal.id)
-        if (result?.error) {
-            toast.error(result.error)
-            setDeleting(false)
-        } else {
-            toast.success('Meal deleted')
+    useEffect(() => {
+        const handler = (e: Event) => {
+            const detail = (e as CustomEvent).detail
+            if (detail?.mealId === meal.id || (detail?.foodName && meal.food_name.toLowerCase().includes(detail.foodName.toLowerCase()))) {
+                setHighlight(true)
+                const timer = setTimeout(() => setHighlight(false), 2500)
+                return () => clearTimeout(timer)
+            }
         }
-    }
+        window.addEventListener('calsnap:meal-highlight', handler)
+        return () => window.removeEventListener('calsnap:meal-highlight', handler)
+    }, [meal.id, meal.food_name])
 
     const time = new Date(meal.created_at).toLocaleTimeString('en-US', {
         hour: 'numeric',
@@ -42,9 +45,11 @@ export function MealCard({ meal, onToggleFavorite }: MealCardProps) {
 
     return (
         <div
+            id={`meal-${meal.id}`}
             className={cn(
                 'glass-card rounded-[2rem] p-4 border border-white/40 transition-all duration-200',
-                deleting && 'opacity-50 pointer-events-none'
+                deleting && 'opacity-50 pointer-events-none',
+                highlight && 'magic-highlight scale-[1.02] z-10'
             )}
         >
             <div className="flex items-start justify-between gap-4">

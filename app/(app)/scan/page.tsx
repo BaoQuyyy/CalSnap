@@ -141,7 +141,20 @@ export default function ScanPage() {
             toast.error(res.error)
         } else {
             setSaved(true)
-            toast.success('Saved to your log!')
+            const mealId = (res as any).data?.id
+            toast.success('Đã lưu vào nhật ký!', {
+                onClick: () => {
+                    if (mealId) {
+                        router.push(`/log?highlight=${mealId}`)
+                    }
+                }
+            })
+            window.dispatchEvent(new CustomEvent('calsnap:meal-updated', {
+                detail: {
+                    date: new Date().toISOString().split('T')[0],
+                    mealId: mealId
+                }
+            }))
             setTimeout(() => router.push('/log'), 1500)
         }
     }
@@ -162,7 +175,7 @@ export default function ScanPage() {
     useEffect(() => {
         if (!result) return
         setScanTime((prev) => prev ?? new Date())
-        const timer = setTimeout(() => setImageVisible(false), 10 * 60 * 1000)
+        const timer = setTimeout(() => setImageVisible(false), 5 * 60 * 1000)
         return () => clearTimeout(timer)
     }, [result])
 
@@ -213,7 +226,7 @@ export default function ScanPage() {
                 imageData?: string
                 savedAt: string
             }
-            if ((Date.now() - new Date(data.savedAt).getTime()) / 3600000 > 24) {
+            if ((Date.now() - new Date(data.savedAt).getTime()) / 60000 > 5) {
                 window.localStorage.removeItem(LOCAL_SCAN_KEY); return
             }
             setResult(data.result)

@@ -20,7 +20,7 @@ export async function saveMeal(data: {
 
     const loggedAt = data.loggedAt ?? new Date().toISOString().split('T')[0]
 
-    const { error } = await supabase.from('meal_logs').insert({
+    const { data: record, error } = await supabase.from('meal_logs').insert({
         user_id: user.id,
         food_name: data.foodName,
         calories: data.calories,
@@ -29,7 +29,7 @@ export async function saveMeal(data: {
         fat: data.fat,
         image_url: data.imageUrl ?? null,
         logged_at: loggedAt,
-    } as never)
+    } as never).select().single()
 
     if (error) return { error: error.message }
 
@@ -38,7 +38,7 @@ export async function saveMeal(data: {
 
     revalidatePath('/log')
     revalidatePath('/')
-    return { success: true }
+    return { success: true, data: record }
 }
 
 export async function deleteMeal(id: string) {
@@ -100,7 +100,7 @@ export async function relogMeal(meal: {
 
     const today = new Date().toISOString().split('T')[0]
 
-    const { error } = await supabase.from('meal_logs').insert({
+    const { data: record, error } = await supabase.from('meal_logs').insert({
         user_id: user.id,
         food_name: meal.food_name,
         calories: meal.calories,
@@ -109,7 +109,7 @@ export async function relogMeal(meal: {
         fat: meal.fat,
         image_url: null,
         logged_at: today,
-    } as never)
+    } as never).select().single()
 
     if (error) return { error: error.message }
 
@@ -118,7 +118,7 @@ export async function relogMeal(meal: {
 
     revalidatePath('/log')
     revalidatePath('/')
-    return { success: true }
+    return { success: true, data: record }
 }
 
 // Toggle is_favorite cho 1 meal
@@ -172,7 +172,7 @@ export async function getWeeklyCalories() {
         grouped[d.toISOString().split('T')[0]] = 0
     }
 
-    ;(data as any[]).forEach((row) => {
+    ; (data as any[]).forEach((row) => {
         if (row.logged_at in grouped) grouped[row.logged_at] += row.calories
     })
 

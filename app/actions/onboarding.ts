@@ -19,8 +19,8 @@ function calculateFallbackPlan(data: OnboardingData) {
     const bmi = Math.round((data.weight_kg / (heightM ** 2)) * 10) / 10
     const bmi_category =
         bmi < 18.5 ? 'Underweight' :
-        bmi < 25 ? 'Normal' :
-        bmi < 30 ? 'Overweight' : 'Obese'
+            bmi < 25 ? 'Normal' :
+                bmi < 30 ? 'Overweight' : 'Obese'
 
     // Mifflin-St Jeor
     const bmr = data.gender === 'male'
@@ -39,8 +39,8 @@ function calculateFallbackPlan(data: OnboardingData) {
 
     const daily_calories =
         data.goal === 'lose_weight' ? tdee - 500 :
-        data.goal === 'gain_muscle' ? tdee + 300 :
-        tdee
+            data.goal === 'gain_muscle' ? tdee + 300 :
+                tdee
 
     const daily_protein_g = Math.round(data.weight_kg * 2)
     const daily_carbs_g = Math.round((daily_calories * 0.45) / 4)
@@ -135,7 +135,7 @@ Return ONLY a valid JSON object with this exact structure, no markdown, no expla
     } else {
         try {
             const geminiRes = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
                 {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

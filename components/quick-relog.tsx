@@ -38,6 +38,7 @@ export function QuickRelog({ recentMeals, onRelog }: QuickRelogProps) {
         {unique.map((meal) => (
           <button
             key={meal.id}
+            id={`meal-${meal.id}`}
             onClick={async () => {
               setLoading(meal.id)
               await onRelog(meal)

@@ -11,7 +11,7 @@ import { PageHeader } from '@/components/page-header'
 import { EmptyState } from '@/components/empty-state'
 import { MacroPill } from '@/components/macro-pill'
 import { DatePicker } from '@/components/date-picker'
-import { toast } from 'sonner'
+import { toast } from '@/components/toast'
 import { SwipeableMealCard } from '@/components/swipeable-meal-card'
 
 type Meal = {
@@ -28,13 +28,38 @@ type Meal = {
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
+import { useSearchParams, useRouter, usePathname } from 'next/navigation'
+
 export default function LogPage() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const pathname = usePathname()
   const today = new Date().toISOString().split('T')[0]
   const [date, setDate] = useState(today)
   const [meals, setMeals] = useState<Meal[]>([])
   const [recentMeals, setRecentMeals] = useState<Meal[]>([])
   const [loading, setLoading] = useState(true)
   const [showHint, setShowHint] = useState(false)
+
+  // Highlight effect
+  useEffect(() => {
+    const highlightId = searchParams.get('highlight')
+    if (highlightId && !loading && meals.length > 0) {
+      setTimeout(() => {
+        const element = document.getElementById(`meal-${highlightId}`)
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          element.classList.add('glow-highlight')
+          setTimeout(() => element.classList.remove('glow-highlight'), 3000)
+
+          // Cleanup URL without refreshing
+          const params = new URLSearchParams(searchParams.toString())
+          params.delete('highlight')
+          router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+        }
+      }, 500)
+    }
+  }, [searchParams, loading, meals, pathname, router])
 
   const dateObj = new Date(date + 'T12:00:00')
   const dayName = DAYS[dateObj.getDay()]
@@ -59,6 +84,29 @@ export default function LogPage() {
     })
   }, [])
 
+  // Real-time sync listener
+  useEffect(() => {
+    const handler = async (e: Event) => {
+      const detail = (e as CustomEvent).detail as { date?: string } | undefined
+      const targetDate = detail?.date || today
+
+      // If we are looking at the date that was updated, refresh the list
+      if (targetDate === date) {
+        const data = await getMealsForDate(date)
+        setMeals(data as Meal[])
+      }
+
+      // Also refresh recent meals if it was today
+      if (targetDate === today) {
+        const recent = await getMealsForDate('recent')
+        setRecentMeals(recent as Meal[])
+      }
+    }
+
+    window.addEventListener('calsnap:meal-updated', handler)
+    return () => window.removeEventListener('calsnap:meal-updated', handler)
+  }, [date, today])
+
   const totals = meals.reduce(
     (acc, m) => ({
       calories: acc.calories + m.calories,
@@ -72,6 +120,8 @@ export default function LogPage() {
   const handleRelog = async (meal: { food_name: string; calories: number; protein: number; carbs: number; fat: number }) => {
     await relogMeal(meal)
     toast.success(`Đã log lại: ${meal.food_name} (${meal.calories} kcal)`)
+    // Dispatch sync event
+    window.dispatchEvent(new CustomEvent('calsnap:meal-updated', { detail: { date: today } }))
     if (date === today) {
       const data = await getMealsForDate(today)
       setMeals(data as Meal[])
@@ -88,7 +138,7 @@ export default function LogPage() {
     if (willFavorite) {
       toast.success('Đã lưu yêu thích! Món này sẽ hiện đầu tiên khi log lại nhanh.')
     } else {
-      toast('Đã bỏ khỏi yêu thích')
+      toast.success('Đã bỏ khỏi yêu thích')
     }
   }
 
@@ -99,6 +149,8 @@ export default function LogPage() {
     } else {
       setMeals(prev => prev.filter(m => m.id !== mealId))
       toast.success(`Đã xóa: ${foodName}`)
+      // Dispatch sync event
+      window.dispatchEvent(new CustomEvent('calsnap:meal-updated', { detail: { date: date } }))
     }
   }
 
@@ -235,6 +287,7 @@ export default function LogPage() {
           meals.map((meal) => (
             <SwipeableMealCard
               key={meal.id}
+              mealId={meal.id}
               onDelete={() => handleDelete(meal.id, meal.food_name)}
               className="relative"
             >

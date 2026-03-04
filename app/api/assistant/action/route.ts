@@ -5,46 +5,94 @@ import { updateDailyAdherence, updateJourneyProgress } from '@/app/actions/adher
 export async function POST(req: NextRequest) {
   try {
     const { type, data } = await req.json()
+    console.log(`[ACTION] ${type}:`, JSON.stringify(data))
+
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    if (!user) {
+      console.error('[ACTION] Unauthorized')
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
     if (type === 'LOG_MEAL') {
       const today = new Date().toISOString().split('T')[0]
-      const { error } = await supabase.from('meal_logs').insert({
+      const calories = Math.round(Number(data.calories) || 0)
+      const protein = Math.round(Number(data.protein) || 0)
+      const carbs = Math.round(Number(data.carbs) || 0)
+      const fat = Math.round(Number(data.fat) || 0)
+
+      const { data: record, error } = await supabase.from('meal_logs').insert({
         user_id: user.id,
         food_name: data.foodName,
-        calories: data.calories,
-        protein: data.protein ?? 0,
-        carbs: data.carbs ?? 0,
-        fat: data.fat ?? 0,
+        calories,
+        protein,
+        carbs,
+        fat,
         logged_at: today,
-      })
-      if (error) throw error
-      return NextResponse.json({ success: true, action: 'logged' })
+      }).select().single()
+
+      if (error) {
+        console.error('[ACTION] LOG_MEAL error:', error)
+        throw error
+      }
+
+      await updateDailyAdherence(today)
+      await updateJourneyProgress()
+
+      return NextResponse.json({ success: true, action: 'logged', data: record })
     }
 
     if (type === 'UPDATE_MEAL') {
-      const { error } = await supabase.from('meal_logs')
+      const calories = Math.round(Number(data.calories) || 0)
+      const protein = Math.round(Number(data.protein) || 0)
+      const carbs = Math.round(Number(data.carbs) || 0)
+      const fat = Math.round(Number(data.fat) || 0)
+
+      const { data: record, error } = await supabase.from('meal_logs')
         .update({
           food_name: data.foodName,
-          calories: data.calories,
-          protein: data.protein ?? 0,
-          carbs: data.carbs ?? 0,
-          fat: data.fat ?? 0,
+          calories,
+          protein,
+          carbs,
+          fat,
         })
         .eq('id', data.mealId)
         .eq('user_id', user.id)
-      if (error) throw error
-      return NextResponse.json({ success: true, action: 'updated' })
+        .select()
+        .maybeSingle()
+
+      if (error) {
+        console.error('[ACTION] UPDATE_MEAL error:', error)
+        throw error
+      }
+      if (!record) return NextResponse.json({ error: 'Không tìm thấy bữa ăn để cập nhật.' }, { status: 404 })
+
+      const today = record.logged_at || new Date().toISOString().split('T')[0]
+      await updateDailyAdherence(today)
+      await updateJourneyProgress()
+
+      return NextResponse.json({ success: true, action: 'updated', data: record })
     }
 
     if (type === 'DELETE_MEAL') {
+      const { data: targetMeal } = await supabase.from('meal_logs').select('logged_at').eq('id', data.mealId).single()
+
       const { error } = await supabase.from('meal_logs')
         .delete()
         .eq('id', data.mealId)
         .eq('user_id', user.id)
-      if (error) throw error
+
+      if (error) {
+        console.error('[ACTION] DELETE_MEAL error:', error)
+        throw error
+      }
+
+      if (targetMeal) {
+        await updateDailyAdherence(targetMeal.logged_at)
+        await updateJourneyProgress()
+      }
+
       return NextResponse.json({ success: true, action: 'deleted' })
     }
 

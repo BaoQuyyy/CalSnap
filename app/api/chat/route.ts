@@ -127,7 +127,7 @@ Khi user nhắc đến việc ăn uống, hãy:
     }
 
     return NextResponse.json(
-      { error: 'Đã xảy ra lỗi trên hệ thống AI. Vui lòng thử lại sau.' },
+      { error: `Đã xảy ra lỗi trên hệ thống AI: ${message.slice(0, 500)}` },
       { status: 500 },
     )
   }

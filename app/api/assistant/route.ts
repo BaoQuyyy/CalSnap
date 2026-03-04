@@ -55,13 +55,18 @@ export async function POST(req: NextRequest) {
 
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Phiên đăng nhập hết hạn hoặc chưa được xác thực. Vui lòng tải lại trang (F5) hoặc đăng nhập lại.' },
+        { status: 401 }
+      )
+    }
 
     const today = new Date().toISOString().split('T')[0]
 
     const [{ data: profile }, { data: todayMeals }, { data: adherence }] = await Promise.all([
       supabase.from('profiles').select('*').eq('id', user.id).single(),
-      supabase.from('meal_logs').select('food_name, calories, protein, carbs, fat').eq('user_id', user.id).eq('logged_at', today),
+      supabase.from('meal_logs').select('id, food_name, calories, protein, carbs, fat').eq('user_id', user.id).eq('logged_at', today),
       supabase.from('plan_adherence').select('*').eq('user_id', user.id).eq('date', today).single(),
     ])
 
@@ -70,76 +75,29 @@ export async function POST(req: NextRequest) {
     const calorieGoal = plan?.daily_calories ?? profile?.daily_calorie_goal ?? 2000
     const caloriesLeft = calorieGoal - actualCalories
 
-    const systemPrompt = `Bạn là trợ lý dinh dưỡng AI cá nhân của CalSnap, nói chuyện nhẹ nhàng, niềm nở, luôn ưu tiên sức khoẻ và an toàn của người dùng. Bạn CHỈ trả lời các câu hỏi liên quan đến dinh dưỡng, ăn uống, sức khoẻ, luyện tập, thói quen sống lành mạnh. Nếu câu hỏi ngoài chủ đề (ví dụ: lập trình, tài chính, chuyện tình cảm, chính trị, v.v.) thì hãy từ chối khéo léo bằng tiếng Việt và gợi ý người dùng hỏi lại về dinh dưỡng/fitness.
+    const systemPrompt = `Bạn là chuyên gia dinh dưỡng AI của CalSnap. Phong thái chuyên nghiệp, điềm đạm, cực kỳ súc tích. Chỉ trả lời về dinh dưỡng và fitness.
 
-## DỮ LIỆU NGƯỜI DÙNG HÔM NAY (${today}):
-- Đã ăn: ${actualCalories} / ${calorieGoal} kcal (còn ${caloriesLeft} kcal)
-- Protein: ${adherence?.protein_actual ?? 0}g / ${plan?.daily_protein_g ?? 0}g
-- Carbs: ${adherence?.carbs_actual ?? 0}g / ${plan?.daily_carbs_g ?? 0}g  
-- Fat: ${adherence?.fat_actual ?? 0}g / ${plan?.daily_fat_g ?? 0}g
-- Streak: ${profile?.journey_streak ?? 0} ngày
+## QUY TẮC PHẢN HỒI (BẮT BUỘC):
+- Trả lời DƯỚI 50 TỪ. Ngắn gọn, đi thẳng vào vấn đề.
+- Tuyệt đối KHÔNG hiển thị [ID:...] hay bất kỳ mã kỹ thuật nào cho người dùng.
+- KHÔNG dùng dấu sao (**) để in đậm. Chỉ dùng văn bản thuần túy.
+- Dùng tiếng Việt chuyên nghiệp.
 
-## CÁC BỮA ĂN HÔM NAY:
-${todayMeals?.map((m: any, i: number) => `[ID:${m.id}] ${m.food_name}: ${m.calories} kcal (P:${m.protein}g C:${m.carbs}g F:${m.fat}g)`).join('\n') || '- Chưa có bữa nào'}
+## DỮ LIỆU HÔM NAY (${today}):
+- Calo: ${actualCalories}/${calorieGoal} kcal (còn ${caloriesLeft})
+- Macros: P:${adherence?.protein_actual ?? 0}g C:${adherence?.carbs_actual ?? 0}g F:${adherence?.fat_actual ?? 0}g
 
-## THÔNG TIN CÁ NHÂN:
-- Mục tiêu: ${profile?.goal === 'lose_weight' ? 'Giảm cân' : profile?.goal === 'gain_muscle' ? 'Tăng cơ' : 'Duy trì'}
-- Cân nặng: ${profile?.weight_kg ?? '?'}kg → mục tiêu ${profile?.target_weight_kg ?? '?'}kg
-${plan ? `- Plan: ${plan.daily_calories} kcal/ngày, ${plan.daily_protein_g}g protein, tập ${plan.weekly_workouts}x/tuần` : '- Chưa có plan'}
+## BỮA ĂN HÔM NAY:
+${todayMeals?.map((m: any) => `[ID:${m.id}] ${m.food_name}: ${m.calories} kcal (P:${m.protein}g C:${m.carbs}g F:${m.fat}g)`).join('\n') || '- Chưa có'}
 
-## CÁC HÀNH ĐỘNG BẠN CÓ THỰC HIỆN:
-Khi user nhắc đến việc ăn uống, hãy:
-1. Phân tích món ăn và số lượng
-2. Ước tính calories + macro (dựa trên suất ăn Việt Nam điển hình)
-3. Hỏi xác nhận nếu không chắc số lượng
-4. Thực hiện hành động bằng cách thêm vào CUỐI response:
+## HÀNH ĐỘNG (đặt ở CUỐI phản hồi):
+- Thêm: [ACTION:LOG_MEAL:{"foodName":"...","calories":...,"protein":...,"carbs":...,"fat":...}]
+- Sửa: [ACTION:UPDATE_MEAL:{"mealId":"ID_bữa","foodName":"...","calories":...,"protein":...,"carbs":...,"fat":...}]
+- Xoá: [ACTION:DELETE_MEAL:{"mealId":"ID_bữa"}]
+- Mục tiêu: [ACTION:UPDATE_GOAL:{"daily_calorie_goal":...}]
+- Nước: [ACTION:LOG_WATER:{"amount_ml":...}]
 
-### THÊM bữa ăn:
-[ACTION:LOG_MEAL:{"foodName":"Cơm tấm sườn","calories":720,"protein":35,"carbs":85,"fat":22,"quantity":1}]
-
-### THÊM NHIỀU món (ví dụ "2 dĩa cơm tấm"):
-[ACTION:LOG_MEAL:{"foodName":"Cơm tấm sườn","calories":1440,"protein":70,"carbs":170,"fat":44,"quantity":2}]
-
-### SỬA bữa ăn (cần meal ID):
-[ACTION:UPDATE_MEAL:{"mealId":"ID_CUA_BUA_AN","foodName":"Phở bò","calories":500,"protein":28,"carbs":55,"fat":12}]
-
-### XÓA bữa ăn (cần meal ID):
-[ACTION:DELETE_MEAL:{"mealId":"ID_CUA_BUA_AN","foodName":"Tên món"}]
-
-### CẬP NHẬT mục tiêu calo:
-[ACTION:UPDATE_GOAL:{"daily_calorie_goal":1800}]
-
-### LOG LƯỢNG NƯỚC UỐNG:
-- Khi user nói họ uống nước (ví dụ: "mình vừa uống thêm 2 chai nước suối", "uống thêm 500ml nước lọc"), hãy:
-  1) Ước lượng chính xác tổng ml nước (một chai thường ~500ml trừ khi user nói khác).
-  2) Trả lời giải thích lợi ích của việc uống nước, và cập nhật tiến độ nước theo plan.
-  3) Thêm ACTION ở CUỐI câu trả lời:
-[ACTION:LOG_WATER:{"amount_ml":1000}]
-
-### LƯU Ý VỀ MỤC TIÊU VÀ CHỈ SỐ:
-- Nếu người dùng đặt các mục tiêu hoặc chỉ số NGUY HIỂM (ví dụ: cân nặng mục tiêu < 40kg, giảm >1kg/tuần, mục tiêu calories < 1,000 kcal/ngày, BMI < 17 hoặc > 35, thay đổi rất đột ngột so với hiện tại), bạn KHÔNG cập nhật ngay mà:
-  1) Nhẹ nhàng hỏi lại: "Bạn chắc chắn chứ? Mục tiêu này có thể hơi cực đoan/không an toàn."
-  2) Đề xuất phạm vi an toàn hơn dựa trên dữ liệu hiện tại.
-  3) Chỉ khi người dùng khẳng định rõ ràng, mới thêm ACTION cập nhật (UPDATE_GOAL hoặc gợi ý cập nhật profile).
-
-## QUY TẮC QUAN TRỌNG:
-- Luôn dùng tiếng Việt thân thiện, tích cực, khuyến khích; tránh phán xét.
-- Khi user nói "tôi ăn X" → tự động log không cần hỏi nhiều, nhưng nếu thông tin mơ hồ thì hỏi lại 1–2 câu đơn giản để rõ hơn.
-- Khi user nói "tôi uống X" → hãy hiểu là log nước uống (nước lọc/nước suối/không calo), tính ra ml nước và dùng ACTION LOG_WATER.
-- Khi user nói "xóa" hoặc "sửa" → hỏi xác nhận trước rồi mới tạo ACTION.
-- Khi user thay đổi mục tiêu (cân nặng, calories, tần suất tập luyện, v.v.) theo hướng quá cực đoan, hãy HỎI LẠI NHẸ NHÀNG trước, giải thích ngắn gọn vì sao có thể không an toàn.
-- Ước tính macro dựa trên suất ăn Việt Nam chuẩn, và nhân calories theo số lượng (2 tô = 2x calories).
-- Sau khi log → nhận xét ngắn về tiến độ hôm nay, gợi ý nhẹ nhàng món/khẩu phần phù hợp với plan và sở thích (dùng thông tin các món người dùng hay ăn/thích nếu có).
-- KHÔNG bịa meal ID — chỉ dùng ID từ danh sách bữa ăn ở trên.
-- Nếu câu hỏi KHÔNG liên quan dinh dưỡng/sức khoẻ/luyện tập, hãy trả lời kiểu: "Mình chỉ có thể hỗ trợ bạn về ăn uống và luyện tập thôi, bạn thử hỏi mình về bữa ăn hoặc mục tiêu sức khoẻ nhé."
-- ĐỘ DÀI: Bạn PHẢI trả lời cực kỳ NGẮN GỌN, SÚC TÍCH (dưới 100 từ).
-- ĐỊNH DẠNG (CLEAN UI) - QUY TẮC BẮT BUỘC:
-  1. TUYỆT ĐỐI KHÔNG dùng dấu sao (** hoặc *) để in đậm hoặc in nghiêng bất kỳ từ nào (kể cả tên món ăn, con số, hay tiêu đề).
-  2. CHỈ dùng văn bản thuần túy.
-  3. Dùng duy nhất dấu gạch ngang (-) ở đầu dòng cho danh sách.
-  4. Ví dụ SAI: **Ức gà**: 165 kcal.
-  5. Ví dụ ĐÚNG: - Ức gà: 165 kcal.
-- KHÔNG hiển thị thông tin Streak (Chuỗi ngày) trong phần tóm tắt dinh dưỡng hằng ngày trừ khi người dùng hỏi trực tiếp.`
+Khi điều chỉnh → tìm bữa khớp nhất, tính lại theo tỷ lệ, dùng UPDATE_MEAL.`
 
     const genAI = new GoogleGenerativeAI(apiKey)
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
@@ -165,32 +123,48 @@ Khi user nhắc đến việc ăn uống, hãy:
     })
 
     const result = await chat.sendMessage(parts)
-    const reply = result.response.text()
+    const response = await result.response
+    const reply = response.text()
 
     return NextResponse.json({ reply })
   } catch (error: any) {
-    console.error('Assistant error:', error)
+    console.error('Assistant API Full Error:', error)
 
-    const message =
-      typeof error?.message === 'string' ? error.message.toLowerCase() : ''
+    // Help identify network/VPN issues
+    const errorDetail = error?.message || 'Unknown'
+    const errorStack = error?.stack || ''
+
+    const message = errorDetail.toLowerCase()
 
     if (
       message.includes('quota') ||
       message.includes('exceeded') ||
       message.includes('rate limit') ||
-      message.includes('429')
+      message.includes('429') ||
+      message.includes('resource_exhausted')
     ) {
       return NextResponse.json(
         {
           error:
             'Hệ thống AI đang quá tải hoặc đã vượt giới hạn trong thời gian ngắn. Vui lòng thử lại sau vài phút.',
+          details: message
         },
         { status: 429 },
       )
     }
 
+    if (message.includes('safety') || message.includes('blocked')) {
+      return NextResponse.json(
+        { error: 'Phản hồi bị chặn bởi bộ lọc an toàn của AI.' },
+        { status: 500 }
+      )
+    }
+
     return NextResponse.json(
-      { error: 'Đã xảy ra lỗi trên hệ thống AI. Vui lòng thử lại sau.' },
+      {
+        error: `Lỗi kết nối AI: ${errorDetail.slice(0, 500)}`,
+        suggestion: 'Bạn hãy kiểm tra lại kết nối mạng hoặc thử tắt VPN/Proxy nếu đang bật nhé.'
+      },
       { status: 500 },
     )
   }

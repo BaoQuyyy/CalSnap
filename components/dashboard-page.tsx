@@ -11,8 +11,9 @@ import { MacroPill } from '@/components/macro-pill'
 import type { Profile as DbProfile, FitnessPlan } from '@/lib/types'
 import { WeeklyChart } from '@/components/weekly-chart'
 import { QuickRelog } from '@/components/quick-relog'
+import { useSearchParams, usePathname, useRouter } from 'next/navigation'
 import { getMealsForDate, getWeeklyCalories, relogMeal } from '@/app/actions/meals'
-import { toast } from 'sonner'
+import { toast } from '@/components/toast'
 import { MonthlySummaryCard } from '@/components/monthly-summary-card'
 
 interface MealSummary { calories: number; protein: number; carbs: number; fat: number }
@@ -28,16 +29,28 @@ export default function DashboardPage() {
   const [exerciseCalories, setExerciseCalories] = useState(0)
   const [habitRefreshKey, setHabitRefreshKey] = useState(0)
   const [ringSize, setRingSize] = useState(180)
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const pathname = usePathname()
 
-  // Responsive ring size
+  // Highlight logic for cross-page jumps
   useEffect(() => {
-    const handleResize = () => {
-      setRingSize(window.innerWidth < 400 ? 150 : 180)
+    const highlightId = searchParams.get('highlight')
+    if (highlightId && profile && totals) {
+      const timer = setTimeout(() => {
+        const element = document.getElementById(`meal-${highlightId}`)
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          window.dispatchEvent(new CustomEvent('calsnap:meal-highlight', { detail: { mealId: highlightId } }))
+
+          const params = new URLSearchParams(searchParams.toString())
+          params.delete('highlight')
+          router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+        }
+      }, 500)
+      return () => clearTimeout(timer)
     }
-    handleResize()
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
+  }, [searchParams, profile, totals, pathname, router])
 
   const todayStr = new Date().toISOString().split('T')[0]
 
@@ -104,39 +117,80 @@ export default function DashboardPage() {
 
     window.addEventListener('calsnap:water-updated', handler as any)
 
-    const mealHandler = async (e: Event) => {
+    const habitHandler = async (e: Event) => {
       const detail = (e as CustomEvent).detail as { date?: string } | undefined
       if (detail?.date === date || !detail?.date) {
-        // Full refresh of profile, meals and habits
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+        const { data: habitsRow } = await supabase
+          .from('daily_habits')
+          .select('steps, water_ml, exercise_minutes, exercise_calories')
+          .eq('user_id', user.id)
+          .eq('date', date)
+          .maybeSingle()
+        setHabits((habitsRow as any) ?? null)
+        setExerciseCalories((habitsRow as any)?.exercise_calories ?? 0)
+        setHabitRefreshKey(k => k + 1)
+      }
+    }
+
+    const profileHandler = async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+      if (prof) setProfile(prof as DbProfile)
+      setHabitRefreshKey(k => k + 1)
+    }
+
+    const mealHandler = async (e: Event) => {
+      // Force refresh of everything for total consistency
+      setTimeout(async () => {
+        const detail = (e as CustomEvent).detail as { date?: string, mealId?: string } | undefined
+        const targetDate = detail?.date || date
+
         const supabase = createClient()
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return
 
+        // Fetch everything to ensure UI is in sync
         const [{ data: prof }, { data: meals }, { data: habitsRow }] = await Promise.all([
           supabase.from('profiles').select('*').eq('id', user.id).single(),
-          supabase.from('meal_logs').select('calories, protein, carbs, fat').eq('user_id', user.id).eq('logged_at', date),
-          supabase.from('daily_habits').select('steps, water_ml, exercise_minutes, exercise_calories').eq('user_id', user.id).eq('date', date).maybeSingle(),
+          supabase.from('meal_logs').select('calories, protein, carbs, fat').eq('user_id', user.id).eq('logged_at', targetDate),
+          supabase.from('daily_habits').select('steps, water_ml, exercise_minutes, exercise_calories').eq('user_id', user.id).eq('date', targetDate).maybeSingle(),
         ])
 
         if (prof) setProfile(prof as DbProfile)
-        const t = (meals as any[] | null)?.reduce(
-          (acc, m) => ({ calories: acc.calories + m.calories, protein: acc.protein + m.protein, carbs: acc.carbs + m.carbs, fat: acc.fat + m.fat }),
-          { calories: 0, protein: 0, carbs: 0, fat: 0 }
-        ) ?? { calories: 0, protein: 0, carbs: 0, fat: 0 }
-        setTotals(t)
-        setHabits((habitsRow as any) ?? null)
-        setExerciseCalories((habitsRow as any)?.exercise_calories ?? 0)
 
-        // Refresh weekly chart too
-        try { setWeeklyCalories((await getWeeklyCalories() as any[]) ?? []) } catch { }
+        // Update totals if on the current date
+        if (targetDate === date) {
+          const t = (meals as any[] | null)?.reduce(
+            (acc, m) => ({ calories: acc.calories + m.calories, protein: acc.protein + m.protein, carbs: acc.carbs + m.carbs, fat: acc.fat + m.fat }),
+            { calories: 0, protein: 0, carbs: 0, fat: 0 }
+          ) ?? { calories: 0, protein: 0, carbs: 0, fat: 0 }
+          setTotals(t)
+          setHabits((habitsRow as any) ?? null)
+          setExerciseCalories((habitsRow as any)?.exercise_calories ?? 0)
+        }
+
+        // Always refresh weekly chart to reflect changes
+        const weeklyData = await getWeeklyCalories()
+        if (weeklyData) setWeeklyCalories(weeklyData as any[])
+
+        // Trigger internal refreshes
         setHabitRefreshKey(k => k + 1)
-      }
+      }, 800) // Slightly longer delay to ensure all server side hooks finished
     }
     window.addEventListener('calsnap:meal-updated', mealHandler as any)
+    window.addEventListener('calsnap:habit-updated', habitHandler as any)
+    window.addEventListener('calsnap:profile-updated', profileHandler as any)
 
     return () => {
       window.removeEventListener('calsnap:water-updated', handler as any)
       window.removeEventListener('calsnap:meal-updated', mealHandler as any)
+      window.removeEventListener('calsnap:habit-updated', habitHandler as any)
+      window.removeEventListener('calsnap:profile-updated', profileHandler as any)
     }
   }, [date])
 
@@ -182,7 +236,21 @@ export default function DashboardPage() {
   const relogHandler = async (meal: any) => {
     const res = await relogMeal(meal)
     if ((res as any)?.error) { toast.error((res as any).error); return }
-    toast.success(`Đã log lại: ${meal.food_name} (${meal.calories} kcal)`)
+
+    const newMealId = (res as any).data?.id
+    toast.success(`Đã log lại: ${meal.food_name} (${meal.calories} kcal)`, {
+      onClick: () => {
+        if (newMealId) {
+          router.push(`/log?highlight=${newMealId}`)
+        }
+      }
+    })
+
+    // Dispatch sync event so dashboard refreshes all metrics
+    window.dispatchEvent(new CustomEvent('calsnap:meal-updated', {
+      detail: { date: new Date().toISOString().split('T')[0], mealId: newMealId }
+    }))
+
     if (date === todayStr) await refreshTodayData()
   }
 

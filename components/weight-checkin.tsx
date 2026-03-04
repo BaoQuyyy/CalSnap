@@ -46,8 +46,8 @@ export function WeightCheckin({
       setInput('')
       setShowInput(false)
       toast.success(`✅ Đã cập nhật cân nặng: ${kg}kg — plan dinh dưỡng đã được tính lại!`)
-      // Reload để dashboard hiện chỉ số mới
-      setTimeout(() => window.location.reload(), 1200)
+      // Dispatch sync event instead of hard reload
+      window.dispatchEvent(new CustomEvent('calsnap:profile-updated', { detail: { weight: kg } }))
     }
     setLoading(false)
   }

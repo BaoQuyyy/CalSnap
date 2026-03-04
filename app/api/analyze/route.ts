@@ -75,14 +75,15 @@ export async function POST(req: NextRequest) {
         // Text-only adjustment mode
         if ('textOnly' in body && body.textOnly) {
             const genAI = new GoogleGenerativeAI(apiKey)
-            const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
+            const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
 
             const result = await model.generateContent([
                 TEXT_PROMPT_PREFIX + body.foodNameHint,
             ])
 
-            const content = result.response.text()
-            console.log('[/api/analyze:textOnly] Gemini response:', content)
+            const response = await result.response
+            const content = response.text()
+            console.log('[/api/analyze:textOnly] Gemini success:', content)
 
             const jsonMatch = content?.match(/\{[\s\S]*\}/)
             if (!jsonMatch) {
@@ -148,8 +149,9 @@ export async function POST(req: NextRequest) {
             IMAGE_PROMPT,
         ])
 
-        const content = result.response.text()
-        console.log('[/api/analyze] Gemini response:', content)
+        const response = await result.response
+        const content = response.text()
+        console.log('[/api/analyze] Gemini success:', content)
 
         if (!content) {
             return NextResponse.json({ error: 'Khong nhan duoc phan hoi tu AI' }, { status: 500 })
@@ -184,17 +186,20 @@ export async function POST(req: NextRequest) {
                 confidence: confidence ?? 'medium',
             },
         })
-    } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Unknown error'
-        console.error('[/api/analyze] Error:', message)
+    } catch (err: any) {
+        console.error('[/api/analyze] CRITICAL ERROR:', err)
+        const message = err?.message || 'Unknown error'
 
         if (message.includes('API_KEY_INVALID') || message.includes('401')) {
-            return NextResponse.json({ error: 'Google AI API key khong hop le. Kiem tra lai GOOGLE_AI_API_KEY.' }, { status: 500 })
+            return NextResponse.json({ error: 'Google AI API key không hợp lệ.' }, { status: 500 })
         }
         if (message.includes('quota') || message.includes('429') || message.includes('RESOURCE_EXHAUSTED')) {
-            return NextResponse.json({ error: 'Da vuot quota Gemini. Vui long thu lai sau it phut.' }, { status: 500 })
+            return NextResponse.json({ error: 'Đã vượt giới hạn Gemini (15 yêu cầu/phút). Vui lòng chờ khoảng 1 phút rồi thử lại.' }, { status: 500 })
+        }
+        if (message.includes('safety') || message.includes('blocked')) {
+            return NextResponse.json({ error: 'Yêu cầu bị chặn bởi bộ lọc an toàn của AI. Thử lại với nội dung khác.' }, { status: 500 })
         }
 
-        return NextResponse.json({ error: `Loi AI: ${message}` }, { status: 500 })
+        return NextResponse.json({ error: `Lỗi AI (${message.slice(0, 50)}...): Vui lòng thử lại.` }, { status: 500 })
     }
 }

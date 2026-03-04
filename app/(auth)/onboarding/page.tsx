@@ -63,6 +63,10 @@ export default function OnboardingPage() {
     })
     setLoading(false)
     if ((result as any)?.error) { setError((result as any).error); setStep(2); return }
+
+    // Dispatch sync event for the new profile/plan
+    window.dispatchEvent(new CustomEvent('calsnap:profile-updated'))
+
     router.push('/fitness-plan')
   }
 
@@ -85,13 +89,12 @@ export default function OnboardingPage() {
               {[1, 2].map(dot => (
                 <div
                   key={dot}
-                  className={`h-2.5 flex-1 rounded-full transition-all duration-300 ${
-                    dot === step
+                  className={`h-2.5 flex-1 rounded-full transition-all duration-300 ${dot === step
                       ? 'bg-emerald-500'
                       : dot < step
                         ? 'bg-emerald-200'
                         : 'bg-slate-200'
-                  }`}
+                    }`}
                 />
               ))}
             </div>
@@ -113,9 +116,8 @@ export default function OnboardingPage() {
               <div className="grid grid-cols-2 gap-3">
                 {(['male', 'female'] as const).map(g => (
                   <button key={g} onClick={() => set('gender', g)}
-                    className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all font-semibold text-sm ${
-                      form.gender === g ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-white text-slate-600'
-                    }`}>
+                    className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all font-semibold text-sm ${form.gender === g ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-white text-slate-600'
+                      }`}>
                     <span className="text-2xl">{g === 'male' ? '👨' : '👩'}</span>
                     {g.charAt(0).toUpperCase() + g.slice(1)}
                   </button>
@@ -167,9 +169,8 @@ export default function OnboardingPage() {
             <div className="flex flex-col gap-3 mb-6">
               {goalOptions.map(g => (
                 <button key={g.value} onClick={() => set('goal', g.value)}
-                  className={`p-4 rounded-2xl border-2 flex items-center gap-4 transition-all text-left ${
-                    form.goal === g.value ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 bg-white'
-                  }`}>
+                  className={`p-4 rounded-2xl border-2 flex items-center gap-4 transition-all text-left ${form.goal === g.value ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 bg-white'
+                    }`}>
                   <span className="text-3xl">{g.icon}</span>
                   <div>
                     <p className="font-bold text-slate-800">{g.label}</p>
@@ -197,9 +198,8 @@ export default function OnboardingPage() {
               <div className="flex flex-wrap gap-2">
                 {activityOptions.map(a => (
                   <button key={a.value} onClick={() => set('activity_level', a.value)} title={a.desc}
-                    className={`px-4 py-2 rounded-2xl text-sm font-semibold transition-all border-2 ${
-                      form.activity_level === a.value ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-white text-slate-600 border-slate-200'
-                    }`}>
+                    className={`px-4 py-2 rounded-2xl text-sm font-semibold transition-all border-2 ${form.activity_level === a.value ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-white text-slate-600 border-slate-200'
+                      }`}>
                     {a.label}
                   </button>
                 ))}
@@ -246,7 +246,7 @@ export default function OnboardingPage() {
               Xong là chuyển ngay sang trang tóm tắt kế hoạch.
             </p>
             <div className="flex gap-1.5 mt-8">
-              {[0,1,2].map(i => (
+              {[0, 1, 2].map(i => (
                 <div key={i} className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
               ))}
             </div>

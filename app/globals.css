@@ -341,3 +341,23 @@ body {
 .dark [class~='bg-white']:not([class*='dark:bg-']) {
   background-color: rgba(30, 41, 59, 0.8);
 }
+
+/* ── Magic Highlight for Jump-to-Change ── */
+@keyframes magic-glow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6);
+  }
+
+  40% {
+    box-shadow: 0 0 20px 6px rgba(34, 197, 94, 0.4);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+  }
+}
+
+.magic-highlight {
+  animation: magic-glow 2.5s ease-out;
+  border-color: rgba(34, 197, 94, 0.5) !important;
+}

@@ -3,6 +3,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Sparkles, Send, Trash } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { toast } from '@/components/toast'
 
 type Message = { role: 'user' | 'assistant'; content: string; timestamp: string }
@@ -54,6 +55,8 @@ export default function ChatPage() {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [hydrated, setHydrated] = useState(false)
+  const [pendingAction, setPendingAction] = useState<{ type: string; data: any; messageIndex: number } | null>(null)
+  const router = useRouter()
   const scrollRef = useRef<HTMLDivElement>(null)
 
   // Hydrate từ localStorage chỉ 1 lần sau mount
@@ -110,66 +113,106 @@ export default function ChatPage() {
           ? data.reply
           : 'Xin lỗi, hiện tại tôi không thể trả lời. Bạn thử lại sau nhé.'
 
-      // Parse ACTION tags giống FloatingAIAssistant
-      const actionMatches = rawReply.matchAll(/\[ACTION:(\w+):(\{.*?\})\]/g)
-      let cleanReply = rawReply.replace(/\[ACTION:.*?\]/g, '').trim()
+      const reply = data.reply ?? 'Mình chưa hiểu ý bạn lắm.'
+      const actionMatch = reply.match(/\[ACTION:(\w+):(\{[\s\S]*?\})\]/)
+      // Strip both ACTIONS and internal IDs [ID:...]
+      let cleanReply = reply
+        .replace(/\[ACTION:[\s\S]*?\]/g, '')
+        .replace(/\[ID:[^\]]+\]/gi, '')
+        .trim()
 
-      for (const match of actionMatches) {
-        const actionType = match[1]
+      if (actionMatch) {
         try {
-          const actionData = JSON.parse(match[2])
+          const type = actionMatch[1]
+          const actionData = JSON.parse(actionMatch[2])
 
-          const actionRes = await fetch('/api/assistant/action', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ type: actionType, data: actionData }),
-          })
-          const ok = actionRes.ok
-          const json = ok ? await actionRes.json().catch(() => null) : null
-
-          if (actionType === 'LOG_MEAL') {
-            cleanReply += `\n\n✅ Đã log: ${actionData.foodName} (${actionData.calories} kcal)`
-            if (ok) toast.success(`Đã thêm bữa ăn: ${actionData.foodName}`)
-          } else if (actionType === 'UPDATE_MEAL') {
-            cleanReply += `\n\n✏️ Đã cập nhật: ${actionData.foodName}`
-            if (ok) toast.success(`Đã cập nhật bữa ăn: ${actionData.foodName}`)
-          } else if (actionType === 'DELETE_MEAL') {
-            cleanReply += `\n\n🗑️ Đã xóa: ${actionData.foodName}`
-            if (ok) toast.success(`Đã xoá bữa ăn: ${actionData.foodName}`)
-          } else if (actionType === 'UPDATE_GOAL') {
-            cleanReply += `\n\n🎯 Đã cập nhật mục tiêu: ${actionData.daily_calorie_goal} kcal/ngày`
-            if (ok) toast.success(`Mục tiêu mới: ${actionData.daily_calorie_goal} kcal/ngày`)
-          } else if (actionType === 'LOG_WATER') {
-            const total = json?.total as number | undefined
-            cleanReply += `\n\n💧 Đã ghi nhận thêm ${actionData.amount_ml}ml nước${typeof total === 'number' ? ` (tổng hôm nay ~${(total / 1000).toFixed(1)}L)` : ''
-              }`
-            if (ok) toast.success('Đã cập nhật lượng nước hôm nay')
-            if (ok && typeof window !== 'undefined') {
-              window.dispatchEvent(
-                new CustomEvent('calsnap:water-updated', {
-                  detail: { date: new Date().toISOString().split('T')[0], water_ml: total ?? null },
-                })
-              )
-            }
+          if (type === 'DELETE_MEAL') {
+            const msgIdx = messages.length + 1
+            setPendingAction({ type, data: actionData, messageIndex: msgIdx })
+            setMessages(prev => [...prev, {
+              role: 'assistant',
+              content: cleanReply || `Xác nhận xóa bữa ${actionData.foodName}?`,
+              timestamp: new Date().toISOString()
+            }])
+          } else {
+            await handleAction(type, actionData)
+            setMessages(prev => [...prev, {
+              role: 'assistant',
+              content: cleanReply,
+              timestamp: new Date().toISOString()
+            }])
           }
-        } catch {
-          // Nếu ACTION lỗi parse / gọi API, bỏ qua và vẫn hiển thị phần text còn lại
+        } catch (err) {
+          console.error("Failed to parse AI action:", err)
+          setMessages(prev => [...prev, {
+            role: 'assistant',
+            content: cleanReply,
+            timestamp: new Date().toISOString()
+          }])
         }
+      } else {
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: cleanReply,
+          timestamp: new Date().toISOString()
+        } as Message])
       }
-
-      const assistantMsg: Message = {
-        role: 'assistant',
-        content: cleanReply || rawReply,
-        timestamp: new Date().toISOString(),
-      }
-      setMessages((m) => [...m, assistantMsg])
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Đã xảy ra lỗi, vui lòng thử lại.'
-      toast.error(msg)
+      toast.error(err instanceof Error ? err.message : 'Lỗi kết nối.')
     } finally {
       setLoading(false)
     }
   }, [loading, messages])
+
+  const handleAction = async (type: string, data: any) => {
+    setLoading(true)
+    try {
+      const res = await fetch('/api/assistant/action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, data }),
+      })
+      const dataJson = await res.json()
+      if (res.ok) {
+        triggerHaptic('success')
+        const record = dataJson?.data
+        const targetId = record?.id || data.mealId
+        const targetDate = record?.logged_at || new Date().toISOString().split('T')[0]
+
+        toast.success('Hành động hoàn tất!', {
+          onClick: () => {
+            if (targetId) {
+              router.push(`/log?highlight=${targetId}`)
+            }
+          }
+        })
+        // Dispatch sync event with data for robust sync
+        window.dispatchEvent(new CustomEvent('calsnap:meal-updated', {
+          detail: {
+            date: targetDate,
+            mealId: targetId
+          }
+        }))
+      } else {
+        const errorData = await res.json().catch(() => ({}))
+        console.error("Action error detail:", errorData)
+        toast.error('Không thể thực hiện yêu cầu.')
+      }
+    } catch (err) {
+      console.error("Action error:", err)
+      toast.error('Lỗi thực hiện yêu cầu.')
+    } finally {
+      setLoading(false)
+      setPendingAction(null)
+    }
+  }
+
+  const triggerHaptic = (style: 'light' | 'medium' | 'success' = 'light') => {
+    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+      if (style === 'success') navigator.vibrate([10, 30, 10])
+      else navigator.vibrate(10)
+    }
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -177,8 +220,11 @@ export default function ChatPage() {
   }
 
   const clearChat = () => {
-    setMessages([])
-    if (typeof window !== 'undefined') localStorage.removeItem(STORAGE_KEY)
+    if (confirm('Xóa lịch sử chat?')) {
+      setMessages([])
+      if (typeof window !== 'undefined') localStorage.removeItem(STORAGE_KEY)
+      triggerHaptic('medium')
+    }
   }
 
   // Parse markdown: **bold**, *italic*, lists, newlines
@@ -284,16 +330,36 @@ export default function ChatPage() {
         )}
 
         {messages.map((m, i) => (
-          <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[80%] p-4 rounded-[1.5rem] text-sm ${m.role === 'user'
+          <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
+            <div className={`max-w-[85%] p-4 rounded-[1.5rem] text-sm break-words break-all ${m.role === 'user'
               ? 'hoverboard-gradient text-white rounded-tr-sm'
               : 'glass-card rounded-tl-sm'
               }`}>
               {m.role === 'assistant' ? (
-                <p
-                  className="leading-relaxed text-slate-800 dark:text-slate-100/90 [&_strong]:font-bold [&_strong]:text-current [&_em]:italic [&_em]:text-current [&_ol]:my-2 [&_ul]:my-2 [&_li]:leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: renderContent(m.content) }}
-                />
+                <>
+                  <div
+                    className="leading-relaxed text-slate-800 dark:text-slate-100/90 [&_strong]:font-bold [&_strong]:text-current [&_em]:italic [&_em]:text-current [&_ol]:my-2 [&_ul]:my-2 [&_li]:leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: renderContent(m.content) }}
+                  />
+
+                  {/* Confirmation Buttons for DELETE */}
+                  {pendingAction?.messageIndex === i && (
+                    <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-200 dark:border-slate-700/50">
+                      <button
+                        onClick={() => handleAction(pendingAction.type, pendingAction.data)}
+                        className="px-4 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 text-white text-xs font-bold transition-all active:scale-95"
+                      >
+                        Xác nhận xóa
+                      </button>
+                      <button
+                        onClick={() => setPendingAction(null)}
+                        className="px-4 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 text-xs font-bold transition-all active:scale-95"
+                      >
+                        Hủy
+                      </button>
+                    </div>
+                  )}
+                </>
               ) : (
                 <p className="whitespace-pre-wrap leading-relaxed">{m.content}</p>
               )}
@@ -305,12 +371,15 @@ export default function ChatPage() {
         ))}
 
         {loading && (
-          <div className="flex justify-start">
-            <div className="glass-card p-4 rounded-[1.5rem] rounded-tl-sm">
-              <div className="flex gap-1">
-                <span className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <span className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <span className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+          <div className="flex justify-start items-end gap-2">
+            <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center animate-pulse">
+              <Sparkles size={14} className="text-emerald-500" />
+            </div>
+            <div className="glass-card px-4 py-3 rounded-[1.5rem] rounded-tl-sm flex items-center justify-center">
+              <div className="typing-container">
+                <div className="typing-dot" style={{ animationDelay: '0s' }} />
+                <div className="typing-dot" style={{ animationDelay: '0.2s' }} />
+                <div className="typing-dot" style={{ animationDelay: '0.4s' }} />
               </div>
             </div>
           </div>

@@ -1,66 +1,123 @@
 'use client'
 
-import { useRef, useState, useCallback } from 'react'
+import { useRef, useState, useCallback, useEffect } from 'react'
 import { Trash, Loader2 } from 'lucide-react'
 
 interface Props {
     children: React.ReactNode
     onDelete: () => void | Promise<void>
     className?: string
+    mealId?: string
 }
 
-const SWIPE_THRESHOLD = 60 // px to reveal the delete button
+const SWIPE_THRESHOLD = 60
 
-export function SwipeableMealCard({ children, onDelete, className = '' }: Props) {
+export function SwipeableMealCard({ children, onDelete, className = '', mealId }: Props) {
     const [offset, setOffset] = useState(0)
     const [isDragging, setIsDragging] = useState(false)
     const [isOpen, setIsOpen] = useState(false)
     const [deleting, setDeleting] = useState(false)
     const startX = useRef(0)
     const startOffset = useRef(0)
+    const cardRef = useRef<HTMLDivElement>(null)
 
-    const handleTouchStart = useCallback((e: React.TouchEvent) => {
-        startX.current = e.touches[0].clientX
+    // ── Shared drag logic ──
+    const onDragStart = useCallback((clientX: number) => {
+        startX.current = clientX
         startOffset.current = offset
         setIsDragging(true)
     }, [offset])
 
-    const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    const onDragMove = useCallback((clientX: number) => {
         if (!isDragging) return
-        const delta = e.touches[0].clientX - startX.current
+        const delta = clientX - startX.current
+        // Allow swiping between -120 and 0
         const newOffset = Math.min(0, Math.max(-120, startOffset.current + delta))
         setOffset(newOffset)
     }, [isDragging])
 
-    const handleTouchEnd = useCallback(() => {
+    const onDragEnd = useCallback(() => {
+        if (!isDragging) return
         setIsDragging(false)
+
+        // If we swiped left past threshold OR we were open and didn't swipe right enough
         if (offset < -SWIPE_THRESHOLD) {
-            setOffset(-100) // Increase reveal width for better visibility
+            setOffset(-100)
             setIsOpen(true)
         } else {
             setOffset(0)
             setIsOpen(false)
         }
-    }, [offset])
+    }, [isDragging, offset])
+
+    // ── Touch events (Mobile) ──
+    const handleTouchStart = useCallback((e: React.TouchEvent) => {
+        onDragStart(e.touches[0].clientX)
+    }, [onDragStart])
+
+    const handleTouchMove = useCallback((e: React.TouchEvent) => {
+        onDragMove(e.touches[0].clientX)
+    }, [onDragMove])
+
+    const handleTouchEnd = useCallback(() => {
+        onDragEnd()
+    }, [onDragEnd])
+
+    // ── Mouse events (PC) ──
+    const handleMouseDown = useCallback((e: React.MouseEvent) => {
+        // Only trigger on left click
+        if (e.button !== 0) return
+        onDragStart(e.clientX)
+    }, [onDragStart])
+
+    useEffect(() => {
+        if (!isDragging) return
+
+        const handleMouseMove = (e: MouseEvent) => {
+            onDragMove(e.clientX)
+        }
+        const handleMouseUp = () => {
+            onDragEnd()
+        }
+
+        window.addEventListener('mousemove', handleMouseMove)
+        window.addEventListener('mouseup', handleMouseUp)
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove)
+            window.removeEventListener('mouseup', handleMouseUp)
+        }
+    }, [isDragging, onDragMove, onDragEnd])
 
     const handleDelete = async () => {
         if (deleting) return
         setDeleting(true)
-        await onDelete()
-        setDeleting(false)
+        try {
+            await onDelete()
+        } finally {
+            setDeleting(false)
+        }
     }
 
-    const close = () => {
-        setOffset(0)
-        setIsOpen(false)
+    // Close button if user clicks the card while it's open (and not dragging)
+    const handleCardClick = (e: React.MouseEvent) => {
+        if (isOpen && !isDragging) {
+            setOffset(0)
+            setIsOpen(false)
+        }
     }
 
     return (
-        <div className={`relative overflow-hidden rounded-[2rem] group/swipe ${className}`}>
-            {/* Delete button revealed on swipe - Increased width and Z-index */}
+        <div
+            id={mealId ? `meal-${mealId}` : undefined}
+            className={`relative overflow-hidden rounded-[2rem] group/swipe transition-all duration-500 ${className}`}
+        >
+            {/* Delete button revealed on swipe — sits at z-10 */}
             <div className="absolute inset-y-0 right-0 flex items-center justify-end w-[100px] bg-red-600 dark:bg-red-500 rounded-r-[2rem] z-10">
                 <button
-                    onClick={handleDelete}
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        handleDelete()
+                    }}
                     disabled={deleting}
                     aria-label="Xóa bữa ăn"
                     className="flex flex-col items-center justify-center h-full w-full pr-2 gap-1 text-white disabled:opacity-70 transition-colors active:bg-red-700"
@@ -78,22 +135,31 @@ export function SwipeableMealCard({ children, onDelete, className = '' }: Props)
                 </button>
             </div>
 
-            {/* Overlay to close when tapping outside */}
+            {/* Hidden closing overlay — now behind the card so it doesn't block dragging */}
             {isOpen && (
                 <div
-                    className="absolute inset-0 z-30"
-                    style={{ right: 100 }}
-                    onClick={close}
+                    className="absolute inset-0 z-5"
+                    onClick={() => {
+                        setOffset(0)
+                        setIsOpen(false)
+                    }}
                 />
             )}
 
-            {/* Swipeable card - Increased Z-index to stay above delete but below FAB */}
+            {/* Swipeable card content — sits at z-20. Supports both touch & mouse drag. */}
             <div
-                className={`relative z-20 ${isDragging ? '' : 'transition-transform duration-300 var(--ios-bezier)'}`}
-                style={{ transform: `translateX(${offset}px)` }}
+                ref={cardRef}
+                onClick={handleCardClick}
+                className={`relative z-20 select-none ${isDragging ? '' : 'transition-transform duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]'}`}
+                style={{
+                    transform: `translateX(${offset}px)`,
+                    cursor: isDragging ? 'grabbing' : isOpen ? 'pointer' : 'grab',
+                    touchAction: 'pan-y' // Prevent browser back/forward swipe while dragging horizontally
+                }}
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
+                onMouseDown={handleMouseDown}
             >
                 {children}
             </div>

@@ -52,7 +52,11 @@ export function HabitCards({ date, initialHabits, onUpdate, className }: HabitCa
     setEditingSteps(false)
     const res = await upsertSteps(date, val)
     if (res.error) toast.error(res.error)
-    else { setSteps(val); onUpdate?.() }
+    else {
+      setSteps(val);
+      onUpdate?.();
+      window.dispatchEvent(new CustomEvent('calsnap:habit-updated', { detail: { date } }))
+    }
   }
 
   const handleSaveExercise = async () => {
@@ -66,20 +70,29 @@ export function HabitCards({ date, initialHabits, onUpdate, className }: HabitCa
     setExerciseCalories(newCal)
     setExMinutes('')
     onUpdate?.(newCal)
+    window.dispatchEvent(new CustomEvent('calsnap:habit-updated', { detail: { date } }))
   }
 
   const addSteps = async (s: number) => {
     const newVal = steps + s
     const res = await upsertSteps(date, newVal)
     if (res.error) toast.error(res.error)
-    else { setSteps(newVal); onUpdate?.() }
+    else {
+      setSteps(newVal);
+      onUpdate?.();
+      window.dispatchEvent(new CustomEvent('calsnap:habit-updated', { detail: { date } }))
+    }
   }
 
   const addWater = async (ml: number) => {
     const newMl = Math.max(0, waterMl + ml)
     const res = await upsertWater(date, newMl)
     if (res.error) toast.error(res.error)
-    else { setWaterMl(newMl); onUpdate?.() }
+    else {
+      setWaterMl(newMl);
+      onUpdate?.();
+      window.dispatchEvent(new CustomEvent('calsnap:water-updated', { detail: { date, water_ml: newMl } }))
+    }
   }
 
   return (
@@ -151,7 +164,11 @@ export function HabitCards({ date, initialHabits, onUpdate, className }: HabitCa
                     const newMl = newGlasses * GLASS_ML
                     const res = await upsertWater(date, newMl)
                     if (res.error) toast.error(res.error)
-                    else { setWaterMl(newMl); onUpdate?.() }
+                    else {
+                      setWaterMl(newMl);
+                      onUpdate?.();
+                      window.dispatchEvent(new CustomEvent('calsnap:water-updated', { detail: { date, water_ml: newMl } }))
+                    }
                   }}
                   className={`flex-1 h-2 rounded-full transition-all ${i < waterGlasses ? 'bg-blue-400' : 'bg-slate-200 dark:bg-slate-700'}`}
                 />
