@@ -3,7 +3,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Sparkles, Send, Trash } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from '@/components/toast'
 
@@ -58,6 +58,7 @@ export default function ChatPage() {
   const [hydrated, setHydrated] = useState(false)
   const [pendingAction, setPendingAction] = useState<{ type: string; data: any; messageIndex: number } | null>(null)
   const router = useRouter()
+  const pathname = usePathname()
   const scrollRef = useRef<HTMLDivElement>(null)
 
   // Hydrate từ localStorage chỉ 1 lần sau mount
@@ -309,7 +310,10 @@ export default function ChatPage() {
   if (pathname === '/chat') return null
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-3.5rem)] md:h-[calc(100vh-4rem)] w-full max-w-2xl mx-auto overflow-hidden bg-slate-50/50 dark:bg-slate-950/50 backdrop-blur-3xl animate-in fade-in duration-500">
+    <div className="fixed inset-0 top-14 md:top-16 bottom-[4.5rem] md:bottom-0 left-0 right-0 z-[40] md:max-w-2xl md:mx-auto bg-slate-50 dark:bg-slate-950 flex flex-col overflow-hidden animate-in fade-in duration-300">
+
+      {/* Background Decor */}
+      <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/5 via-transparent to-transparent pointer-events-none" />
 
       {/* Header - Fixed Top */}
       <div className="ios-blur z-30 px-6 py-4 flex items-center justify-between border-b border-slate-200/50 dark:border-slate-800/50 bg-white/70 dark:bg-slate-900/70 shrink-0">
