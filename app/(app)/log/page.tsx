@@ -110,10 +110,10 @@ export default function LogPage() {
 
   const totals = meals.reduce(
     (acc, m) => ({
-      calories: acc.calories + m.calories,
-      protein: acc.protein + m.protein,
-      carbs: acc.carbs + m.carbs,
-      fat: acc.fat + m.fat,
+      calories: acc.calories + (m.calories || 0),
+      protein: acc.protein + (m.protein || 0),
+      carbs: acc.carbs + (m.carbs || 0),
+      fat: acc.fat + (m.fats || 0),
     }),
     { calories: 0, protein: 0, carbs: 0, fat: 0 }
   )

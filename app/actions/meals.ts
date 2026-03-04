@@ -26,7 +26,7 @@ export async function saveMeal(data: {
         calories: data.calories,
         protein: data.protein,
         carbs: data.carbs,
-        fat: data.fat,
+        fats: data.fat,
         image_url: data.imageUrl ?? null,
         logged_at: loggedAt,
     } as never).select().maybeSingle()
@@ -106,7 +106,7 @@ export async function relogMeal(meal: {
         calories: meal.calories,
         protein: meal.protein,
         carbs: meal.carbs,
-        fat: meal.fat,
+        fats: meal.fat,
         image_url: null,
         logged_at: today,
     } as never).select().maybeSingle()
