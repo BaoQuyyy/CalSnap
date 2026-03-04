@@ -44,6 +44,13 @@ export async function POST(req: NextRequest) {
     }
 
     if (type === 'UPDATE_MEAL') {
+      let mealId = data.mealId
+      // Sanitization: Remove [ID:...] or ID: prefixes
+      if (typeof mealId === 'string') {
+        mealId = mealId.replace(/^\[?ID:/i, '').replace(/\]$/, '').trim()
+      }
+      console.log(`[ACTION] Sanitized ID: "${mealId}"`)
+
       const calories = Math.round(Number(data.calories) || 0)
       const protein = Math.round(Number(data.protein) || 0)
       const carbs = Math.round(Number(data.carbs) || 0)
@@ -57,7 +64,7 @@ export async function POST(req: NextRequest) {
           carbs,
           fat,
         })
-        .eq('id', data.mealId)
+        .eq('id', mealId)
         .eq('user_id', user.id)
         .select()
         .maybeSingle()

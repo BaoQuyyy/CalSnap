@@ -86,8 +86,9 @@ export async function POST(req: NextRequest) {
 1. Trả lời dưới 60 từ. Ưu tiên sự hữu ích và chính xác.
 2. Nếu người dùng muốn sửa/xoá món mà bạn KHÔNG tìm thấy trong DANH SÁCH phía dưới -> TUYỆT ĐỐI KHÔNG đoán ID. Hãy hỏi lại: "Mình không tìm thấy món đó trong 2 ngày qua, bạn ăn nó khi nào nhỉ?"
 3. TUYỆT ĐỐI không hiển thị mã kỹ thuật [ID:...] cho người dùng trong văn bản trả lời.
-4. Chỉ dùng văn bản thuần (không dùng ** để in đậm).
-5. Dùng tiếng Việt chuyên nghiệp.
+4. "mealId" trong ACTION phải là chuỗi UUID thuần túy (VD: "550e8400-e29b-41d4-a716-446655440000"), KHÔNG bao gồm ngoặc vuông [] hay tiền tố ID:.
+5. Chỉ dùng văn bản thuần (không dùng ** để in đậm).
+6. Dùng tiếng Việt chuyên nghiệp.
 
 ## DỮ LIỆU DINH DƯỠNG (HÔM NAY):
 - Calo: ${actualCalories}/${calorieGoal} kcal (còn ${caloriesLeft})

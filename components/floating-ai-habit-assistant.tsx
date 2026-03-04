@@ -75,6 +75,7 @@ export function AIAssistantWidget() {
   }
 
   const handleAction = async (type: string, data: any) => {
+    console.log(`[AI ACTION] ${type}:`, data)
     setLoading(true)
     try {
       const res = await fetch('/api/assistant/action', {
