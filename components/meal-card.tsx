@@ -75,8 +75,14 @@ export function MealCard({ meal, onToggleFavorite }: MealCardProps) {
     const saveEdit = async () => {
         if (!editingField || isSaving) return
 
+        const numericValue = Math.round(Number(editValue))
+        if (isNaN(numericValue)) {
+            toast.error('Vui lòng nhập số hợp lệ')
+            return
+        }
+
         setIsSaving(true)
-        const numericValue = Math.round(Number(editValue) || 0)
+        console.log(`[Edit] Updating ${editingField} for meal ${meal.id} to ${numericValue}`)
 
         try {
             const res = await updateMealNutrition(meal.id, {
@@ -84,17 +90,22 @@ export function MealCard({ meal, onToggleFavorite }: MealCardProps) {
             })
 
             if (res.success) {
+                console.log('[Edit] Success:', res.data)
                 triggerHaptic()
                 setEditingField(null)
+                toast.success('Đã cập nhật số liệu! ✨')
+
                 // Notify parent to refresh totals with accurate date
                 window.dispatchEvent(new CustomEvent('calsnap:meal-updated', {
                     detail: { date: meal.logged_at }
                 }))
             } else {
-                toast.error('Không thể cập nhật')
+                console.error('[Edit] Error:', res.error)
+                toast.error(res.error || 'Không thể cập nhật')
             }
-        } catch (err) {
-            toast.error('Lỗi kết nối')
+        } catch (err: any) {
+            console.error('[Edit] Exception:', err)
+            toast.error('Lỗi kết nối hoặc hệ thống')
         } finally {
             setIsSaving(false)
         }
@@ -139,40 +150,43 @@ export function MealCard({ meal, onToggleFavorite }: MealCardProps) {
                     </div>
                     <div className="flex items-center gap-3 flex-wrap">
                         {editingField === 'calories' ? (
-                            <div className="flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg px-1 py-0.5 border border-emerald-200 dark:border-emerald-800 animate-in fade-in zoom-in-95 duration-200">
+                            <div className="flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl px-2 py-1 border border-emerald-200 dark:border-emerald-800/50 animate-in fade-in zoom-in-95 duration-200 relative z-20">
                                 <input
                                     autoFocus
                                     type="number"
+                                    inputMode="decimal"
                                     value={editValue}
                                     onChange={e => setEditValue(e.target.value)}
                                     className="w-16 bg-transparent text-sm font-bold text-emerald-600 dark:text-emerald-400 focus:outline-none"
                                 />
-                                <div className="flex items-center gap-0.5 border-l border-emerald-200 dark:border-emerald-800 ml-1 pl-1">
+                                <div className="flex items-center gap-1 border-l border-emerald-200 dark:border-emerald-800/50 ml-1 pl-1">
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation()
                                             saveEdit()
                                         }}
                                         disabled={isSaving}
-                                        className="p-1 hover:bg-emerald-100 dark:hover:bg-emerald-800 rounded-md transition-colors"
+                                        className="p-1 hover:bg-emerald-100 dark:hover:bg-emerald-800/50 rounded-lg transition-colors disabled:opacity-50"
+                                        aria-label="Save"
                                     >
-                                        <Check size={14} className="text-emerald-500" />
+                                        <Check size={16} className={cn("text-emerald-500", isSaving && "animate-pulse")} />
                                     </button>
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation()
                                             cancelEditing()
                                         }}
-                                        className="p-1 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors"
+                                        className="p-1 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                                        aria-label="Cancel"
                                     >
-                                        <CloseIcon size={14} className="text-red-400" />
+                                        <CloseIcon size={16} className="text-red-400" />
                                     </button>
                                 </div>
                             </div>
                         ) : (
                             <button
                                 onClick={() => startEditing('calories', meal.calories)}
-                                className="flex items-center gap-1 text-sm font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 px-2 py-0.5 rounded-lg transition-colors"
+                                className="flex items-center gap-1 text-sm font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 px-2 py-0.5 rounded-lg transition-colors active:scale-95"
                             >
                                 <Flame className="h-3.5 w-3.5" />
                                 {meal.calories} kcal
@@ -247,7 +261,7 @@ function MacroEditable({
     return (
         <button
             onClick={() => onStart(field, badgeProps.value)}
-            className={cn('hover:bg-slate-50 dark:hover:bg-slate-950/40 px-1.5 py-0.5 rounded-lg transition-colors')}
+            className={cn('hover:bg-slate-50 dark:hover:bg-slate-950/40 px-1.5 py-1 rounded-lg transition-all active:scale-95 group')}
         >
             <MacroBadge {...badgeProps} />
         </button>
@@ -268,8 +282,8 @@ function MacroBadge({
     color: string
 }) {
     return (
-        <span className={cn('flex items-center gap-0.5 text-xs font-semibold', color)}>
-            <Icon className="h-3 w-3" />
+        <span className={cn('flex items-center gap-1 text-xs font-bold transition-transform group-hover:scale-110', color)}>
+            <Icon className="h-3.5 w-3.5" />
             {label} {value}{unit}
         </span>
     )
