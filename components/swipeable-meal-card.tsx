@@ -63,6 +63,13 @@ export function SwipeableMealCard({ children, onDelete, onEdit, className = '', 
         else if (offset > SWIPE_THRESHOLD) {
             setOffset(100)
             setIsOpen(true)
+            // Auto-trigger edit for better UX
+            onEdit?.()
+            // Reset after a short delay to feel "snappy"
+            setTimeout(() => {
+                setOffset(0)
+                setIsOpen(false)
+            }, 1000)
         }
         else {
             setOffset(0)

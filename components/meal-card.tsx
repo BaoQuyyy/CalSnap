@@ -48,6 +48,7 @@ export function MealCard({ meal, onToggleFavorite }: MealCardProps) {
         const editHandler = (e: Event) => {
             const detail = (e as CustomEvent).detail
             if (detail?.mealId === meal.id) {
+                console.log('Edit event received for meal:', meal.id)
                 startEditing('calories', meal.calories)
             }
         }
