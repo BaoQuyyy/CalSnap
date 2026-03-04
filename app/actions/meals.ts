@@ -199,33 +199,71 @@ export async function updateCalorieGoal(goal: number) {
     revalidatePath('/profile')
     return { success: true }
 }
-export async function updateMealNutrition(id: string, data: {
-    calories?: number
-    protein?: number
-    carbs?: number
-    fat?: number
+export async function updateMealNutrition(mealId: string, data: {
+    calories: number
+    protein: number
+    carbs: number
+    fat: number
     food_name?: string
 }) {
     const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) return { error: 'Not authenticated' }
 
-    const { data: record, error } = await supabase
+    // 1. Verify ownership
+    const { data: existingMeal } = await supabase
         .from('meal_logs')
-        .update(data as never)
-        .eq('id', id)
-        .eq('user_id', user.id)
-        .select()
+        .select('logged_at, user_id')
+        .eq('id', mealId)
         .maybeSingle()
 
-    if (error) return { error: error.message }
+    if (!existingMeal || existingMeal.user_id !== user.id) {
+        return { error: 'Meal not found or permission denied' }
+    }
 
-    // Get the logged_at date for revalidation
-    const loggedAt = record?.logged_at || new Date().toISOString().split('T')[0]
-    await updateDailyAdherence(loggedAt)
+    const date = existingMeal.logged_at
+
+    // 2. Update meal_logs
+    const { data: updatedMeal, error: updateError } = await supabase
+        .from('meal_logs')
+        .update({
+            calories: data.calories,
+            protein: data.protein,
+            carbs: data.carbs,
+            fat: data.fat,
+            food_name: data.food_name || undefined
+        } as never)
+        .eq('id', mealId)
+        .select()
+        .single()
+
+    if (updateError) return { error: updateError.message }
+
+    // 3. Calculate new totals for the day
+    const { data: dayMeals } = await supabase
+        .from('meal_logs')
+        .select('calories, protein, carbs, fat')
+        .eq('user_id', user.id)
+        .eq('logged_at', date)
+
+    const newTotals = (dayMeals || []).reduce((acc, m) => ({
+        calories: acc.calories + (m.calories || 0),
+        protein: acc.protein + (m.protein || 0),
+        carbs: acc.carbs + (m.carbs || 0),
+        fat: acc.fat + (m.fat || 0),
+    }), { calories: 0, protein: 0, carbs: 0, fat: 0 })
+
+    // 4. Update adherence/progress
+    await updateDailyAdherence(date)
     await updateJourneyProgress()
 
+    // 5. Revalidate
     revalidatePath('/log')
     revalidatePath('/')
-    return { success: true, data: record }
+
+    return {
+        success: true,
+        data: updatedMeal,
+        newTotals
+    }
 }

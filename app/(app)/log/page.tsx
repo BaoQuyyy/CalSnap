@@ -155,9 +155,19 @@ export default function LogPage() {
   }
 
   const handleUpdateMeal = (updatedMeal: Meal) => {
-    setMeals(prev => prev.map(m => m.id === updatedMeal.id ? updatedMeal : m))
-    // Also update recent meals if it's in there
+    // 1. Update meals array
+    const newMeals = meals.map(m => m.id === updatedMeal.id ? updatedMeal : m)
+    setMeals(newMeals)
+
+    // 2. Also update recent meals
     setRecentMeals(prev => prev.map(m => m.id === updatedMeal.id ? updatedMeal : m))
+
+    // 3. Recalculate totals immediately for UI consistency
+    // Note: totals state is derived from 'meals', but if we have a separate totals state or want to force it
+    // In this component, 'totals' is a constant calculated on render, so setMeals is enough.
+
+    // 4. Sync dashboard & adherence cards
+    router.refresh()
   }
 
   return (
