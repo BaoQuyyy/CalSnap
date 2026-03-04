@@ -226,13 +226,13 @@ export default function LogPage() {
         </div>
       )}
 
-      {/* Date selector */}
-      <div className="space-y-3 ios-reveal delay-200">
-        <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 scrollbar-hide">
+      {/* Date selector area */}
+      <div className="space-y-4 ios-reveal delay-200">
+        <div className="flex gap-2 overflow-x-auto pb-4 -mx-1 scrollbar-hide px-1">
           {sevenDays.map((d) => {
             const isActive = d === date
             const dObj = new Date(d + 'T12:00:00')
-            const label = DAYS[dObj.getDay()].slice(0, 2)
+            const label = DAYS[dObj.getDay()].toUpperCase().slice(0, 3)
             const num = dObj.getDate()
             const isToday = d === today
             return (
@@ -240,21 +240,32 @@ export default function LogPage() {
                 key={d}
                 type="button"
                 onClick={() => setDate(d)}
-                className={`shrink-0 px-4 py-2.5 rounded-2xl text-sm font-bold transition-all ${isActive
-                  ? 'hoverboard-gradient text-white'
-                  : isToday
-                    ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
+                className={cn(
+                  "shrink-0 flex flex-col items-center justify-center w-[60px] h-[75px] rounded-[1.5rem] transition-all duration-300",
+                  isActive
+                    ? "hoverboard-gradient text-white shadow-lg shadow-emerald-500/30 scale-105 z-10"
+                    : isToday
+                      ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 border border-emerald-100 dark:border-emerald-800/50"
+                      : "bg-white/40 dark:bg-slate-900/40 text-slate-500 hover:bg-white/60 dark:hover:bg-slate-800/60"
+                )}
               >
-                {label} {num}
+                <span className="text-[10px] font-black tracking-widest mb-1 opacity-70">{label}</span>
+                <span className="text-xl font-black tabular-nums">{num}</span>
               </button>
             )
           })}
         </div>
-        <div className="flex items-center gap-2">
-          <label className="text-xs font-medium text-slate-500 shrink-0">Chọn ngày:</label>
-          <DatePicker value={date} max={today} onChange={setDate} placeholder="Chọn ngày" className="flex-1" />
+
+        <div className="flex justify-center px-2">
+          <div className="w-full max-w-[280px] bg-white/40 dark:bg-slate-900/40 rounded-[2rem] p-1.5 border border-white/20 dark:border-white/5 shadow-sm">
+            <DatePicker
+              value={date}
+              max={today}
+              onChange={setDate}
+              placeholder="Chọn ngày"
+              className="w-full border-none bg-transparent"
+            />
+          </div>
         </div>
       </div>
 
