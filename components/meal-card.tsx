@@ -16,6 +16,7 @@ interface MealCardProps {
         carbs: number
         fat: number
         created_at: string
+        logged_at: string
         is_favorite?: boolean
     }
     onToggleFavorite?: (id: string) => void
@@ -85,9 +86,9 @@ export function MealCard({ meal, onToggleFavorite }: MealCardProps) {
             if (res.success) {
                 triggerHaptic()
                 setEditingField(null)
-                // Notify parent to refresh totals
+                // Notify parent to refresh totals with accurate date
                 window.dispatchEvent(new CustomEvent('calsnap:meal-updated', {
-                    detail: { date: meal.created_at.split('T')[0] }
+                    detail: { date: meal.logged_at }
                 }))
             } else {
                 toast.error('Không thể cập nhật')
@@ -144,11 +145,29 @@ export function MealCard({ meal, onToggleFavorite }: MealCardProps) {
                                     type="number"
                                     value={editValue}
                                     onChange={e => setEditValue(e.target.value)}
-                                    onBlur={saveEdit}
-                                    onKeyDown={e => e.key === 'Enter' && saveEdit()}
                                     className="w-16 bg-transparent text-sm font-bold text-emerald-600 dark:text-emerald-400 focus:outline-none"
                                 />
-                                <Check size={14} className="text-emerald-500" />
+                                <div className="flex items-center gap-0.5 border-l border-emerald-200 dark:border-emerald-800 ml-1 pl-1">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            saveEdit()
+                                        }}
+                                        disabled={isSaving}
+                                        className="p-1 hover:bg-emerald-100 dark:hover:bg-emerald-800 rounded-md transition-colors"
+                                    >
+                                        <Check size={14} className="text-emerald-500" />
+                                    </button>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            cancelEditing()
+                                        }}
+                                        className="p-1 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors"
+                                    >
+                                        <CloseIcon size={14} className="text-red-400" />
+                                    </button>
+                                </div>
                             </div>
                         ) : (
                             <button
@@ -199,11 +218,28 @@ function MacroEditable({
                     type="number"
                     value={editValue}
                     onChange={e => setEditValue(e.target.value)}
-                    onBlur={onSave}
-                    onKeyDown={e => e.key === 'Enter' && onSave()}
                     className={cn('w-10 bg-transparent text-xs font-bold focus:outline-none', badgeProps.color)}
                 />
-                <span className={cn('text-[10px] font-bold', badgeProps.color)}>{badgeProps.unit}</span>
+                <div className="flex items-center gap-0.5">
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            onSave()
+                        }}
+                        className="p-0.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded"
+                    >
+                        <Check size={12} className="text-emerald-500" />
+                    </button>
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            onCancel()
+                        }}
+                        className="p-0.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded"
+                    >
+                        <CloseIcon size={12} className="text-red-400" />
+                    </button>
+                </div>
             </div>
         )
     }
