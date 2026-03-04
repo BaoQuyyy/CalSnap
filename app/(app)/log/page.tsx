@@ -13,6 +13,7 @@ import { MacroPill } from '@/components/macro-pill'
 import { DatePicker } from '@/components/date-picker'
 import { toast } from '@/components/toast'
 import { SwipeableMealCard } from '@/components/swipeable-meal-card'
+import { cn } from '@/lib/utils'
 
 type Meal = {
   id: string

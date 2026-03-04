@@ -227,10 +227,10 @@ export async function updateMealNutrition(mealId: string, data: {
     const { data: updatedMeal, error: updateError } = await supabase
         .from('meal_logs')
         .update({
-            calories: data.calories,
-            protein: data.protein,
-            carbs: data.carbs,
-            fat: data.fat,
+            calories: Math.round(Number(data.calories)),
+            protein: Math.round(Number(data.protein)),
+            carbs: Math.round(Number(data.carbs)),
+            fat: Math.round(Number(data.fat)),
             food_name: data.food_name || undefined
         } as never)
         .eq('id', mealId)

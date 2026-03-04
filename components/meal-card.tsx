@@ -73,6 +73,10 @@ export function MealCard({ meal, onToggleFavorite, onUpdate }: MealCardProps) {
         triggerHaptic(15)
     }
 
+    const cancelEditing = () => {
+        setIsEditing(false)
+    }
+
     const handleCaloriesChange = (val: string) => {
         const num = Math.max(0, Number(val))
         if (meal.calories === 0) {
