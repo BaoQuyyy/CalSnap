@@ -21,7 +21,7 @@ type Meal = {
   calories: number
   protein: number
   carbs: number
-  fat: number
+  fats: number
   created_at: string
   logged_at: string
   is_favorite?: boolean

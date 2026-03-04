@@ -29,10 +29,10 @@ export function MealCard({ meal, onToggleFavorite, onUpdate }: MealCardProps) {
     const [isEditing, setIsEditing] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
     const [editData, setEditData] = useState({
-        calories: meal.calories,
-        protein: meal.protein,
-        carbs: meal.carbs,
-        fats: meal.fats
+        calories: meal.calories || 0,
+        protein: meal.protein || 0,
+        carbs: meal.carbs || 0,
+        fats: meal.fats || 0
     })
 
     const triggerHaptic = (duration = 10) => {
@@ -64,10 +64,10 @@ export function MealCard({ meal, onToggleFavorite, onUpdate }: MealCardProps) {
 
     const startEditing = () => {
         setEditData({
-            calories: meal.calories,
-            protein: meal.protein,
-            carbs: meal.carbs,
-            fats: meal.fats
+            calories: meal.calories || 0,
+            protein: meal.protein || 0,
+            carbs: meal.carbs || 0,
+            fats: meal.fats || 0
         })
         setIsEditing(true)
         triggerHaptic(15)
@@ -86,9 +86,9 @@ export function MealCard({ meal, onToggleFavorite, onUpdate }: MealCardProps) {
         const ratio = num / meal.calories
         setEditData({
             calories: num,
-            protein: Math.round(meal.protein * ratio),
-            carbs: Math.round(meal.carbs * ratio),
-            fats: Math.round(meal.fats * ratio)
+            protein: Math.round((meal.protein || 0) * ratio),
+            carbs: Math.round((meal.carbs || 0) * ratio),
+            fats: Math.round((meal.fats || 0) * ratio)
         })
     }
 
@@ -221,11 +221,11 @@ export function MealCard({ meal, onToggleFavorite, onUpdate }: MealCardProps) {
                                         <input
                                             type="number"
                                             inputMode="numeric"
-                                            value={editData[macro.field as 'protein' | 'carbs' | 'fats']}
+                                            value={editData[macro.field as keyof typeof editData] ?? ''}
                                             onChange={e => handleMacroChange(macro.field as 'protein' | 'carbs' | 'fats', e.target.value)}
                                             className={`w-full bg-${macro.color}-50/30 dark:bg-${macro.color}-900/10 text-sm font-bold text-${macro.color}-600 dark:text-${macro.color}-400 px-3 py-2.5 rounded-xl border border-${macro.color}-100 dark:border-${macro.color}-900/30 focus:outline-none`}
                                         />
-                                        <DiffIndicator val={editData[macro.field as 'protein' | 'carbs' | 'fats']} original={meal[macro.field as 'protein' | 'carbs' | 'fats']} unit="g" />
+                                        <DiffIndicator val={editData[macro.field as keyof typeof editData] ?? 0} original={meal[macro.field as keyof typeof meal] ?? 0} unit="g" />
                                     </div>
                                 </div>
                             ))}
