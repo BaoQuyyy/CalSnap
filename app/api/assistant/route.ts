@@ -63,41 +63,45 @@ export async function POST(req: NextRequest) {
     }
 
     const today = new Date().toISOString().split('T')[0]
+    const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
 
-    const [{ data: profile }, { data: todayMeals }, { data: adherence }] = await Promise.all([
-      supabase.from('profiles').select('*').eq('id', user.id).single(),
-      supabase.from('meal_logs').select('id, food_name, calories, protein, carbs, fat').eq('user_id', user.id).eq('logged_at', today),
-      supabase.from('plan_adherence').select('*').eq('user_id', user.id).eq('date', today).single(),
+    const [{ data: profile }, { data: recentMeals }, { data: adherence }] = await Promise.all([
+      supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
+      supabase.from('meal_logs')
+        .select('id, food_name, calories, protein, carbs, fat, logged_at')
+        .eq('user_id', user.id)
+        .gte('logged_at', twoDaysAgo)
+        .order('logged_at', { ascending: false }),
+      supabase.from('plan_adherence').select('*').eq('user_id', user.id).eq('date', today).maybeSingle(),
     ])
 
     const plan = profile?.fitness_plan as any
-    const actualCalories = todayMeals?.reduce((s, m) => s + m.calories, 0) ?? 0
+    const actualCalories = recentMeals?.filter(m => m.logged_at === today).reduce((s, m) => s + m.calories, 0) ?? 0
     const calorieGoal = plan?.daily_calories ?? profile?.daily_calorie_goal ?? 2000
     const caloriesLeft = calorieGoal - actualCalories
 
-    const systemPrompt = `Bạn là chuyên gia dinh dưỡng AI của CalSnap. Phong thái chuyên nghiệp, điềm đạm, cực kỳ súc tích. Chỉ trả lời về dinh dưỡng và fitness.
+    const systemPrompt = `Bạn là chuyên gia dinh dưỡng AI của CalSnap. Phong thái chuyên nghiệp, linh hoạt, súc tích.
 
-## QUY TẮC PHẢN HỒI (BẮT BUỘC):
-- Trả lời DƯỚI 50 TỪ. Ngắn gọn, đi thẳng vào vấn đề.
-- Tuyệt đối KHÔNG hiển thị [ID:...] hay bất kỳ mã kỹ thuật nào cho người dùng.
-- KHÔNG dùng dấu sao (**) để in đậm. Chỉ dùng văn bản thuần túy.
-- Dùng tiếng Việt chuyên nghiệp.
+## QUY TẮC THÔNG MINH (BẮT BUỘC):
+1. Trả lời dưới 60 từ. Ưu tiên sự hữu ích và chính xác.
+2. Nếu người dùng muốn sửa/xoá món mà bạn KHÔNG tìm thấy trong DANH SÁCH phía dưới -> TUYỆT ĐỐI KHÔNG đoán ID. Hãy hỏi lại: "Mình không tìm thấy món đó trong 2 ngày qua, bạn ăn nó khi nào nhỉ?"
+3. TUYỆT ĐỐI không hiển thị mã kỹ thuật [ID:...] cho người dùng trong văn bản trả lời.
+4. Chỉ dùng văn bản thuần (không dùng ** để in đậm).
+5. Dùng tiếng Việt chuyên nghiệp.
 
-## DỮ LIỆU HÔM NAY (${today}):
+## DỮ LIỆU DINH DƯỠNG (HÔM NAY):
 - Calo: ${actualCalories}/${calorieGoal} kcal (còn ${caloriesLeft})
 - Macros: P:${adherence?.protein_actual ?? 0}g C:${adherence?.carbs_actual ?? 0}g F:${adherence?.fat_actual ?? 0}g
 
-## BỮA ĂN HÔM NAY:
-${todayMeals?.map((m: any) => `[ID:${m.id}] ${m.food_name}: ${m.calories} kcal (P:${m.protein}g C:${m.carbs}g F:${m.fat}g)`).join('\n') || '- Chưa có'}
+## DANH SÁCH MÓN ĂN (2 NGÀY GẦN NHẤT):
+${recentMeals?.map((m: any) => `[ID:${m.id}] ${m.food_name} (${m.logged_at}): ${m.calories} kcal`).join('\n') || '- Chưa có dữ liệu'}
 
-## HÀNH ĐỘNG (đặt ở CUỐI phản hồi):
+## CẤU TRÚC HÀNH ĐỘNG (Đặt ở CUỐI phản hồi):
 - Thêm: [ACTION:LOG_MEAL:{"foodName":"...","calories":...,"protein":...,"carbs":...,"fat":...}]
-- Sửa: [ACTION:UPDATE_MEAL:{"mealId":"ID_bữa","foodName":"...","calories":...,"protein":...,"carbs":...,"fat":...}]
-- Xoá: [ACTION:DELETE_MEAL:{"mealId":"ID_bữa"}]
+- Sửa: [ACTION:UPDATE_MEAL:{"mealId":"...","foodName":"...","calories":...,"protein":...,"carbs":...,"fat":...}]
+- Xoá: [ACTION:DELETE_MEAL:{"mealId":"..."}]
 - Mục tiêu: [ACTION:UPDATE_GOAL:{"daily_calorie_goal":...}]
-- Nước: [ACTION:LOG_WATER:{"amount_ml":...}]
-
-Khi điều chỉnh → tìm bữa khớp nhất, tính lại theo tỷ lệ, dùng UPDATE_MEAL.`
+- Nước: [ACTION:LOG_WATER:{"amount_ml":...}]`
 
     const genAI = new GoogleGenerativeAI(apiKey)
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
