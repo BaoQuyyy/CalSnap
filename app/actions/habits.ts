@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { updateDailyAdherence, updateJourneyProgress } from './adherence'
 
 export type ExerciseType = 'Walking' | 'Running' | 'Gym' | 'Cycling'
 
@@ -64,6 +65,16 @@ export async function upsertWater(date: string, waterMl: number) {
     if (error.message?.toLowerCase().includes('daily_habits')) return { success: true }
     return { error: error.message }
   }
+
+  // Keep profiles + adherence in sync with daily_habits water
+  await supabase
+    .from('profiles')
+    .update({ water_ml_today: waterMl, water_updated_date: date })
+    .eq('id', user.id)
+
+  await updateDailyAdherence(date)
+  await updateJourneyProgress()
+
   revalidatePath('/')
   return { success: true }
 }

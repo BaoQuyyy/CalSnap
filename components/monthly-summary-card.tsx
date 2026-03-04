@@ -214,19 +214,25 @@ export function MonthlySummaryCard({ refreshKey = 0 }: { refreshKey?: number }) 
                 />
                 <Tooltip
                   contentStyle={{
-                    background: 'white',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: 12,
-                    padding: '8px 10px',
-                    boxShadow: '0 10px 30px rgba(15,23,42,0.12)',
-                    fontSize: 11,
+                    background: 'var(--tw-slate-900, #0f172a)',
+                    border: '1px solid rgba(16,185,129,0.2)',
+                    borderRadius: 16,
+                    padding: '10px 14px',
+                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
                   }}
-                  formatter={(value: any, name?: string) => {
-                    if (name === 'calories') return [`${value} kcal`, 'Calories']
-                    if (name === 'protein') return [`${value} g`, 'Protein']
-                    if (name === 'steps') return [`${value.toLocaleString()} bước`, 'Steps']
-                    if (name === 'water') return [`${value} L`, 'Water']
-                    return [value, name ?? '']
+                  labelStyle={{
+                    color: '#f8fafc',
+                    fontWeight: '800',
+                    fontSize: '11px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    marginBottom: '6px'
+                  }}
+                  itemStyle={{
+                    color: '#10b981',
+                    fontSize: '13px',
+                    fontWeight: 'bold',
+                    padding: '2px 0'
                   }}
                   labelFormatter={(value) => `Ngày ${value}`}
                 />

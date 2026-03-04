@@ -56,9 +56,18 @@ export function WeeklyChart({ data, goal = 2000 }: WeeklyChartProps) {
                         contentStyle={{
                             background: tooltipBg,
                             border: `1px solid ${tooltipBorder}`,
-                            borderRadius: '8px',
-                            color: tooltipColor,
-                            fontSize: '13px',
+                            borderRadius: '12px',
+                            padding: '8px 12px',
+                            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                        }}
+                        labelStyle={{
+                            color: isDark ? '#f8fafc' : '#1e293b',
+                            fontWeight: 'bold',
+                            marginBottom: '4px'
+                        }}
+                        itemStyle={{
+                            color: isDark ? '#cbd5e1' : '#475569',
+                            fontSize: '12px'
                         }}
                         cursor={{ fill: isDark ? 'rgba(148,163,184,0.08)' : 'rgba(148,163,184,0.15)' }}
                         formatter={(value) => [`${value ?? 0} kcal`, 'Calories']}

@@ -50,7 +50,7 @@ export function QuickRelog({ recentMeals, onRelog }: QuickRelogProps) {
               <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 group-hover:text-emerald-700 dark:group-hover:text-emerald-400">
                 {meal.food_name}
               </p>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500 dark:text-slate-300 font-medium">
                 {meal.calories} kcal · P:{meal.protein}g · C:{meal.carbs}g
               </p>
             </div>

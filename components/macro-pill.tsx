@@ -5,9 +5,9 @@ import { cn } from '@/lib/utils'
 type MacroType = 'protein' | 'carbs' | 'fat'
 
 const styles: Record<MacroType, string> = {
-  protein: 'bg-blue-100 text-blue-600',
-  carbs: 'bg-amber-100 text-amber-600',
-  fat: 'bg-orange-100 text-orange-600',
+  protein: 'bg-blue-50 text-blue-600 dark:bg-blue-500/20 dark:text-blue-300',
+  carbs: 'bg-amber-50 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300',
+  fat: 'bg-orange-50 text-orange-600 dark:bg-orange-500/20 dark:text-orange-300',
 }
 
 interface MacroPillProps {

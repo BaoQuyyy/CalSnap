@@ -65,6 +65,36 @@ export default function DashboardPage() {
     loadWeekly()
   }, [])
 
+  // React to AI water logging (so dashboard updates without refresh)
+  useEffect(() => {
+    const handler = async (e: Event) => {
+      const detail = (e as CustomEvent).detail as { date?: string; water_ml?: number | null } | undefined
+      const dStr = detail?.date
+      if (!dStr) return
+
+      // Only update when the currently selected date matches
+      if (dStr !== date) return
+
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data: habitsRow } = await supabase
+        .from('daily_habits')
+        .select('steps, water_ml, exercise_minutes, exercise_calories')
+        .eq('user_id', user.id)
+        .eq('date', dStr)
+        .maybeSingle()
+
+      setHabits((habitsRow as any) ?? null)
+      setExerciseCalories((habitsRow as any)?.exercise_calories ?? 0)
+      setHabitRefreshKey(k => k + 1)
+    }
+
+    window.addEventListener('calsnap:water-updated', handler as any)
+    return () => window.removeEventListener('calsnap:water-updated', handler as any)
+  }, [date])
+
   const refreshTodayData = async (newExerciseCal?: number) => {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -137,8 +167,8 @@ export default function DashboardPage() {
           {/* Top: greeting + avatar */}
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-white/65 text-[11px] font-semibold tracking-wide">{dateLabel}</p>
-              <h1 className="text-white text-xl font-display font-extrabold mt-0.5">Xin chào, {firstName} 👋</h1>
+              <p className="text-white/80 text-[11px] font-bold tracking-wide uppercase">{dateLabel}</p>
+              <h1 className="text-white text-2xl font-display font-black mt-1">Xin chào, {firstName} 👋</h1>
             </div>
             <Link href="/profile" className="w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-lg border border-white/25 transition-colors">🧑</Link>
           </div>
@@ -174,8 +204,8 @@ export default function DashboardPage() {
                 ].map((s) => (
                   <div key={s.label}>
                     <div className="text-sm">{s.icon}</div>
-                    <div className="text-white font-extrabold text-base tabular-nums">{s.val}</div>
-                    <div className="text-white/60 text-[9px] font-semibold tracking-wide">{s.label}</div>
+                    <div className="text-white font-black text-lg tabular-nums leading-tight">{s.val}</div>
+                    <div className="text-white/75 text-[10px] font-bold tracking-wider uppercase">{s.label}</div>
                   </div>
                 ))}
               </div>
@@ -197,7 +227,7 @@ export default function DashboardPage() {
               return (
                 <button key={idx} type="button" onClick={() => setDate(dStr)}
                   className={`flex-1 rounded-xl px-1 py-1.5 text-center transition-all ${isActive ? 'bg-white' : 'hover:bg-white/10'}`}>
-                  <div className={`text-[9px] font-bold ${isActive ? 'text-emerald-700' : 'text-white/75'}`}>{weekdayLabels[d.getDay()]}</div>
+                  <div className={`text-[10px] font-black uppercase tracking-wider ${isActive ? 'text-emerald-700' : 'text-white/80'}`}>{weekdayLabels[d.getDay()]}</div>
                   <div className={`w-6 h-6 rounded-full mx-auto mt-0.5 flex items-center justify-center text-[9px] font-black ${dayPct > 100 ? (isActive ? 'bg-red-500 text-white' : 'bg-red-400/80 text-white')
                     : isActive ? 'bg-emerald-600 text-white' : dayPct > 0 ? 'bg-white/20 text-white' : 'bg-white/8 text-white/40'
                     }`}>{dayPct > 0 ? `${dayPct}%` : '-'}</div>
@@ -214,9 +244,9 @@ export default function DashboardPage() {
         <div className="grid gap-3 md:grid-cols-2 items-stretch">
           <HabitCards className="h-full" date={date} initialHabits={habits} onUpdate={(newCal) => refreshTodayData(newCal)} />
           <div className="glass-card rounded-[2rem] p-5 h-full flex flex-col">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-[10px] font-black uppercase tracking-wider text-slate-400">Calories 7 ngày</h3>
-              <span className="text-[10px] text-slate-400 font-semibold">Goal {calorieGoal.toLocaleString()} kcal</span>
+            <div className="flex items-center justify-between mb-3 border-b border-slate-100 dark:border-slate-800 pb-2">
+              <h3 className="text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-300">Calories 7 ngày</h3>
+              <span className="text-[11px] text-slate-400 dark:text-slate-400 font-bold">Goal {calorieGoal.toLocaleString()} kcal</span>
             </div>
             <div className="flex-1 flex flex-col justify-center">
               {loadingWeekly
@@ -232,9 +262,9 @@ export default function DashboardPage() {
         <div className="grid gap-3 md:grid-cols-2 items-stretch">
           <div className="glass-card rounded-[2rem] p-5 flex flex-col justify-between">
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Trợ lý AI</p>
-                <span className="text-[10px] text-slate-500">Còn <span className="font-bold text-slate-700 dark:text-slate-200">{Math.max(0, remaining).toLocaleString()} kcal</span></span>
+              <div className="flex items-center justify-between mb-3 border-b border-slate-100 dark:border-slate-800 pb-2">
+                <p className="text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-300">Trợ lý AI</p>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-bold">Còn <span className="font-extrabold text-slate-800 dark:text-slate-100">{Math.max(0, remaining).toLocaleString()} kcal</span></span>
               </div>
               <Link href="/chat" className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl hoverboard-gradient text-white text-xs font-bold mb-3 shadow-lg shadow-emerald-500/10 active:scale-[0.98] transition-all">
                 <span>✨</span> Mở AI Assistant
@@ -260,9 +290,9 @@ export default function DashboardPage() {
               </p>
 
               {/* Extra Health Insight to fill space */}
-              <div className="pt-2 border-t border-emerald-100/50 dark:border-emerald-800/20">
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter mb-1">💡 Daily Insight</p>
-                <p className="text-[10.5px] text-slate-500 dark:text-slate-400 leading-snug">
+              <div className="pt-2.5 border-t border-emerald-100/50 dark:border-emerald-800/30">
+                <p className="text-[10px] font-black text-slate-500 dark:text-slate-300 uppercase tracking-wider mb-1">💡 Daily Insight</p>
+                <p className="text-[11px] text-slate-600 dark:text-slate-200 leading-relaxed font-medium">
                   Việc đi bộ 10 phút sau bữa ăn giúp ổn định đường huyết và hỗ trợ tiêu hóa cực tốt đấy!
                 </p>
               </div>
@@ -271,12 +301,12 @@ export default function DashboardPage() {
             {/* Quick Tips or Stats to fill space */}
             <div className="px-4 mb-3 grid grid-cols-2 gap-3">
               <div className="flex flex-col">
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Status</span>
-                <span className="text-[11px] font-bold text-emerald-500">Perfect Day ✨</span>
+                <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider">Status</span>
+                <span className="text-[12px] font-black text-emerald-500 dark:text-emerald-400 tabular-nums">Perfect Day ✨</span>
               </div>
-              <div className="flex flex-col">
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">AI Analysis</span>
-                <span className="text-[11px] font-bold text-blue-500">Optimizing...</span>
+              <div className="flex flex-col border-l border-slate-100 dark:border-slate-800 pl-3">
+                <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider">AI Analysis</span>
+                <span className="text-[12px] font-black text-blue-500 dark:text-blue-400 tabular-nums">Optimizing...</span>
               </div>
             </div>
 

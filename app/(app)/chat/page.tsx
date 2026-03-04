@@ -125,6 +125,7 @@ export default function ChatPage() {
             body: JSON.stringify({ type: actionType, data: actionData }),
           })
           const ok = actionRes.ok
+          const json = ok ? await actionRes.json().catch(() => null) : null
 
           if (actionType === 'LOG_MEAL') {
             cleanReply += `\n\n✅ Đã log: ${actionData.foodName} (${actionData.calories} kcal)`
@@ -138,6 +139,19 @@ export default function ChatPage() {
           } else if (actionType === 'UPDATE_GOAL') {
             cleanReply += `\n\n🎯 Đã cập nhật mục tiêu: ${actionData.daily_calorie_goal} kcal/ngày`
             if (ok) toast.success(`Mục tiêu mới: ${actionData.daily_calorie_goal} kcal/ngày`)
+          } else if (actionType === 'LOG_WATER') {
+            const total = json?.total as number | undefined
+            cleanReply += `\n\n💧 Đã ghi nhận thêm ${actionData.amount_ml}ml nước${
+              typeof total === 'number' ? ` (tổng hôm nay ~${(total / 1000).toFixed(1)}L)` : ''
+            }`
+            if (ok) toast.success('Đã cập nhật lượng nước hôm nay')
+            if (ok && typeof window !== 'undefined') {
+              window.dispatchEvent(
+                new CustomEvent('calsnap:water-updated', {
+                  detail: { date: new Date().toISOString().split('T')[0], water_ml: total ?? null },
+                })
+              )
+            }
           }
         } catch {
           // Nếu ACTION lỗi parse / gọi API, bỏ qua và vẫn hiển thị phần text còn lại

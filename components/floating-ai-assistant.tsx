@@ -2,7 +2,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Sparkles, X, Minus, Send, Paperclip } from 'lucide-react'
+import { Sparkles, X, Minus, Send, Paperclip, Trash2 } from 'lucide-react'
 import { toast } from '@/components/toast'
 
 interface Message {
@@ -73,14 +73,18 @@ export function FloatingAIAssistant() {
     setLoading(true)
 
     try {
+      const payload: any = {
+        message: msg,
+        history: messages.slice(-6),
+      }
+      if (image?.base64) {
+        payload.imageBase64 = image.base64
+      }
+
       const res = await fetch('/api/assistant', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: msg,
-          imageBase64: image?.base64 ?? null,
-          history: messages.slice(-6),
-        }),
+        body: JSON.stringify(payload),
       })
       const data = await res.json()
 
@@ -107,6 +111,7 @@ export function FloatingAIAssistant() {
           body: JSON.stringify({ type: actionType, data: actionData }),
         })
         const ok = res.ok
+        const json = ok ? await res.json().catch(() => null) : null
 
         if (actionType === 'LOG_MEAL') {
           cleanReply += `\n\n✅ Đã log: ${actionData.foodName} (${actionData.calories} kcal)`
@@ -120,6 +125,18 @@ export function FloatingAIAssistant() {
         } else if (actionType === 'UPDATE_GOAL') {
           cleanReply += `\n\n🎯 Đã cập nhật mục tiêu: ${actionData.daily_calorie_goal} kcal/ngày`
           if (ok) toast.success(`Mục tiêu mới: ${actionData.daily_calorie_goal} kcal/ngày`)
+        } else if (actionType === 'LOG_WATER') {
+          const total = json?.total as number | undefined
+          cleanReply += `\n\n💧 Đã ghi nhận thêm ${actionData.amount_ml}ml nước${typeof total === 'number' ? ` (tổng hôm nay ~${(total / 1000).toFixed(1)}L)` : ''
+            }`
+          if (ok) toast.success('Đã cập nhật lượng nước hôm nay')
+          if (ok && typeof window !== 'undefined') {
+            window.dispatchEvent(
+              new CustomEvent('calsnap:water-updated', {
+                detail: { date: new Date().toISOString().split('T')[0], water_ml: total ?? null },
+              })
+            )
+          }
         }
       }
 
@@ -128,6 +145,16 @@ export function FloatingAIAssistant() {
       setMessages(prev => [...prev, { role: 'assistant', content: 'Có lỗi xảy ra, thử lại nhé!' }])
     } finally {
       setLoading(false)
+    }
+  }
+
+  const clearHistory = () => {
+    if (confirm('Bạn có chắc chắn muốn xóa toàn bộ lịch sử chat không?')) {
+      setMessages([])
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem('csnap_ai_chat')
+      }
+      toast.success('Đã xóa lịch sử chat')
     }
   }
 
@@ -158,15 +185,13 @@ export function FloatingAIAssistant() {
       {/* Chat panel */}
       {open && (
         <div
-          className={`fixed right-4 md:right-6 z-50 transition-all duration-300 ${
-            minimized ? 'bottom-24' : 'bottom-28'
-          }`}
+          className={`fixed right-4 md:right-6 z-50 transition-all duration-300 ${minimized ? 'bottom-24' : 'bottom-28'
+            }`}
           style={{ width: '24rem' }}
         >
           <div
-            className={`backdrop-blur-xl bg-slate-950/80 border border-emerald-500/20 rounded-3xl shadow-[0_24px_70px_rgba(15,23,42,0.9)] overflow-hidden flex flex-col transition-all duration-300 ${
-              minimized ? 'h-14' : 'h-[500px]'
-            }`}
+            className={`backdrop-blur-xl bg-slate-950/80 border border-emerald-500/20 rounded-3xl shadow-[0_24px_70px_rgba(15,23,42,0.9)] overflow-hidden flex flex-col transition-all duration-300 ${minimized ? 'h-14' : 'h-[500px]'
+              }`}
           >
 
             {/* Header */}
@@ -193,6 +218,13 @@ export function FloatingAIAssistant() {
                   className="w-7 h-7 rounded-lg hover:bg-emerald-500/10 flex items-center justify-center text-emerald-200 transition-colors"
                 >
                   <Minus size={14} />
+                </button>
+                <button
+                  onClick={clearHistory}
+                  title="Xóa lịch sử"
+                  className="w-7 h-7 rounded-lg hover:bg-red-500/10 flex items-center justify-center text-slate-400 hover:text-red-400 transition-colors"
+                >
+                  <Trash2 size={14} />
                 </button>
                 <button
                   onClick={() => setOpen(false)}
@@ -227,16 +259,14 @@ export function FloatingAIAssistant() {
                   {messages.map((m, i) => (
                     <div
                       key={i}
-                      className={`flex ${
-                        m.role === 'user' ? 'justify-end' : 'justify-start'
-                      }`}
+                      className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'
+                        }`}
                     >
                       <div
-                        className={`max-w-[85%] px-4 py-3 text-sm leading-relaxed ${
-                          m.role === 'user'
+                        className={`max-w-[85%] px-4 py-3 text-sm leading-relaxed ${m.role === 'user'
                             ? 'bg-gradient-to-br from-emerald-400 to-teal-400 text-white rounded-2xl rounded-br-sm shadow-[0_10px_30px_rgba(16,185,129,0.55)]'
                             : 'bg-slate-900/80 text-slate-50 rounded-2xl rounded-bl-sm border border-slate-800'
-                        }`}
+                          }`}
                       >
                         {m.image && (
                           <img
