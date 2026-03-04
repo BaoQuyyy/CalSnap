@@ -132,7 +132,10 @@ export function SwipeableMealCard({ children, onDelete, onEdit, className = '', 
             className={`relative overflow-hidden rounded-[2rem] group/swipe transition-all duration-500 ${className}`}
         >
             {/* Edit Button (Revealed on Swipe Right) - sits at LEFT */}
-            <div className="absolute inset-y-0 left-0 flex items-center justify-start w-[100px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-l-[2rem] z-10">
+            <div
+                className="absolute inset-y-0 left-0 flex items-center justify-start w-[100px] z-10"
+                style={{ opacity: Math.max(0, offset / 80) }}
+            >
                 <button
                     onClick={(e) => {
                         e.stopPropagation()
@@ -140,33 +143,36 @@ export function SwipeableMealCard({ children, onDelete, onEdit, className = '', 
                         setIsOpen(false)
                         onEdit?.()
                     }}
-                    className="flex flex-col items-center justify-center h-full w-full pl-2 gap-1 transition-colors active:bg-slate-200"
+                    className="flex flex-col items-center justify-center h-full w-full pl-2 gap-1 transition-all active:scale-95 text-slate-600 dark:text-slate-300"
                 >
-                    <div className="w-9 h-9 rounded-full bg-slate-200/50 dark:bg-slate-700/50 flex items-center justify-center mb-0.5">
-                        <Pencil className="h-4.5 w-4.5" />
+                    <div className="w-12 h-12 rounded-2xl ios-glass flex items-center justify-center mb-0.5 shadow-sm">
+                        <Pencil className="h-5 w-5" />
                     </div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider">Sửa</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Sửa</span>
                 </button>
             </div>
 
             {/* Delete Button (Revealed on Swipe Left) - sits at RIGHT */}
-            <div className="absolute inset-y-0 right-0 flex items-center justify-end w-[100px] bg-red-600 dark:bg-red-500 rounded-r-[2rem] z-10">
+            <div
+                className="absolute inset-y-0 right-0 flex items-center justify-end w-[100px] z-10"
+                style={{ opacity: Math.max(0, -offset / 80) }}
+            >
                 <button
                     onClick={(e) => {
                         e.stopPropagation()
                         handleDelete()
                     }}
                     disabled={deleting}
-                    className="flex flex-col items-center justify-center h-full w-full pr-2 gap-1 text-white disabled:opacity-70 transition-colors active:bg-red-700"
+                    className="flex flex-col items-center justify-center h-full w-full pr-2 gap-1 text-white disabled:opacity-70 transition-all active:scale-95"
                 >
                     {deleting ? (
                         <Loader2 className="h-5 w-5 animate-spin" />
                     ) : (
                         <>
-                            <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center mb-0.5 shadow-sm">
-                                <Trash className="h-4.5 w-4.5" />
+                            <div className="w-12 h-12 rounded-2xl bg-red-500 shadow-lg shadow-red-500/20 flex items-center justify-center mb-0.5">
+                                <Trash className="h-5 w-5" />
                             </div>
-                            <span className="text-[10px] font-bold uppercase tracking-wider">Xóa</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-red-500 dark:text-red-400">Xóa</span>
                         </>
                     )}
                 </button>
