@@ -71,22 +71,27 @@ export function DatePicker({ value, max, onChange, placeholder = 'Chọn ngày',
     }
   }, [showYearPicker])
 
+  const toYMD = (d: Date) => {
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${y}-${m}-${day}`
+  }
+
   const formatDisplay = (d: string) => {
     if (!d) return placeholder
-    const date = new Date(d + 'T12:00:00')
-    const ymd = d
+    const dateObj = new Date(d + 'T12:00:00')
     const todayYMD = toYMD(today)
     const yesterday = new Date(today)
     yesterday.setDate(today.getDate() - 1)
     const yesterdayYMD = toYMD(yesterday)
 
-    if (ymd === todayYMD) return 'Hôm nay'
-    if (ymd === yesterdayYMD) return 'Hôm qua'
+    if (d === todayYMD) return 'Hôm nay'
+    if (d === yesterdayYMD) return 'Hôm qua'
 
-    const weekday = DAYS_VI[date.getDay()]
+    const weekday = DAYS_VI[dateObj.getDay()]
     const [y, m, day] = d.split('-')
-    return \
-`${weekday}, ${day.padStart(2, '0')}/${m}/${y}`
+    return `${weekday}, ${day.padStart(2, '0')}/${m}/${y}`
   }
 
   const getCalendarDays = () => {
@@ -118,13 +123,6 @@ export function DatePicker({ value, max, onChange, placeholder = 'Chọn ngày',
       rows.push({ date: d, isCurrent: false, disabled: !!maxDate && d > maxDate })
     }
     return rows
-  }
-
-  const toYMD = (d: Date) => {
-    const y = d.getFullYear()
-    const m = String(d.getMonth() + 1).padStart(2, '0')
-    const day = String(d.getDate()).padStart(2, '0')
-    return `${y}-${m}-${day}`
   }
 
   const selectDate = (d: Date, isCurrent: boolean) => {
