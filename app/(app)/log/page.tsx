@@ -259,7 +259,7 @@ export default function LogPage() {
         </div>
 
         <div className="flex justify-center px-2">
-          <div className="w-full max-w-[280px] bg-white/40 dark:bg-slate-900/40 rounded-[2rem] p-1.5 border border-white/20 dark:border-white/5 shadow-sm">
+          <div className="w-full max-w-[280px] bg-white/40 dark:bg-slate-900/40 rounded-[2rem] p-1.5 border border-white/20 dark:border-white/5 shadow-sm overflow-visible relative">
             <DatePicker
               value={date}
               max={today}

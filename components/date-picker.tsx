@@ -193,7 +193,7 @@ export function DatePicker({ value, max, onChange, placeholder = 'Chọn ngày',
         'z-[100] bg-white/95 dark:bg-slate-900/95 p-5 shadow-2xl border border-slate-200/50 dark:border-white/10',
         isMobile
           ? 'fixed bottom-0 left-0 right-0 rounded-t-[2rem] animate-in slide-in-from-bottom duration-300'
-          : 'absolute top-full left-0 right-0 mt-2 rounded-[2rem] animate-in fade-in slide-in-from-top-2 duration-200'
+          : 'absolute top-full left-1/2 -translate-x-1/2 mt-2 rounded-[2rem] animate-in fade-in slide-in-from-top-2 duration-200 w-[320px]'
       )}
       style={isMobile ? { paddingBottom: 'calc(env(safe-area-inset-bottom) + 1.25rem)' } : undefined}
     >

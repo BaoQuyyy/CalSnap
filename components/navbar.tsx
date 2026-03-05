@@ -44,20 +44,23 @@ export function Navbar() {
         </Link>
 
         <nav className="flex items-center gap-1">
-          {navItems.map(({ href, label }) => (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                'px-4 py-2 rounded-xl text-sm font-semibold transition-all',
-                pathname === href
-                  ? 'text-emerald-500 font-bold underline underline-offset-4'
-                  : 'text-slate-600 hover:text-slate-800'
-              )}
-            >
-              {label}
-            </Link>
-          ))}
+          {navItems.map(({ href, label }) => {
+            const isActive = pathname === href
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={cn(
+                  'relative flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-bold transition-all duration-200',
+                  isActive
+                    ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 shadow-sm'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-white/5'
+                )}
+              >
+                {label}
+              </Link>
+            )
+          })}
         </nav>
 
         <div className="flex items-center gap-3">

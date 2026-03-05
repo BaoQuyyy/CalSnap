@@ -565,3 +565,92 @@ body {
 .ios-rubber-band {
   transition: transform 0.4s var(--ios-bounce);
 }
+
+/* === DESKTOP-SPECIFIC IMPROVEMENTS === */
+
+/* Smoother scrollbar for desktop */
+@media (min-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: oklch(0.7 0 0 / 0.3);
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.7 0 0 / 0.5);
+  }
+}
+
+/* Selection color */
+::selection {
+  background: oklch(0.7 0.15 160 / 0.3);
+  color: inherit;
+}
+
+/* Smooth focus rings */
+:focus-visible {
+  outline: 2px solid oklch(0.7 0.15 160);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* Enhanced glass card hover on desktop */
+@media (min-width: 768px) {
+  .glass-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .glass-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 20px 40px -10px oklch(0 0 0 / 0.08);
+  }
+}
+
+/* Stagger children animation utility */
+.stagger-children > * {
+  animation: fadeSlideUp 0.4s ease forwards;
+  opacity: 0;
+}
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 60ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 120ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 180ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 240ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 300ms; }
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Tooltip style */
+[data-tooltip] {
+  position: relative;
+}
+[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: oklch(0.2 0 0 / 0.85);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 8px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 50;
+  backdrop-filter: blur(8px);
+}
