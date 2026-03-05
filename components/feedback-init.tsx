@@ -10,7 +10,8 @@ import { initFeedbackSystem } from '@/lib/feedback'
  */
 export function FeedbackInit() {
     useEffect(() => {
-        initFeedbackSystem()
+        const cleanup = initFeedbackSystem()
+        return cleanup
     }, [])
 
     return null

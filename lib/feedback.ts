@@ -168,25 +168,27 @@ export const triggerHaptic = (type: HapticType = 'light') => {
     playHapticSound(type);
 };
 
+const FEEDBACK_SOUND_MAP: Record<string, HapticType> = {
+    tick: 'light',
+    tap: 'medium',
+    pop: 'success',
+};
+
 /**
  * Play a subtle UI feedback sound (for non-haptic contexts).
  * E.g., navigation ticks, button taps.
  */
 export const playFeedbackSound = (type: 'tick' | 'tap' | 'pop' = 'tick') => {
-    const hapticMap: Record<string, HapticType> = {
-        tick: 'light',
-        tap: 'medium',
-        pop: 'success',
-    };
-    playHapticSound(hapticMap[type] || 'light');
+    playHapticSound(FEEDBACK_SOUND_MAP[type] || 'light');
 };
 
 /**
  * Initialize audio context on first user interaction.
  * Call this once on app mount to ensure iOS audio works.
+ * Returns a cleanup function to remove event listeners.
  */
-export const initFeedbackSystem = () => {
-    if (typeof window === 'undefined') return;
+export const initFeedbackSystem = (): (() => void) => {
+    if (typeof window === 'undefined') return () => {};
 
     const handler = () => {
         ensureAudioReady();
@@ -194,4 +196,9 @@ export const initFeedbackSystem = () => {
 
     window.addEventListener('touchstart', handler, { once: true, passive: true });
     window.addEventListener('click', handler, { once: true });
+
+    return () => {
+        window.removeEventListener('touchstart', handler);
+        window.removeEventListener('click', handler);
+    };
 };
