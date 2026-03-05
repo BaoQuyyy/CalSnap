@@ -234,6 +234,9 @@ body {
 :root {
   --ios-bezier: cubic-bezier(0.32, 0.72, 0, 1);
   --ios-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --ios-ease: cubic-bezier(0.25, 0.1, 0.25, 1.0);
+  --ios-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ios-smooth: cubic-bezier(0.4, 0, 0.2, 1);
   --ios-shadow-soft: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 20px 40px -8px rgba(0, 0, 0, 0.08);
   --ios-shadow-premium:
     0 2px 4px rgba(0, 0, 0, 0.02),
@@ -294,13 +297,13 @@ body {
 }
 
 .ios-spring-enter {
-  animation: iosSpringEnter 0.6s var(--ios-spring) forwards;
+  animation: iosSpringEnter 0.5s var(--ios-spring) forwards;
 }
 
 @keyframes iosSpringEnter {
   from {
     opacity: 0;
-    transform: scale(0.92) translateY(10px);
+    transform: scale(0.95) translateY(8px);
   }
 
   to {
@@ -311,14 +314,14 @@ body {
 
 .ios-reveal {
   opacity: 0;
-  transform: translateY(15px);
-  animation: iosReveal 0.6s var(--ios-bezier) forwards;
+  transform: translateY(12px);
+  animation: iosReveal 0.5s var(--ios-ease) forwards;
 }
 
 @keyframes iosReveal {
   from {
     opacity: 0;
-    transform: translateY(15px);
+    transform: translateY(12px);
   }
 
   to {
@@ -329,32 +332,45 @@ body {
 
 .ios-glide {
   opacity: 0;
-  animation: iosReveal 0.8s var(--ios-bezier) forwards;
+  animation: iosGlide 0.4s var(--ios-ease) forwards;
+}
+
+@keyframes iosGlide {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .ios-spring {
-  transition: all 0.5s var(--ios-bounce);
+  transition: all 0.4s var(--ios-bounce);
 }
 
 .ios-tap {
-  transition: transform 0.2s var(--ios-bezier);
+  transition: transform 0.1s var(--ios-ease);
 }
 
 .ios-tap:active {
-  transform: scale(0.96);
+  transform: scale(0.97);
+  transition: transform 0.1s var(--ios-ease);
 }
 
 .ios-card {
-  transition: all 0.4s var(--ios-bezier);
+  transition: transform 0.35s var(--ios-ease), box-shadow 0.35s var(--ios-ease);
 }
 
 .ios-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
 }
 
 .ios-card:active {
-  transform: scale(0.98);
+  transform: scale(0.985);
+  transition: transform 0.1s var(--ios-ease);
 }
 
 .ios-blur {
@@ -363,7 +379,18 @@ body {
 }
 
 .page-enter {
-  animation: iosReveal 0.5s var(--ios-bezier) forwards;
+  animation: iosPageEnter 0.45s var(--ios-ease) forwards;
+}
+
+@keyframes iosPageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .nutri-header-danger {
@@ -441,4 +468,100 @@ body {
 .magic-highlight {
   animation: magic-glow 2.5s ease-out;
   border-color: rgba(34, 197, 94, 0.5) !important;
+}
+
+/* ── Additional Premium iOS Animations ── */
+
+/* Pulse glow for active elements */
+@keyframes iosPulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.05); }
+}
+
+.ios-pulse {
+  animation: iosPulse 2s var(--ios-ease) infinite;
+}
+
+/* Smooth skeleton loading */
+@keyframes iosShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.ios-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(0,0,0,0.04) 0%,
+    rgba(0,0,0,0.08) 50%,
+    rgba(0,0,0,0.04) 100%
+  );
+  background-size: 200% 100%;
+  animation: iosShimmer 1.5s var(--ios-ease) infinite;
+  border-radius: 8px;
+}
+
+.dark .ios-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.04) 0%,
+    rgba(255,255,255,0.08) 50%,
+    rgba(255,255,255,0.04) 100%
+  );
+  background-size: 200% 100%;
+}
+
+/* Scale-in for modals/popovers */
+@keyframes iosScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.ios-scale-in {
+  animation: iosScaleIn 0.25s var(--ios-ease) forwards;
+}
+
+/* Fade-slide for bottom sheets */
+@keyframes iosSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ios-slide-up {
+  animation: iosSlideUp 0.4s var(--ios-spring) forwards;
+}
+
+/* Better glass morphism */
+.ios-glass-premium {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  border: 0.5px solid rgba(255, 255, 255, 0.3);
+}
+
+.dark .ios-glass-premium {
+  background: rgba(15, 23, 42, 0.72);
+  border: 0.5px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Smooth number transitions */
+.ios-number {
+  font-variant-numeric: tabular-nums;
+  transition: all 0.3s var(--ios-ease);
+}
+
+/* Rubber band overscroll feel */
+.ios-rubber-band {
+  transition: transform 0.4s var(--ios-bounce);
 }

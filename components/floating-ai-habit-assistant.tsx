@@ -7,6 +7,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from '@/components/toast'
 import confetti from 'canvas-confetti'
+import { triggerHaptic } from '@/lib/feedback'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -52,14 +53,6 @@ export function AIAssistantWidget() {
   const pathname = usePathname()
   const fileRef = useRef<HTMLInputElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
-
-
-  const triggerHaptic = (style: 'light' | 'medium' | 'success' = 'light') => {
-    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
-      const duration = style === 'success' ? [15, 50, 15] : style === 'medium' ? [25] : [12]
-      navigator.vibrate(duration)
-    }
-  }
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' })

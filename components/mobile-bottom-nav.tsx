@@ -39,6 +39,8 @@ export function MobileBottomNav() {
               const isCenter = href === '/scan'
 
               const handleClick = (e: React.MouseEvent) => {
+                triggerHaptic('light')
+
                 if (isActive) {
                   e.preventDefault()
                   window.scrollTo({ top: 0, behavior: 'smooth' })

@@ -6,6 +6,7 @@ import { Sparkles, Send, Trash } from 'lucide-react'
 import { useRouter, usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from '@/components/toast'
+import { triggerHaptic } from '@/lib/feedback'
 
 type Message = { role: 'user' | 'assistant'; content: string; timestamp: string }
 
@@ -177,7 +178,7 @@ export default function ChatPage() {
   }
 
   const messageVariants = {
-    hidden: { opacity: 0, scale: 0.95, y: 10, filter: 'blur(4px)' },
+    hidden: { opacity: 0, scale: 0.97, y: 12, filter: 'blur(4px)' },
     show: {
       opacity: 1,
       scale: 1,
@@ -185,8 +186,9 @@ export default function ChatPage() {
       filter: 'blur(0px)',
       transition: {
         type: 'spring' as const,
-        damping: 25,
-        stiffness: 300
+        damping: 28,
+        stiffness: 350,
+        mass: 0.8
       }
     }
   }
@@ -232,13 +234,6 @@ export default function ChatPage() {
     } finally {
       setLoading(false)
       setPendingAction(null)
-    }
-  }
-
-  const triggerHaptic = (style: 'light' | 'medium' | 'success' = 'light') => {
-    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
-      if (style === 'success') navigator.vibrate([10, 30, 10])
-      else navigator.vibrate(10)
     }
   }
 

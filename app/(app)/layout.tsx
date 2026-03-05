@@ -4,6 +4,7 @@ import { InstallPrompt } from '@/components/install-prompt'
 import { AIAssistantWidget } from '../../components/floating-ai-habit-assistant'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { PushNotificationPrompt } from '@/components/push-notification-prompt'
+import { FeedbackInit } from '@/components/feedback-init'
 import { logout } from '@/app/actions/auth'
 import { LogOut } from 'lucide-react'
 import Script from 'next/script'
@@ -38,6 +39,7 @@ export default function AppLayout({
             <InstallPrompt />
             <AIAssistantWidget />
             <PushNotificationPrompt />
+            <FeedbackInit />
             <Script src="/register-sw.js" strategy="afterInteractive" />
         </div>
     )

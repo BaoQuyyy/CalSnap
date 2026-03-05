@@ -7,6 +7,7 @@ import { Flame, Beef, Wheat, Droplets, Heart, X as CloseIcon } from 'lucide-reac
 import { toast } from '@/components/toast'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
+import { triggerHaptic } from '@/lib/feedback'
 
 interface MealCardProps {
     meal: {
@@ -56,10 +57,10 @@ export function MealCard({ meal, onToggleFavorite, onUpdate, onDelete }: MealCar
         })
     }, [meal.id])
 
-    const triggerHaptic = (duration = 10) => {
-        if (typeof window !== 'undefined' && 'vibrate' in navigator) {
-            navigator.vibrate([duration])
-        }
+    const startEditing = () => {
+        setEditData({ ...displayData })
+        setIsEditing(true)
+        triggerHaptic('light')
     }
 
     useEffect(() => {
@@ -81,12 +82,6 @@ export function MealCard({ meal, onToggleFavorite, onUpdate, onDelete }: MealCar
             window.removeEventListener('calsnap:meal-start-edit', editHandler)
         }
     }, [meal.id])
-
-    const startEditing = () => {
-        setEditData({ ...displayData })
-        setIsEditing(true)
-        triggerHaptic(15)
-    }
 
     const cancelEditing = () => setIsEditing(false)
 
@@ -127,7 +122,7 @@ export function MealCard({ meal, onToggleFavorite, onUpdate, onDelete }: MealCar
             })
 
             if (res.success) {
-                triggerHaptic(20)
+                triggerHaptic('medium')
 
                 // Dùng data từ server trả về (chắc chắn đúng)
                 const saved = res.data ?? editData
