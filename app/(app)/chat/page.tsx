@@ -423,15 +423,20 @@ export default function ChatPage() {
 
         {loading && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
             className="flex justify-start"
           >
             <div className="bg-white dark:bg-slate-900 rounded-[22px] rounded-bl-[6px] px-6 py-4 ios-shadow border border-slate-200/50 dark:border-white/5">
               <div className="flex gap-1.5 h-4 items-center">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-bounce" />
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-bounce [animation-delay:0.2s]" />
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-bounce [animation-delay:0.4s]" />
+                {[0, 1, 2].map((i) => (
+                  <motion.div
+                    key={i}
+                    className="w-2 h-2 rounded-full bg-emerald-400"
+                    animate={{ scale: [1, 1.4, 1] }}
+                    transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15, ease: 'easeInOut' }}
+                  />
+                ))}
               </div>
             </div>
           </motion.div>

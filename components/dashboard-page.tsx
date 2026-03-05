@@ -15,8 +15,41 @@ import { useSearchParams, usePathname, useRouter } from 'next/navigation'
 import { getMealsForDate, getWeeklyCalories, relogMeal } from '@/app/actions/meals'
 import { toast } from '@/components/toast'
 import { MonthlySummaryCard } from '@/components/monthly-summary-card'
+import confetti from 'canvas-confetti'
+import { motion, useSpring } from 'framer-motion'
 
 interface MealSummary { calories: number; protein: number; carbs: number; fat: number }
+
+async function fetchStreak(supabase: ReturnType<typeof createClient>, userId: string): Promise<number> {
+  const { data } = await supabase
+    .from('meal_logs')
+    .select('logged_at')
+    .eq('user_id', userId)
+    .order('logged_at', { ascending: false })
+  if (!data || data.length === 0) return 0
+
+  const uniqueDates = [...new Set(data.map((r: { logged_at: string }) => r.logged_at as string))].sort().reverse()
+
+  const todayDate = new Date()
+  todayDate.setHours(0, 0, 0, 0)
+
+  let streak = 0
+  const checkDate = new Date(todayDate)
+
+  for (const dateStr of uniqueDates) {
+    const d = new Date(dateStr + 'T12:00:00')
+    d.setHours(0, 0, 0, 0)
+    const diff = Math.round((checkDate.getTime() - d.getTime()) / (1000 * 60 * 60 * 24))
+    if (diff === 0) {
+      streak++
+      checkDate.setDate(checkDate.getDate() - 1)
+    } else if (diff > 0) {
+      break
+    }
+  }
+
+  return streak
+}
 
 export default function DashboardPage() {
   const [profile, setProfile] = useState<DbProfile | null>(null)
@@ -29,6 +62,7 @@ export default function DashboardPage() {
   const [exerciseCalories, setExerciseCalories] = useState(0)
   const [habitRefreshKey, setHabitRefreshKey] = useState(0)
   const [ringSize, setRingSize] = useState(180)
+  const [streak, setStreak] = useState(0)
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
@@ -76,6 +110,9 @@ export default function DashboardPage() {
       if (recentMeals.length === 0) {
         try { setRecentMeals((await getMealsForDate('recent') as any[]) ?? []) } catch { }
       }
+      // Load streak on initial load
+      const streakCount = await fetchStreak(supabase, user.id)
+      setStreak(streakCount)
     }
     load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -88,6 +125,27 @@ export default function DashboardPage() {
     }
     loadWeekly()
   }, [])
+
+  // Feature 1: Confetti + Goal Celebration when daily calorie goal is reached
+  useEffect(() => {
+    const plan = profile?.fitness_plan as FitnessPlan | null
+    const goal = plan?.daily_calories ?? profile?.daily_calorie_goal ?? 2000
+    if (!totals || goal <= 0) return
+    if (totals.calories >= goal) {
+      const todayKey = new Date().toLocaleDateString('en-CA')
+      const storageKey = 'calsnap_goal_celebrated_date'
+      try {
+        if (localStorage.getItem(storageKey) !== todayKey) {
+          localStorage.setItem(storageKey, todayKey)
+          confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 }, colors: ['#10b981', '#34d399', '#6ee7b7', '#fbbf24', '#f59e0b'] })
+          toast.success('🎉 Bạn đã đạt mục tiêu hôm nay!')
+        }
+      } catch {
+        // localStorage not available
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [totals?.calories, profile])
 
   // React to AI water logging (so dashboard updates without refresh)
   useEffect(() => {
@@ -233,6 +291,12 @@ export default function DashboardPage() {
   const pct = calorieGoal > 0 ? Math.min(100, Math.round((calories / calorieGoal) * 100)) : 0
   const dash = isOverGoal ? circ : (pct / 100) * circ
 
+  // Feature 5: Animated ring using Framer Motion spring
+  const ringOffset = useSpring(circ, { stiffness: 60, damping: 18 })
+  useEffect(() => {
+    ringOffset.set(circ - dash)
+  }, [dash, circ, ringOffset])
+
   const relogHandler = async (meal: any) => {
     const res = await relogMeal(meal)
     if ((res as any)?.error) { toast.error((res as any).error); return }
@@ -297,10 +361,10 @@ export default function DashboardPage() {
                   </linearGradient>
                 </defs>
                 <circle cx={RS / 2} cy={RS / 2} r={r} fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth={ST} />
-                <circle cx={RS / 2} cy={RS / 2} r={r} fill="none" stroke="url(#nutriRing)" strokeWidth={ST} strokeLinecap="round"
+                <motion.circle cx={RS / 2} cy={RS / 2} r={r} fill="none" stroke="url(#nutriRing)" strokeWidth={ST} strokeLinecap="round"
                   transform={`rotate(-90 ${RS / 2} ${RS / 2})`}
-                  strokeDasharray={`${dash} ${circ}`}
-                  strokeDashoffset={0} />
+                  strokeDasharray={circ}
+                  style={{ strokeDashoffset: ringOffset }} />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
                 <p className="text-white font-display font-extrabold text-3xl leading-none tabular-nums">{Math.abs(remaining).toLocaleString()}</p>
@@ -323,10 +387,16 @@ export default function DashboardPage() {
                   </div>
                 ))}
               </div>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-1.5 items-center">
                 <MacroPill type="protein" value={totals?.protein ?? 0} />
                 <MacroPill type="carbs" value={totals?.carbs ?? 0} />
                 <MacroPill type="fat" value={totals?.fat ?? 0} />
+                {/* Feature 2: Streak badge */}
+                {streak >= 2 && (
+                  <span className="text-xs font-black text-orange-500 bg-orange-50 dark:bg-orange-900/20 px-2 py-0.5 rounded-full">
+                    🔥 {streak} ngày
+                  </span>
+                )}
               </div>
             </div>
           </div>

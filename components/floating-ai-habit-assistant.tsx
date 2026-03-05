@@ -317,15 +317,24 @@ export function AIAssistantWidget() {
                 </div>
               ))}
               {loading && (
-                <div className="flex justify-start">
-                  <div className="ios-bubble-ai px-4 py-2.5">
-                    <div className="flex gap-1 h-3 items-center">
-                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/40 animate-bounce" />
-                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/40 animate-bounce [animation-delay:0.2s]" />
-                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/40 animate-bounce [animation-delay:0.4s]" />
+                <motion.div
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex justify-start"
+                >
+                  <div className="ios-bubble-ai px-4 py-3">
+                    <div className="flex gap-1.5 items-center h-4">
+                      {[0, 1, 2].map((i) => (
+                        <motion.div
+                          key={i}
+                          className="w-2 h-2 rounded-full bg-emerald-400"
+                          animate={{ scale: [1, 1.4, 1] }}
+                          transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15, ease: 'easeInOut' }}
+                        />
+                      ))}
                     </div>
                   </div>
-                </div>
+                </motion.div>
               )}
               <div ref={scrollRef} />
             </div>

@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, Calendar, ChevronDown, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
+
 const DAYS_VI = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7']
 const DAYS_FULL_VI = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7']
 const MONTHS_VI = ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12']
@@ -29,7 +30,6 @@ export function DatePicker({ value, max, onChange, placeholder = 'Chọn ngày',
   })
   const [monthPickerMode, setMonthPickerMode] = useState(false)
   const [slideDir, setSlideDir] = useState<'left' | 'right' | null>(null)
-  const [isMobile, setIsMobile] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const slideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -44,14 +44,6 @@ export function DatePicker({ value, max, onChange, placeholder = 'Chọn ngày',
       setViewDate(new Date(y, m - 1, 1))
     }
   }, [value])
-
-  // Detect mobile
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768)
-    check()
-    window.addEventListener('resize', check)
-    return () => window.removeEventListener('resize', check)
-  }, [])
 
   // Close on outside click
   useEffect(() => {
@@ -70,16 +62,6 @@ export function DatePicker({ value, max, onChange, placeholder = 'Chọn ngày',
       document.removeEventListener('touchstart', handleClickOutside)
     }
   }, [open])
-
-  // Lock body scroll on mobile when open
-  useEffect(() => {
-    if (isMobile && open) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
-    return () => { document.body.style.overflow = '' }
-  }, [isMobile, open])
 
   // Cleanup slide animation timer on unmount
   useEffect(() => {
@@ -189,23 +171,10 @@ export function DatePicker({ value, max, onChange, placeholder = 'Chọn ngày',
     <div
       role="dialog"
       aria-label="Chọn ngày"
-      className={cn(
-        'z-[100] bg-white/95 dark:bg-slate-900/95 p-5 shadow-2xl border border-slate-200/50 dark:border-white/10',
-        isMobile
-          ? 'fixed bottom-0 left-0 right-0 rounded-t-[2rem] animate-in slide-in-from-bottom duration-300'
-          : 'absolute top-full left-1/2 -translate-x-1/2 mt-2 rounded-[2rem] animate-in fade-in slide-in-from-top-2 duration-200 w-[320px]'
-      )}
-      style={isMobile ? { paddingBottom: 'calc(env(safe-area-inset-bottom) + 1.25rem)' } : undefined}
+      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-[200] bg-white/95 dark:bg-slate-900/95 p-5 shadow-2xl border border-slate-200/50 dark:border-white/10 rounded-[2rem] animate-in fade-in slide-in-from-top-2 duration-200 w-[320px]"
     >
       {/* Glassmorphism background */}
       <div className="absolute inset-0 bg-white/80 dark:bg-slate-900/80 ios-blur -z-10 rounded-[2rem]" />
-
-      {/* Mobile handle bar */}
-      {isMobile && (
-        <div className="flex justify-center mb-4 -mt-1">
-          <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
-        </div>
-      )}
 
       {monthPickerMode ? (
         /* ── MONTH PICKER MODE ── */
@@ -390,14 +359,6 @@ export function DatePicker({ value, max, onChange, placeholder = 'Chọn ngày',
         </span>
         <ChevronDown className={cn('h-4 w-4 text-slate-400 transition-transform duration-200', open && 'rotate-180')} />
       </button>
-
-      {/* Mobile backdrop overlay */}
-      {open && isMobile && (
-        <div
-          className="fixed inset-0 bg-black/30 z-[99] animate-in fade-in duration-200"
-          onClick={() => { setOpen(false); setMonthPickerMode(false) }}
-        />
-      )}
 
       {/* Calendar panel */}
       {open && CalendarPanel}
