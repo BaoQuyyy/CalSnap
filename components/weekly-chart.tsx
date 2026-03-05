@@ -45,7 +45,7 @@ export function WeeklyChart({ data, goal = 2000 }: WeeklyChartProps) {
         normal: '#34d399',      // emerald-400
         empty: isDark ? '#1e293b' : '#e2e8f0',  // slate-800 dark / slate-200 light
     }
-    const axisColor = isDark ? '#94a3b8' : '#94a3b8'   // slate-400
+    const axisColor = '#94a3b8'   // slate-400
     const gridColor = isDark ? 'rgba(148,163,184,0.15)' : 'rgba(148,163,184,0.3)'
     const tooltipBg = isDark ? '#1e293b' : '#ffffff'
     const tooltipBorder = isDark ? '#334155' : '#e2e8f0'

@@ -5,7 +5,6 @@ import { updateDailyAdherence, updateJourneyProgress } from '@/app/actions/adher
 export async function POST(req: NextRequest) {
   try {
     const { type, data } = await req.json()
-    console.log(`[ACTION] ${type}:`, JSON.stringify(data))
 
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -49,7 +48,6 @@ export async function POST(req: NextRequest) {
       if (typeof mealId === 'string') {
         mealId = mealId.replace(/^\[?ID:/i, '').replace(/\]$/, '').trim()
       }
-      console.log(`[ACTION] Sanitized ID: "${mealId}"`)
 
       const calories = Math.round(Number(data.calories) || 0)
       const protein = Math.round(Number(data.protein) || 0)

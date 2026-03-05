@@ -101,7 +101,6 @@ export async function POST(req: NextRequest) {
 
             const response = await result.response
             const content = response.text()
-            console.log('[/api/analyze:textOnly] Gemini success:', content)
 
             const jsonMatch = content?.match(/\{[\s\S]*\}/)
             if (!jsonMatch) {
@@ -153,8 +152,6 @@ export async function POST(req: NextRequest) {
             )
         }
 
-        console.log(`[/api/analyze] Sending ${Math.round(approximateSizeBytes / 1024)} KB image to Gemini`)
-
         const genAI = new GoogleGenerativeAI(apiKey)
         const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
 
@@ -170,7 +167,6 @@ export async function POST(req: NextRequest) {
 
         const response = await result.response
         const content = response.text()
-        console.log('[/api/analyze] Gemini success:', content)
 
         if (!content) {
             return NextResponse.json({ error: 'Không nhận được phản hồi từ AI.' }, { status: 500 })

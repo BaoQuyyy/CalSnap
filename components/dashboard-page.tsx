@@ -21,7 +21,7 @@ interface MealSummary { calories: number; protein: number; carbs: number; fat: n
 export default function DashboardPage() {
   const [profile, setProfile] = useState<DbProfile | null>(null)
   const [totals, setTotals] = useState<MealSummary | null>(null)
-  const [date, setDate] = useState(() => new Date().toISOString().split('T')[0])
+  const [date, setDate] = useState(() => new Date().toLocaleDateString('en-CA'))
   const [recentMeals, setRecentMeals] = useState<any[]>([])
   const [weeklyCalories, setWeeklyCalories] = useState<{ date: string; calories: number; label?: string }[]>([])
   const [loadingWeekly, setLoadingWeekly] = useState(true)
@@ -52,7 +52,7 @@ export default function DashboardPage() {
     }
   }, [searchParams, profile, totals, pathname, router])
 
-  const todayStr = new Date().toISOString().split('T')[0]
+  const todayStr = new Date().toLocaleDateString('en-CA')
 
   useEffect(() => {
     const load = async () => {

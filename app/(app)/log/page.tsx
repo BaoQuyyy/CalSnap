@@ -36,7 +36,7 @@ export default function LogPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
-  const today = new Date().toISOString().split('T')[0]
+  const today = new Date().toLocaleDateString('en-CA')
   const [date, setDate] = useState(today)
   const [meals, setMeals] = useState<Meal[]>([])
   const [recentMeals, setRecentMeals] = useState<Meal[]>([])

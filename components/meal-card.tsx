@@ -108,7 +108,6 @@ export function MealCard({ meal, onToggleFavorite, onUpdate, onDelete }: MealCar
         if (isSaving) return
         if (editData.calories < 0 || editData.protein < 0 || editData.carbs < 0 || editData.fat < 0) {
             toast.error('Giá trị không được âm!')
-            console.log('Saving meal id:', meal.id, 'data:', editData)
             return
         }
 

@@ -19,8 +19,8 @@ export function WaterTracker({ currentMl: initial, goalMl }: WaterTrackerProps) 
   const handleAdd = async (ml: number) => {
     setLoading(true)
     const result = await addWater(ml)
-    if ((result as any)?.success) {
-      setCurrent((result as any).total)
+    if ('total' in result) {
+      setCurrent(result.total)
     }
     setLoading(false)
   }
