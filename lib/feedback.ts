@@ -1,5 +1,6 @@
 /**
- * Shared utility for haptic and audio feedback.
+ * Premium haptic & audio feedback system.
+ * Works on iOS (via Web Audio API) and Android (via Vibration API + Audio).
  */
 
 export const HAPTIC_TYPES = {
@@ -7,67 +8,190 @@ export const HAPTIC_TYPES = {
     MEDIUM: 'medium',
     HEAVY: 'heavy',
     SUCCESS: 'success',
+    ERROR: 'error',
+    NOTIFICATION: 'notification',
 } as const;
 
 export type HapticType = typeof HAPTIC_TYPES[keyof typeof HAPTIC_TYPES];
 
+// Reuse AudioContext for performance
+let audioCtx: AudioContext | null = null;
+
+function getAudioContext(): AudioContext | null {
+    if (typeof window === 'undefined') return null;
+    if (audioCtx && audioCtx.state !== 'closed') return audioCtx;
+    try {
+        const AC = window.AudioContext || (window as any).webkitAudioContext;
+        if (!AC) return null;
+        audioCtx = new AC();
+        return audioCtx;
+    } catch { return null; }
+}
+
+// Resume audio context (needed after user interaction on iOS)
+async function ensureAudioReady(): Promise<AudioContext | null> {
+    const ctx = getAudioContext();
+    if (!ctx) return null;
+    if (ctx.state === 'suspended') {
+        try { await ctx.resume(); } catch { return null; }
+    }
+    return ctx;
+}
+
 /**
- * Trigger haptic vibration on supporting devices.
+ * Play a subtle haptic-like audio feedback.
+ * Different profiles for different interaction types.
+ */
+async function playHapticSound(type: HapticType): Promise<void> {
+    const ctx = await ensureAudioReady();
+    if (!ctx) return;
+
+    try {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        const now = ctx.currentTime;
+
+        switch (type) {
+            case 'light':
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(1200, now);
+                osc.frequency.exponentialRampToValueAtTime(600, now + 0.015);
+                gain.gain.setValueAtTime(0.03, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.015);
+                osc.start(now);
+                osc.stop(now + 0.015);
+                break;
+
+            case 'medium':
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, now);
+                osc.frequency.exponentialRampToValueAtTime(400, now + 0.03);
+                gain.gain.setValueAtTime(0.06, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+                osc.start(now);
+                osc.stop(now + 0.03);
+                break;
+
+            case 'heavy':
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(200, now);
+                osc.frequency.exponentialRampToValueAtTime(80, now + 0.06);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+                osc.start(now);
+                osc.stop(now + 0.06);
+                break;
+
+            case 'success': {
+                // Two-tone chime (like iOS success)
+                const osc2 = ctx.createOscillator();
+                const gain2 = ctx.createGain();
+                osc2.connect(gain2);
+                gain2.connect(ctx.destination);
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, now);
+                gain.gain.setValueAtTime(0.05, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                osc.start(now);
+                osc.stop(now + 0.08);
+
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(1320, now + 0.06);
+                gain2.gain.setValueAtTime(0.001, now);
+                gain2.gain.linearRampToValueAtTime(0.05, now + 0.06);
+                gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+                osc2.start(now + 0.06);
+                osc2.stop(now + 0.15);
+                break;
+            }
+
+            case 'error':
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(200, now);
+                osc.frequency.linearRampToValueAtTime(150, now + 0.1);
+                gain.gain.setValueAtTime(0.04, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+                break;
+
+            case 'notification': {
+                // Three quick ascending notes
+                const notes = [660, 880, 1100];
+                notes.forEach((freq, i) => {
+                    const o = ctx.createOscillator();
+                    const g = ctx.createGain();
+                    o.connect(g);
+                    g.connect(ctx.destination);
+                    o.type = 'sine';
+                    const t = now + i * 0.06;
+                    o.frequency.setValueAtTime(freq, t);
+                    g.gain.setValueAtTime(0.04, t);
+                    g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+                    o.start(t);
+                    o.stop(t + 0.05);
+                });
+                // Silence the main osc (separate notes used above)
+                gain.gain.setValueAtTime(0, now);
+                osc.start(now);
+                osc.stop(now + 0.01);
+                break;
+            }
+        }
+    } catch {
+        // Audio blocked by browser policy — silently fail
+    }
+}
+
+/**
+ * Trigger haptic feedback. Uses vibration on Android + audio feedback on all platforms.
  */
 export const triggerHaptic = (type: HapticType = 'light') => {
-    if (typeof window === 'undefined' || !('vibrate' in window.navigator)) return;
-    try {
-        switch (type) {
-            case 'light': navigator.vibrate(10); break;
-            case 'medium': navigator.vibrate(20); break;
-            case 'heavy': navigator.vibrate(30); break;
-            case 'success': navigator.vibrate([15, 50, 20]); break;
-        }
-    } catch (e) { }
+    // 1. Try native vibration (Android only — iOS Safari does not support Vibration API)
+    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+        try {
+            switch (type) {
+                case 'light': navigator.vibrate(8); break;
+                case 'medium': navigator.vibrate(15); break;
+                case 'heavy': navigator.vibrate(25); break;
+                case 'success': navigator.vibrate([10, 30, 15]); break;
+                case 'error': navigator.vibrate([20, 10, 20]); break;
+                case 'notification': navigator.vibrate([8, 20, 8, 20, 8]); break;
+            }
+        } catch { }
+    }
+
+    // 2. Always play audio feedback (works on iOS + Android after user interaction)
+    playHapticSound(type);
 };
 
 /**
- * Play a subtle iPhone-style "tick" or "pop" sound using Web Audio API.
- * This avoids needing external MP3 files and is extremely low latency.
+ * Play a subtle UI feedback sound (for non-haptic contexts).
+ * E.g., navigation ticks, button taps.
  */
-export const playFeedbackSound = (type: 'tick' | 'tap' = 'tick') => {
+export const playFeedbackSound = (type: 'tick' | 'tap' | 'pop' = 'tick') => {
+    const hapticMap: Record<string, HapticType> = {
+        tick: 'light',
+        tap: 'medium',
+        pop: 'success',
+    };
+    playHapticSound(hapticMap[type] || 'light');
+};
+
+/**
+ * Initialize audio context on first user interaction.
+ * Call this once on app mount to ensure iOS audio works.
+ */
+export const initFeedbackSystem = () => {
     if (typeof window === 'undefined') return;
 
-    try {
-        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-        if (!AudioContextClass) return;
+    const handler = () => {
+        ensureAudioReady();
+    };
 
-        const ctx = new AudioContextClass();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-
-        const now = ctx.currentTime;
-
-        if (type === 'tick') {
-            // High-pitched short "tick"
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(880, now);
-            osc.frequency.exponentialRampToValueAtTime(440, now + 0.05);
-
-            gain.gain.setValueAtTime(0.1, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
-        } else {
-            // Lower "tap"
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(150, now);
-            osc.frequency.exponentialRampToValueAtTime(50, now + 0.1);
-
-            gain.gain.setValueAtTime(0.2, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-        }
-
-        osc.start(now);
-        osc.stop(now + 0.1);
-    } catch (e) {
-        // Audio might be blocked by browser policy until user interacts
-        console.debug('Feedback sound blocked or failed:', e);
-    }
+    window.addEventListener('touchstart', handler, { once: true, passive: true });
+    window.addEventListener('click', handler, { once: true });
 };
