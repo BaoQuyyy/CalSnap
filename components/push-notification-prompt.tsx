@@ -39,9 +39,8 @@ export function PushNotificationPrompt() {
             const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
 
             if (!vapidKey) {
-                // No VAPID key configured — just show success for UX demo
-                setDone(true)
-                setTimeout(dismiss, 2000)
+                // VAPID key not configured — cannot subscribe, silently dismiss
+                dismiss()
                 return
             }
 

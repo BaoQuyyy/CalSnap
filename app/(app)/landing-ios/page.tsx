@@ -1,12 +1,13 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Flame, Star, Zap, Scan, Activity, ArrowRight, ShieldCheck, Github } from 'lucide-react'
+import { Flame, Star, Zap, Scan, Activity, ArrowRight, X, Menu } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export default function IOSLandingPage() {
     const scrollRef = useRef<HTMLDivElement>(null)
+    const [menuOpen, setMenuOpen] = useState(false)
 
     useEffect(() => {
         const observer = new IntersectionObserver(
@@ -28,12 +29,6 @@ export default function IOSLandingPage() {
 
     return (
         <div className="min-h-screen bg-[#fcfcfc] text-[#1d1d1f] font-sans selection:bg-emerald-100 selection:text-emerald-900">
-            {/* --- FONTS --- */}
-            <link
-                href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Fraunces:ital,wght@0,300;0,500;0,700;1,300;1,500&display=swap"
-                rel="stylesheet"
-            />
-
             <style jsx global>{`
         :root {
           --ios-bg: #f5f5f7;
@@ -42,8 +37,8 @@ export default function IOSLandingPage() {
           --ios-glass: rgba(255, 255, 255, 0.7);
         }
 
-        .font-be { font-family: 'Be Vietnam Pro', sans-serif; }
-        .font-fraunces { font-family: 'Fraunces', serif; }
+        .font-be { font-family: var(--font-be-vietnam-pro), sans-serif; }
+        .font-fraunces { font-family: var(--font-display), serif; }
 
         @keyframes iosFadeUp {
           from { opacity: 0; transform: translateY(30px) scale(0.98); }
@@ -117,11 +112,31 @@ export default function IOSLandingPage() {
                         <Link href="/scan" className="ios-btn-primary ml-4">Bắt đầu ngay</Link>
                     </div>
 
-                    <button className="md:hidden w-8 h-8 flex flex-col justify-center items-end gap-1.5 focus:outline-none">
-                        <div className="w-6 h-0.5 bg-black rounded-full" />
-                        <div className="w-4 h-0.5 bg-black rounded-full" />
+                    <button
+                        className="md:hidden w-8 h-8 flex flex-col justify-center items-end gap-1.5 focus:outline-none"
+                        onClick={() => setMenuOpen(v => !v)}
+                        aria-label={menuOpen ? 'Đóng menu' : 'Mở menu'}
+                    >
+                        {menuOpen ? (
+                            <X className="w-5 h-5 text-black" />
+                        ) : (
+                            <>
+                                <div className="w-6 h-0.5 bg-black rounded-full" />
+                                <div className="w-4 h-0.5 bg-black rounded-full" />
+                            </>
+                        )}
                     </button>
                 </div>
+
+                {/* Mobile dropdown menu */}
+                {menuOpen && (
+                    <div className="md:hidden absolute top-full left-0 right-0 glass-nav border-t border-black/5 px-6 py-4 flex flex-col gap-4 text-[14px] font-semibold text-black/70 font-be">
+                        <Link href="#features" onClick={() => setMenuOpen(false)} className="hover:text-black transition-colors py-1">Tính năng</Link>
+                        <Link href="#how-it-works" onClick={() => setMenuOpen(false)} className="hover:text-black transition-colors py-1">Cách hoạt động</Link>
+                        <Link href="/log" onClick={() => setMenuOpen(false)} className="hover:text-black transition-colors py-1">Nhật ký</Link>
+                        <Link href="/scan" onClick={() => setMenuOpen(false)} className="ios-btn-primary text-center mt-1">Bắt đầu ngay</Link>
+                    </div>
+                )}
             </nav>
 
             <main className="pt-24 font-be overflow-hidden">

@@ -6,13 +6,17 @@ function getSafeUrl(): string {
         new URL(url)
         return url
     } catch {
+        if (typeof window !== 'undefined') {
+            console.warn('[CalSnap] NEXT_PUBLIC_SUPABASE_URL is missing or invalid. Authentication will not work.')
+        }
         return 'https://placeholder.supabase.co'
     }
 }
 
 export function createClient() {
-    return createBrowserClient(
-        getSafeUrl(),
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key'
-    )
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    if (!anonKey && typeof window !== 'undefined') {
+        console.warn('[CalSnap] NEXT_PUBLIC_SUPABASE_ANON_KEY is missing. Authentication will not work.')
+    }
+    return createBrowserClient(getSafeUrl(), anonKey || 'placeholder-anon-key')
 }

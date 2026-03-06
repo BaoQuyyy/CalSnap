@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Geist, Geist_Mono, Fraunces, DM_Sans } from 'next/font/google'
+import { Geist, Geist_Mono, Fraunces, DM_Sans, Be_Vietnam_Pro } from 'next/font/google'
 import './globals.css'
 import { Toaster } from '@/components/ui/sonner'
 import { ThemeProvider } from '@/components/theme-provider'
@@ -23,6 +23,12 @@ const fraunces = Fraunces({
 const dmSans = DM_Sans({
   variable: '--font-body',
   subsets: ['latin', 'latin-ext'],
+})
+
+const beVietnamPro = Be_Vietnam_Pro({
+  variable: '--font-be-vietnam-pro',
+  subsets: ['latin', 'vietnamese'],
+  weight: ['300', '400', '500', '600', '700'],
 })
 
 export const viewport: Viewport = {
@@ -62,7 +68,7 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://supabase.co" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} ${dmSans.variable} antialiased min-h-screen overflow-x-hidden`}
+        className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} ${dmSans.variable} ${beVietnamPro.variable} antialiased min-h-screen overflow-x-hidden`}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <PullToRefresh>
