@@ -41,10 +41,16 @@ export default function ScanPage() {
     const galleryInputRef = useRef<HTMLInputElement>(null)
     const router = useRouter()
 
-    const handleFile = useCallback((file: File) => {
+    const handleFile = useCallback(async (file: File) => {
         const reader = new FileReader()
-        reader.onloadend = () => {
-            setImageData(reader.result as string)
+        reader.onloadend = async () => {
+            const raw = reader.result as string
+            try {
+                const resized = await resizeImage(raw, 800)
+                setImageData(resized)
+            } catch {
+                setImageData(raw)
+            }
             setState('preview')
             setSaved(false)
             setResult(null)
@@ -75,7 +81,7 @@ export default function ScanPage() {
                 canvas.height = img.height * scale
                 const ctx = canvas.getContext('2d')!
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-                resolve(canvas.toDataURL('image/jpeg', 0.8))
+                resolve(canvas.toDataURL('image/jpeg', 0.7))
             }
             img.src = dataUrl
         })
@@ -97,11 +103,10 @@ export default function ScanPage() {
         }, 100)
 
         try {
-            const resized = await resizeImage(imageData, 800)
             const res = await fetch('/api/analyze', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ image: resized }),
+                body: JSON.stringify({ image: imageData }),
             })
             const data = await res.json()
 

@@ -145,17 +145,68 @@ export function AIAssistantWidget() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
-      const data = await res.json()
 
       if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
         const errorMsg = data?.error ?? 'Hệ thống AI đang bận, vui lòng thử lại sau.'
         setMessages(prev => [...prev, { role: 'assistant', content: errorMsg, timestamp: new Date().toISOString() }])
         return
       }
 
-      const reply = data.reply ?? '...'
+      // Stream the response
+      const reader = res.body?.getReader()
+      if (!reader) {
+        setMessages(prev => [...prev, { role: 'assistant', content: 'Lỗi kết nối stream. Vui lòng thử lại.', timestamp: new Date().toISOString() }])
+        return
+      }
+      const decoder = new TextDecoder()
+      let fullReply = ''
+      const assistantMsgTimestamp = new Date().toISOString()
+
+      // Add placeholder message that we'll update as chunks arrive
+      setMessages(prev => [...prev, { role: 'assistant', content: '', timestamp: assistantMsgTimestamp }])
+
+      let buffer = ''
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() ?? ''
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue
+          const payload = line.slice(6)
+          if (payload === '[DONE]') break
+          try {
+            const chunk = JSON.parse(payload) as string
+            fullReply += chunk
+            setMessages(prev => {
+              const updated = [...prev]
+              const last = updated[updated.length - 1]
+              if (last?.role === 'assistant') {
+                updated[updated.length - 1] = { ...last, content: fullReply }
+              }
+              return updated
+            })
+          } catch {
+            // ignore parse errors
+          }
+        }
+      }
+
+      const reply = fullReply
       const actionMatch = reply.match(/\[ACTION:(\w+):(\{[\s\S]*?\})\]/)
       const msgForState = reply.replace(/\[ACTION:[\s\S]*?\]/g, '').trim()
+
+      // Update final message with cleaned text (no ACTION tags)
+      setMessages(prev => {
+        const updated = [...prev]
+        const last = updated[updated.length - 1]
+        if (last?.role === 'assistant') {
+          updated[updated.length - 1] = { ...last, content: msgForState }
+        }
+        return updated
+      })
 
       if (actionMatch) {
         try {
@@ -165,20 +216,12 @@ export function AIAssistantWidget() {
           if (type === 'DELETE_MEAL') {
             const msgIdx = messages.length + 1
             setPendingAction({ type, data: actionData, messageIndex: msgIdx })
-            setMessages(prev => [...prev, {
-              role: 'assistant',
-              content: msgForState || `Xác nhận xóa bữa ${actionData.foodName}?`,
-              timestamp: new Date().toISOString()
-            }])
           } else {
             await handleAction(type, actionData)
-            setMessages(prev => [...prev, { role: 'assistant', content: msgForState, timestamp: new Date().toISOString() }])
           }
-        } catch (err) {
-          setMessages(prev => [...prev, { role: 'assistant', content: msgForState, timestamp: new Date().toISOString() }])
+        } catch {
+          // ignore action parse errors
         }
-      } else {
-        setMessages(prev => [...prev, { role: 'assistant', content: msgForState, timestamp: new Date().toISOString() }])
       }
     } catch (err) {
       setMessages(prev => [...prev, { role: 'assistant', content: 'Lỗi AI. Vui lòng thử lại sau.', timestamp: new Date().toISOString() }])

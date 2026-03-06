@@ -76,7 +76,7 @@ export async function getMealsForDate(date: string) {
     if (date === 'recent') {
         const { data } = await supabase
             .from('meal_logs')
-            .select('*')
+            .select('id, food_name, calories, protein, carbs, fat, logged_at, created_at, is_favorite, image_url')
             .eq('user_id', user.id)
             .order('created_at', { ascending: false })
             .limit(10)
@@ -85,7 +85,7 @@ export async function getMealsForDate(date: string) {
 
     const { data } = await supabase
         .from('meal_logs')
-        .select('*')
+        .select('id, food_name, calories, protein, carbs, fat, logged_at, created_at, is_favorite, image_url')
         .eq('user_id', user.id)
         .eq('logged_at', date)
         .order('created_at', { ascending: false })

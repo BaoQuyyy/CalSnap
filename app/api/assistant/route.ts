@@ -68,13 +68,13 @@ export async function POST(req: NextRequest) {
     const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
 
     const [{ data: profile }, { data: recentMeals }, { data: adherence }] = await Promise.all([
-      supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
+      supabase.from('profiles').select('fitness_plan, daily_calorie_goal, journey_streak').eq('id', user.id).maybeSingle(),
       supabase.from('meal_logs')
         .select('id, food_name, calories, protein, carbs, fat, logged_at')
         .eq('user_id', user.id)
         .gte('logged_at', twoDaysAgo)
         .order('logged_at', { ascending: false }),
-      supabase.from('plan_adherence').select('*').eq('user_id', user.id).eq('date', today).maybeSingle(),
+      supabase.from('plan_adherence').select('protein_actual, carbs_actual, fat_actual').eq('user_id', user.id).eq('date', today).maybeSingle(),
     ])
 
     const plan = profile?.fitness_plan as FitnessPlan | null
@@ -131,11 +131,34 @@ ${recentMeals?.map((m) => `[ID:${m.id}] ${m.food_name} (${m.logged_at}): ${m.cal
       ],
     })
 
-    const result = await chat.sendMessage(parts)
-    const response = await result.response
-    const reply = response.text()
+    const result = await chat.sendMessageStream(parts)
 
-    return NextResponse.json({ reply })
+    const encoder = new TextEncoder()
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of result.stream) {
+            const text = chunk.text()
+            if (text) {
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify(text)}\n\n`))
+            }
+          }
+          controller.enqueue(encoder.encode('data: [DONE]\n\n'))
+        } catch (err) {
+          controller.error(err)
+        } finally {
+          controller.close()
+        }
+      },
+    })
+
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+      },
+    })
   } catch (error: unknown) {
     console.error('Assistant API Full Error:', error)
 

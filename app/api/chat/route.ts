@@ -66,9 +66,9 @@ export async function POST(req: NextRequest) {
     const today = new Date().toISOString().split('T')[0]
 
     const [{ data: profile }, { data: todayMeals }, { data: adherence }] = await Promise.all([
-      supabase.from('profiles').select('*').eq('id', user.id).single(),
+      supabase.from('profiles').select('fitness_plan, daily_calorie_goal, journey_streak').eq('id', user.id).single(),
       supabase.from('meal_logs').select('id, food_name, calories, protein, carbs, fat').eq('user_id', user.id).eq('logged_at', today),
-      supabase.from('plan_adherence').select('*').eq('user_id', user.id).eq('date', today).single(),
+      supabase.from('plan_adherence').select('protein_actual, carbs_actual, fat_actual').eq('user_id', user.id).eq('date', today).single(),
     ])
 
     const plan = profile?.fitness_plan as FitnessPlan | null
@@ -137,10 +137,34 @@ Luôn đặt ACTION ở cuối cùng của response, không có văn bản nào 
       ],
     })
 
-    const result = await chat.sendMessage(parts)
-    const reply = result.response.text()
+    const result = await chat.sendMessageStream(parts)
 
-    return NextResponse.json({ reply })
+    const encoder = new TextEncoder()
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of result.stream) {
+            const text = chunk.text()
+            if (text) {
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify(text)}\n\n`))
+            }
+          }
+          controller.enqueue(encoder.encode('data: [DONE]\n\n'))
+        } catch (err) {
+          controller.error(err)
+        } finally {
+          controller.close()
+        }
+      },
+    })
+
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+      },
+    })
   } catch (error: unknown) {
     console.error('Chat error:', error)
 

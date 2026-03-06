@@ -101,9 +101,8 @@ export default function ChatPage() {
         }),
       })
 
-      const data = await res.json()
-
       if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
         const isOverload = res.status === 429
         const msg =
           data?.error ??
@@ -113,15 +112,59 @@ export default function ChatPage() {
         throw new Error(msg)
       }
 
-      const rawReply: string =
-        typeof data.reply === 'string'
-          ? data.reply
-          : 'Xin lỗi, hiện tại tôi không thể trả lời. Bạn thử lại sau nhé.'
+      // Stream the response
+      const reader = res.body?.getReader()
+      if (!reader) {
+        throw new Error('Lỗi kết nối stream. Vui lòng thử lại.')
+      }
+      const decoder = new TextDecoder()
+      let fullReply = ''
+      const assistantMsgTimestamp = new Date().toISOString()
 
-      const reply = data.reply ?? 'Mình chưa hiểu ý bạn lắm.'
+      setMessages((prev) => [...prev, { role: 'assistant', content: '', timestamp: assistantMsgTimestamp }])
+
+      let buffer = ''
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() ?? ''
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue
+          const payload = line.slice(6)
+          if (payload === '[DONE]') break
+          try {
+            const chunk = JSON.parse(payload) as string
+            fullReply += chunk
+            setMessages((prev) => {
+              const updated = [...prev]
+              const last = updated[updated.length - 1]
+              if (last?.role === 'assistant') {
+                updated[updated.length - 1] = { ...last, content: fullReply }
+              }
+              return updated
+            })
+          } catch {
+            // ignore parse errors
+          }
+        }
+      }
+
+      const reply = fullReply
       const actionMatch = reply.match(/\[ACTION:(\w+):(\{[\s\S]*?\})\]/)
       // DO NOT strip [ID:...] for state storage - we need it in history for next turn memory
       const msgForState = reply.replace(/\[ACTION:[\s\S]*?\]/g, '').trim()
+
+      // Update final message with cleaned text (no ACTION tags)
+      setMessages((prev) => {
+        const updated = [...prev]
+        const last = updated[updated.length - 1]
+        if (last?.role === 'assistant') {
+          updated[updated.length - 1] = { ...last, content: msgForState }
+        }
+        return updated
+      })
 
       if (actionMatch) {
         try {
@@ -131,33 +174,12 @@ export default function ChatPage() {
           if (type === 'DELETE_MEAL') {
             const msgIdx = messages.length + 1
             setPendingAction({ type, data: actionData, messageIndex: msgIdx })
-            setMessages(prev => [...prev, {
-              role: 'assistant',
-              content: msgForState || `Xác nhận xóa bữa ${actionData.foodName}?`,
-              timestamp: new Date().toISOString()
-            }])
           } else {
             await handleAction(type, actionData)
-            setMessages(prev => [...prev, {
-              role: 'assistant',
-              content: msgForState,
-              timestamp: new Date().toISOString()
-            }])
           }
         } catch (err) {
           console.error("Failed to parse AI action:", err)
-          setMessages(prev => [...prev, {
-            role: 'assistant',
-            content: msgForState,
-            timestamp: new Date().toISOString()
-          }])
         }
-      } else {
-        setMessages(prev => [...prev, {
-          role: 'assistant',
-          content: msgForState,
-          timestamp: new Date().toISOString()
-        } as Message])
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Lỗi kết nối.')

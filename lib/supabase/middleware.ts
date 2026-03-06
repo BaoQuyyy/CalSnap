@@ -67,16 +67,29 @@ export async function updateSession(request: NextRequest) {
         !pathname.startsWith('/register') &&
         isProtected
     ) {
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('onboarding_completed')
-            .eq('id', user.id)
-            .single()
+        const onboardedCookie = request.cookies.get('calsnap_onboarded')?.value
 
-        if (profile && profile.onboarding_completed === false) {
-            const url = request.nextUrl.clone()
-            url.pathname = '/onboarding'
-            return NextResponse.redirect(url)
+        if (onboardedCookie !== '1') {
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('onboarding_completed')
+                .eq('id', user.id)
+                .single()
+
+            if (profile && profile.onboarding_completed === false) {
+                const url = request.nextUrl.clone()
+                url.pathname = '/onboarding'
+                return NextResponse.redirect(url)
+            }
+
+            if (profile?.onboarding_completed === true) {
+                supabaseResponse.cookies.set('calsnap_onboarded', '1', {
+                    maxAge: 60 * 60 * 24 * 7,
+                    httpOnly: true,
+                    sameSite: 'lax',
+                    path: '/',
+                })
+            }
         }
     }
 
