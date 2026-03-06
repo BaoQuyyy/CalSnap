@@ -7,8 +7,6 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
 const GLASS_ML = 250
-const STEPS_GOAL = 10000
-const WATER_GLASSES = 8
 const CAL_PER_MIN_MAP: Record<ExerciseType, number> = { Walking: 4, Running: 10, Gym: 7, Cycling: 8 }
 
 interface HabitCardsProps {
@@ -19,11 +17,13 @@ interface HabitCardsProps {
     exercise_minutes: number
     exercise_calories: number
   } | null
+  stepsGoal?: number
+  waterGlasses?: number
   onUpdate?: (newExerciseCalories?: number) => void
   className?: string
 }
 
-export function HabitCards({ date, initialHabits, onUpdate, className }: HabitCardsProps) {
+export function HabitCards({ date, initialHabits, stepsGoal = 10000, waterGlasses: waterGoal = 8, onUpdate, className }: HabitCardsProps) {
   const [steps, setSteps] = useState(initialHabits?.steps ?? 0)
   const [waterMl, setWaterMl] = useState(initialHabits?.water_ml ?? 0)
   const [exerciseMinutes, setExerciseMinutes] = useState(initialHabits?.exercise_minutes ?? 0)
@@ -42,9 +42,9 @@ export function HabitCards({ date, initialHabits, onUpdate, className }: HabitCa
   }, [initialHabits])
 
   const waterGlasses = Math.round(waterMl / GLASS_ML)
-  const stepsPercent = Math.min(100, (steps / STEPS_GOAL) * 100)
+  const stepsPercent = Math.min(100, (steps / stepsGoal) * 100)
   const stepsCalories = steps <= 0 ? 0 : Math.max(1, Math.round(steps * 0.04))
-  const waterPercent = Math.min(100, (waterGlasses / WATER_GLASSES) * 100)
+  const waterPercent = Math.min(100, (waterGlasses / waterGoal) * 100)
   const exercisePercent = Math.min(100, (exerciseMinutes / 30) * 100)
 
   const handleSaveSteps = async () => {
@@ -142,7 +142,7 @@ export function HabitCards({ date, initialHabits, onUpdate, className }: HabitCa
               ) : (
                 <button onClick={() => { setStepsInput(String(steps)); setEditingSteps(true) }}
                   className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 tabular-nums">
-                  {steps.toLocaleString()}<span className="text-slate-400">/{STEPS_GOAL.toLocaleString()} · ~{stepsCalories}kcal</span>
+                  {steps.toLocaleString()}<span className="text-slate-400">/{stepsGoal.toLocaleString()} · ~{stepsCalories}kcal</span>
                 </button>
               )}
             </div>
@@ -172,11 +172,11 @@ export function HabitCards({ date, initialHabits, onUpdate, className }: HabitCa
           <div className="flex-1 min-w-0">
             <div className="flex items-baseline justify-between">
               <span className="text-sm font-bold text-slate-800 dark:text-slate-100">Water</span>
-              <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">{waterGlasses}/{WATER_GLASSES} ly · {waterMl}ml</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">{waterGlasses}/{waterGoal} ly · {waterMl}ml</span>
             </div>
             {/* Glass toggles */}
             <div className="flex gap-1 mt-1.5">
-              {Array.from({ length: WATER_GLASSES }, (_, i) => (
+              {Array.from({ length: waterGoal }, (_, i) => (
                 <button key={i} type="button"
                   onClick={async () => {
                     const newGlasses = waterGlasses === i + 1 ? i : i + 1
