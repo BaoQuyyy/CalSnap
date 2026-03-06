@@ -13,6 +13,7 @@ import { toast } from '@/components/toast'
 import { SwipeableMealCard } from '@/components/swipeable-meal-card'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
+import { MealRouletteWheel } from '@/components/meal-roulette-wheel'
 
 type Meal = {
   id: string
@@ -75,7 +76,6 @@ export default function LogPage() {
   const [moodMealId, setMoodMealId] = useState<string | null>(null)
   const moodTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   // Feature 4: Roulette
-  const [rouletteMeal, setRouletteMeal] = useState<{ name: string; calories: number } | null>(null)
   const [showRoulette, setShowRoulette] = useState(false)
 
   // Highlight effect
@@ -196,8 +196,6 @@ export default function LogPage() {
 
   // Feature 4: Roulette helpers
   const spinRoulette = () => {
-    const randomMeal = VIETNAMESE_MEALS[Math.floor(Math.random() * VIETNAMESE_MEALS.length)]
-    setRouletteMeal(randomMeal)
     setShowRoulette(true)
   }
 
@@ -269,47 +267,14 @@ export default function LogPage() {
         </div>
       </div>
 
-      {/* Feature 4: Roulette card */}
+      {/* Feature 4: Meal Roulette Wheel modal */}
       <AnimatePresence>
-        {showRoulette && rouletteMeal && (
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.8, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 22 }}
-            className="glass-card rounded-[2rem] p-5 border border-emerald-100/50 dark:border-emerald-800/30"
-          >
-            <div className="flex items-start justify-between mb-2">
-              <p className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                🎰 Gợi ý ngẫu nhiên
-              </p>
-              <button
-                type="button"
-                onClick={() => setShowRoulette(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs"
-              >
-                ✕
-              </button>
-            </div>
-            <h3 className="text-lg font-black text-slate-900 dark:text-slate-100 mb-1">{rouletteMeal.name}</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">~{rouletteMeal.calories} kcal</p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={spinRoulette}
-                className="flex-1 py-2 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-              >
-                Quay lại 🎰
-              </button>
-              <Link
-                href={`/scan?prefill=${encodeURIComponent(rouletteMeal.name)}`}
-                onClick={() => setShowRoulette(false)}
-                className="flex-1 py-2 rounded-2xl hoverboard-gradient text-white text-xs font-bold text-center"
-              >
-                Dùng gợi ý này ✓
-              </Link>
-            </div>
-          </motion.div>
+        {showRoulette && (
+          <MealRouletteWheel
+            meals={VIETNAMESE_MEALS}
+            onSelectMeal={() => setShowRoulette(false)}
+            onClose={() => setShowRoulette(false)}
+          />
         )}
       </AnimatePresence>
 
