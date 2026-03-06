@@ -322,7 +322,7 @@ export default function LogPage() {
       )}
 
       {/* Date selector area */}
-      <div className="space-y-4 ios-reveal delay-200">
+      <div className="space-y-4 ios-reveal delay-200 relative z-10">
         <div className="flex gap-2 overflow-x-auto pb-4 -mx-1 scrollbar-hide px-1">
           {sevenDays.map((d) => {
             const isActive = d === date
