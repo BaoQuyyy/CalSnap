@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 const GLASS_ML = 250
 const STEPS_GOAL = 10000
 const WATER_GLASSES = 8
+const CAL_PER_MIN_MAP: Record<ExerciseType, number> = { Walking: 4, Running: 10, Gym: 7, Cycling: 8 }
 
 interface HabitCardsProps {
   date: string
@@ -49,11 +50,14 @@ export function HabitCards({ date, initialHabits, onUpdate, className }: HabitCa
   const handleSaveSteps = async () => {
     const val = parseInt(stepsInput, 10)
     if (isNaN(val) || val < 0) return
+    const prevSteps = steps
     setEditingSteps(false)
+    setSteps(val)
     const res = await upsertSteps(date, val)
-    if (res.error) toast.error(res.error)
-    else {
-      setSteps(val);
+    if (res.error) {
+      setSteps(prevSteps)
+      toast.error(res.error)
+    } else {
       onUpdate?.();
       window.dispatchEvent(new CustomEvent('calsnap:habit-updated', { detail: { date } }))
     }
@@ -63,22 +67,34 @@ export function HabitCards({ date, initialHabits, onUpdate, className }: HabitCa
     const mins = parseInt(exMinutes, 10)
     if (isNaN(mins) || mins <= 0) return
     setEditingExercise(false)
-    const res = await upsertExercise(date, mins, exType)
-    if ((res as any).error) { toast.error((res as any).error); return }
-    const newCal = (res as any).newCalories ?? exerciseCalories
+    const estimatedCal = exerciseCalories + Math.round(mins * CAL_PER_MIN_MAP[exType])
+    const prevMinutes = exerciseMinutes
+    const prevCalories = exerciseCalories
     setExerciseMinutes((p) => p + mins)
-    setExerciseCalories(newCal)
+    setExerciseCalories(estimatedCal)
     setExMinutes('')
+    const res = await upsertExercise(date, mins, exType)
+    if ((res as any).error) {
+      setExerciseMinutes(prevMinutes)
+      setExerciseCalories(prevCalories)
+      toast.error((res as any).error)
+      return
+    }
+    const newCal = (res as any).newCalories ?? estimatedCal
+    setExerciseCalories(newCal)
     onUpdate?.(newCal)
     window.dispatchEvent(new CustomEvent('calsnap:habit-updated', { detail: { date } }))
   }
 
   const addSteps = async (s: number) => {
     const newVal = steps + s
+    const prevSteps = steps
+    setSteps(newVal)
     const res = await upsertSteps(date, newVal)
-    if (res.error) toast.error(res.error)
-    else {
-      setSteps(newVal);
+    if (res.error) {
+      setSteps(prevSteps)
+      toast.error(res.error)
+    } else {
       onUpdate?.();
       window.dispatchEvent(new CustomEvent('calsnap:habit-updated', { detail: { date } }))
     }
@@ -86,10 +102,13 @@ export function HabitCards({ date, initialHabits, onUpdate, className }: HabitCa
 
   const addWater = async (ml: number) => {
     const newMl = Math.max(0, waterMl + ml)
+    const prevWaterMl = waterMl
+    setWaterMl(newMl)
     const res = await upsertWater(date, newMl)
-    if (res.error) toast.error(res.error)
-    else {
-      setWaterMl(newMl);
+    if (res.error) {
+      setWaterMl(prevWaterMl)
+      toast.error(res.error)
+    } else {
       onUpdate?.();
       window.dispatchEvent(new CustomEvent('calsnap:water-updated', { detail: { date, water_ml: newMl } }))
     }
@@ -162,10 +181,13 @@ export function HabitCards({ date, initialHabits, onUpdate, className }: HabitCa
                   onClick={async () => {
                     const newGlasses = waterGlasses === i + 1 ? i : i + 1
                     const newMl = newGlasses * GLASS_ML
+                    const prevWaterMl = waterMl
+                    setWaterMl(newMl)
                     const res = await upsertWater(date, newMl)
-                    if (res.error) toast.error(res.error)
-                    else {
-                      setWaterMl(newMl);
+                    if (res.error) {
+                      setWaterMl(prevWaterMl)
+                      toast.error(res.error)
+                    } else {
                       onUpdate?.();
                       window.dispatchEvent(new CustomEvent('calsnap:water-updated', { detail: { date, water_ml: newMl } }))
                     }

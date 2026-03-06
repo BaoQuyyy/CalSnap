@@ -76,8 +76,9 @@ export async function upsertWater(date: string, waterMl: number) {
     .update({ water_ml_today: waterMl, water_updated_date: date })
     .eq('id', user.id)
 
-  await updateDailyAdherence(date)
-  await updateJourneyProgress()
+  // Fire-and-forget heavy operations — don't block the response
+  void updateDailyAdherence(date)
+  void updateJourneyProgress()
 
   revalidatePath('/')
   return { success: true }
