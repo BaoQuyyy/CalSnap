@@ -21,9 +21,9 @@ export function MobileBottomNav() {
 
   return (
     <>
-      {/* Background trắng che vùng safe area phía dưới home indicator iPhone */}
+      {/* Background che vùng safe area phía dưới home indicator iPhone */}
       <div
-        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#F8FAFC] dark:bg-slate-950"
         style={{ height: 'env(safe-area-inset-bottom)' }}
       />
 

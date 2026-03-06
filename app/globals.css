@@ -143,6 +143,26 @@
   }
 }
 
+/* iOS safe area utilities */
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.pl-safe {
+  padding-left: env(safe-area-inset-left);
+}
+.pr-safe {
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Edge-to-edge hero backgrounds that bleed behind status bar */
+.bg-safe-top {
+  padding-top: env(safe-area-inset-top);
+  margin-top: calc(-1 * env(safe-area-inset-top));
+}
+
 /* Touch targets min 44x44px */
 .touch-target {
   min-width: 44px;
