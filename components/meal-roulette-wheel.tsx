@@ -24,7 +24,7 @@ const MAX_DISPLAY_MEALS = 16
 const SPIN_DURATION_MS = 3500
 const MIN_EXTRA_SPINS = 5
 const RANDOM_EXTRA_SPINS_RANGE = 4
-const CANVAS_DISPLAY_SIZE = 'min(80vw, 300px)'
+const CANVAS_DISPLAY_SIZE = 'min(72vw, 280px)'
 
 interface MealRouletteWheelProps {
   meals: { name: string; calories: number }[]
@@ -177,25 +177,20 @@ export function MealRouletteWheel({ meals, onSelectMeal, onClose }: MealRoulette
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
-      style={{ backdropFilter: 'blur(6px)', background: 'rgba(0,0,0,0.45)' }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-sm"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
     >
       <motion.div
-        initial={{ y: '100%', opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: '100%', opacity: 0 }}
+        initial={{ scale: 0.92, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.92, opacity: 0 }}
         transition={{ type: 'spring', stiffness: 280, damping: 30 }}
-        className="w-full sm:max-w-sm bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] px-6 pt-5 pb-10 shadow-2xl"
+        className="relative w-full max-w-sm mx-4 bg-white dark:bg-slate-900 rounded-3xl overflow-hidden flex flex-col max-h-[90dvh] shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Drag handle (mobile) */}
-        <div className="flex justify-center mb-4 sm:hidden">
-          <div className="w-10 h-1 rounded-full bg-slate-200 dark:bg-slate-700" />
-        </div>
-
+        <div className="overflow-y-auto flex flex-col px-6 pt-5 pb-10">
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-xl font-black text-slate-900 dark:text-slate-100">
@@ -286,6 +281,7 @@ export function MealRouletteWheel({ meals, onSelectMeal, onClose }: MealRoulette
               </motion.div>
             )}
           </AnimatePresence>
+        </div>
         </div>
       </motion.div>
     </motion.div>
