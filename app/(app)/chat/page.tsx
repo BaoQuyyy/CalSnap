@@ -327,36 +327,38 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="fixed inset-0 top-14 md:top-16 bottom-[4.5rem] md:bottom-0 left-0 right-0 z-[40] md:max-w-2xl md:mx-auto bg-slate-50 dark:bg-slate-950 flex flex-col overflow-hidden animate-in fade-in duration-300">
+    <div className="fixed inset-0 top-14 md:top-16 bottom-[4.5rem] md:bottom-0 left-0 right-0 z-[40] bg-slate-50 dark:bg-slate-950 flex flex-col overflow-hidden animate-in fade-in duration-300">
 
       {/* Background Decor */}
       <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/5 via-transparent to-transparent pointer-events-none" />
 
-      {/* Desktop header (md+): full CalSnap AI header */}
-      <div className="hidden md:flex ios-blur z-30 px-6 py-4 items-center justify-between border-b border-slate-200/50 dark:border-slate-800/50 bg-white/70 dark:bg-slate-900/70 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl hoverboard-gradient flex items-center justify-center shadow-lg shadow-emerald-500/20">
-            <Sparkles className="text-white h-5 w-5" />
-          </div>
-          <div>
-            <h1 className="text-slate-900 dark:text-white text-lg font-extrabold tracking-tight">
-              CalSnap AI
-            </h1>
-            <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[10px] uppercase tracking-widest font-black text-emerald-600 dark:text-emerald-400">
-                Online
-              </span>
+      {/* Desktop header (md+): full CalSnap AI header — centered with content */}
+      <div className="hidden md:flex ios-blur z-30 border-b border-slate-200/50 dark:border-slate-800/50 bg-white/70 dark:bg-slate-900/70 shrink-0">
+        <div className="w-full max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl hoverboard-gradient flex items-center justify-center shadow-lg shadow-emerald-500/20">
+              <Sparkles className="text-white h-5 w-5" />
+            </div>
+            <div>
+              <h1 className="text-slate-900 dark:text-white text-lg font-extrabold tracking-tight">
+                CalSnap AI
+              </h1>
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[10px] uppercase tracking-widest font-black text-emerald-600 dark:text-emerald-400">
+                  Online
+                </span>
+              </div>
             </div>
           </div>
+          <button
+            type="button"
+            onClick={clearChat}
+            className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-red-50 hover:text-red-500 transition-all active:scale-90 flex items-center justify-center"
+          >
+            <Trash className="h-4.5 w-4.5" />
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={clearChat}
-          className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-red-50 hover:text-red-500 transition-all active:scale-90 flex items-center justify-center"
-        >
-          <Trash className="h-4.5 w-4.5" />
-        </button>
       </div>
 
       {/* Mobile header: slim status + conditional clear button */}
@@ -385,139 +387,145 @@ export default function ChatPage() {
         variants={containerVariants}
         initial="hidden"
         animate="show"
-        className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4 scroll-smooth scrollbar-hide"
+        className="flex-1 overflow-y-auto py-4 flex flex-col gap-4 scroll-smooth scrollbar-hide"
       >
-        {hydrated && messages.length === 0 && !loading && (
-          <motion.div
-            variants={messageVariants}
-            className="flex-1 flex flex-col items-center justify-center text-center py-6 md:py-20"
-          >
-            <div className="relative group">
-              <div className="absolute inset-0 bg-emerald-500 blur-3xl opacity-20 group-hover:opacity-40 transition-opacity" />
-              <div className="w-20 h-20 md:w-24 md:h-24 rounded-[2rem] md:rounded-[2.5rem] hoverboard-gradient flex items-center justify-center mb-5 md:mb-8 shadow-2xl relative z-10">
-                <Sparkles className="text-white h-10 w-10 md:h-12 md:w-12 animate-pulse" />
-              </div>
-            </div>
-            <h2 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white mb-2 md:mb-3 tracking-tighter">CalSnap AI</h2>
-            <p className="text-slate-500 dark:text-slate-400 max-w-[260px] md:max-w-[280px] leading-relaxed text-sm font-medium md:font-bold opacity-80">
-              Trợ lý sức khỏe thông minh của riêng anh. Hãy bắt đầu bằng một bữa ăn nhé!
-            </p>
-            {/* Mobile: 2-column grid | Desktop: flex wrap centered */}
-            <div className="grid grid-cols-2 gap-2 mt-6 w-full max-w-sm px-2 md:hidden">
-              {SUGGESTIONS.map((s) => (
-                <button
-                  key={s}
-                  onClick={() => sendMessage(s)}
-                  className="px-4 py-3.5 ios-glass rounded-2xl text-[13px] font-bold text-slate-700 dark:text-slate-200 hover:border-emerald-500 transition-all shadow-sm active:scale-95 text-left leading-snug"
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-            <div className="hidden md:flex flex-wrap gap-2.5 justify-center mt-12 px-6">
-              {SUGGESTIONS.map((s) => (
-                <button
-                  key={`d-${s}`}
-                  onClick={() => sendMessage(s)}
-                  className="px-5 py-3.5 ios-glass rounded-2xl text-[13px] font-black text-slate-700 dark:text-slate-200 hover:border-emerald-500 transition-all shadow-sm active:scale-95"
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        <AnimatePresence mode="popLayout">
-          {messages.map((m, i) => (
+        {/* Inner column — full width on mobile, centered max-w on desktop */}
+        <div className="w-full md:max-w-4xl md:mx-auto px-4 flex flex-col gap-4 flex-1">
+          {hydrated && messages.length === 0 && !loading && (
             <motion.div
-              key={`${m.timestamp}-${i}`}
               variants={messageVariants}
-              layout
-              className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}
+              className="flex-1 flex flex-col items-center justify-center text-center py-6 md:py-20"
             >
-              <div className={`max-w-[88%] md:max-w-[82%] p-4 px-5 text-[15.5px] leading-relaxed break-words ios-shadow ${m.role === 'user'
-                ? 'rounded-[22px] rounded-br-[6px] bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/10'
-                : 'rounded-[22px] rounded-bl-[6px] bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-white/5 text-slate-800 dark:text-slate-100'
-                }`}>
-                {m.role === 'assistant' ? (
-                  <div
-                    className="[&_strong]:font-black [&_strong]:text-emerald-600 dark:[&_strong]:text-emerald-400 [&_em]:italic [&_ol]:my-3 [&_ul]:my-3 [&_li]:leading-relaxed font-medium"
-                    dangerouslySetInnerHTML={{ __html: renderContent(m.content) }}
-                  />
-                ) : (
-                  <p className="whitespace-pre-wrap leading-relaxed font-bold">{m.content}</p>
-                )}
+              <div className="relative group">
+                <div className="absolute inset-0 bg-emerald-500 blur-3xl opacity-20 group-hover:opacity-40 transition-opacity" />
+                <div className="w-20 h-20 md:w-24 md:h-24 rounded-[2rem] md:rounded-[2.5rem] hoverboard-gradient flex items-center justify-center mb-5 md:mb-8 shadow-2xl relative z-10">
+                  <Sparkles className="text-white h-10 w-10 md:h-12 md:w-12 animate-pulse" />
+                </div>
+              </div>
+              <h2 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white mb-2 md:mb-3 tracking-tighter">CalSnap AI</h2>
+              <p className="text-slate-500 dark:text-slate-400 max-w-[260px] md:max-w-[320px] leading-relaxed text-sm font-medium md:font-bold opacity-80">
+                Trợ lý sức khỏe thông minh của riêng anh. Hãy bắt đầu bằng một bữa ăn nhé!
+              </p>
+              {/* Mobile: 2-column grid */}
+              <div className="grid grid-cols-2 gap-2 mt-6 w-full max-w-sm px-2 md:hidden">
+                {SUGGESTIONS.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => sendMessage(s)}
+                    className="px-4 py-3.5 ios-glass rounded-2xl text-[13px] font-bold text-slate-700 dark:text-slate-200 hover:border-emerald-500 transition-all shadow-sm active:scale-95 text-left leading-snug"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+              {/* Desktop: flex wrap centered */}
+              <div className="hidden md:flex flex-wrap gap-2.5 justify-center mt-12 px-6">
+                {SUGGESTIONS.map((s) => (
+                  <button
+                    key={`d-${s}`}
+                    onClick={() => sendMessage(s)}
+                    className="px-5 py-3.5 ios-glass rounded-2xl text-[13px] font-black text-slate-700 dark:text-slate-200 hover:border-emerald-500 transition-all shadow-sm active:scale-95"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
 
-                {pendingAction?.messageIndex === i && (
-                  <div className="flex items-center gap-2 mt-5 pt-5 border-t border-slate-200/50 dark:border-white/10">
-                    <button
-                      onClick={() => handleAction(pendingAction.type, pendingAction.data)}
-                      className="flex-1 py-3 rounded-2xl bg-red-500 text-white text-[11px] font-black shadow-lg shadow-red-500/20 active:scale-95 transition-all uppercase tracking-widest"
-                    >
-                      Xác nhận xóa
-                    </button>
-                    <button
-                      onClick={() => setPendingAction(null)}
-                      className="flex-1 py-3 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500 text-[11px] font-black active:scale-95 transition-all uppercase tracking-widest"
-                    >
-                      Hủy
-                    </button>
+          <AnimatePresence mode="popLayout">
+            {messages.map((m, i) => (
+              <motion.div
+                key={`${m.timestamp}-${i}`}
+                variants={messageVariants}
+                layout
+                className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}
+              >
+                <div className={`max-w-[88%] md:max-w-[70%] p-4 px-5 text-[15.5px] leading-relaxed break-words ios-shadow ${m.role === 'user'
+                  ? 'rounded-[22px] rounded-br-[6px] bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/10'
+                  : 'rounded-[22px] rounded-bl-[6px] bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-white/5 text-slate-800 dark:text-slate-100'
+                  }`}>
+                  {m.role === 'assistant' ? (
+                    <div
+                      className="[&_strong]:font-black [&_strong]:text-emerald-600 dark:[&_strong]:text-emerald-400 [&_em]:italic [&_ol]:my-3 [&_ul]:my-3 [&_li]:leading-relaxed font-medium"
+                      dangerouslySetInnerHTML={{ __html: renderContent(m.content) }}
+                    />
+                  ) : (
+                    <p className="whitespace-pre-wrap leading-relaxed font-bold">{m.content}</p>
+                  )}
+
+                  {pendingAction?.messageIndex === i && (
+                    <div className="flex items-center gap-2 mt-5 pt-5 border-t border-slate-200/50 dark:border-white/10">
+                      <button
+                        onClick={() => handleAction(pendingAction.type, pendingAction.data)}
+                        className="flex-1 py-3 rounded-2xl bg-red-500 text-white text-[11px] font-black shadow-lg shadow-red-500/20 active:scale-95 transition-all uppercase tracking-widest"
+                      >
+                        Xác nhận xóa
+                      </button>
+                      <button
+                        onClick={() => setPendingAction(null)}
+                        className="flex-1 py-3 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500 text-[11px] font-black active:scale-95 transition-all uppercase tracking-widest"
+                      >
+                        Hủy
+                      </button>
+                    </div>
+                  )}
+
+                  <div className={`mt-2.5 flex items-center gap-1.5 opacity-40 ${m.role === 'user' ? 'text-white' : 'text-slate-500'}`}>
+                    <span className="text-[10px] font-black uppercase tracking-tighter">{formatTime(m.timestamp)}</span>
+                    {m.role === 'assistant' && <Sparkles size={10} className="text-emerald-500" />}
                   </div>
-                )}
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
 
-                <div className={`mt-2.5 flex items-center gap-1.5 opacity-40 ${m.role === 'user' ? 'text-white' : 'text-slate-500'}`}>
-                  <span className="text-[10px] font-black uppercase tracking-tighter">{formatTime(m.timestamp)}</span>
-                  {m.role === 'assistant' && <Sparkles size={10} className="text-emerald-500" />}
+          {loading && (
+            <motion.div
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex justify-start"
+            >
+              <div className="bg-white dark:bg-slate-900 rounded-[22px] rounded-bl-[6px] px-6 py-4 ios-shadow border border-slate-200/50 dark:border-white/5">
+                <div className="flex gap-1.5 h-4 items-center">
+                  {[0, 1, 2].map((i) => (
+                    <motion.div
+                      key={i}
+                      className="w-2 h-2 rounded-full bg-emerald-400"
+                      animate={{ scale: [1, 1.4, 1] }}
+                      transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15, ease: 'easeInOut' }}
+                    />
+                  ))}
                 </div>
               </div>
             </motion.div>
-          ))}
-        </AnimatePresence>
-
-        {loading && (
-          <motion.div
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex justify-start"
-          >
-            <div className="bg-white dark:bg-slate-900 rounded-[22px] rounded-bl-[6px] px-6 py-4 ios-shadow border border-slate-200/50 dark:border-white/5">
-              <div className="flex gap-1.5 h-4 items-center">
-                {[0, 1, 2].map((i) => (
-                  <motion.div
-                    key={i}
-                    className="w-2 h-2 rounded-full bg-emerald-400"
-                    animate={{ scale: [1, 1.4, 1] }}
-                    transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15, ease: 'easeInOut' }}
-                  />
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        )}
+          )}
+        </div>
       </motion.div>
 
-      {/* Input Area - part of flex flow */}
-      <div className="shrink-0 px-4 pb-4 pt-2">
-        <div className="ios-glass ios-shadow rounded-[2.5rem] p-2 flex items-center gap-2">
-          <div className="flex-1 relative group pl-3">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSubmit(e as unknown as React.FormEvent)}
-              placeholder="Nhắn cho trợ lý CalSnap..."
-              disabled={loading}
-              className="w-full bg-transparent py-3.5 text-[16px] text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none transition-all font-medium"
-            />
+      {/* Input Area */}
+      <div className="shrink-0 px-4 pb-4 pt-2 md:pb-6">
+        <div className="w-full md:max-w-4xl md:mx-auto">
+          <div className="ios-glass ios-shadow rounded-[2.5rem] p-2 flex items-center gap-2">
+            <div className="flex-1 relative group pl-3">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSubmit(e as unknown as React.FormEvent)}
+                placeholder="Nhắn cho trợ lý CalSnap..."
+                disabled={loading}
+                className="w-full bg-transparent py-3.5 text-[16px] text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none transition-all font-medium"
+              />
+            </div>
+            <button
+              onClick={handleSubmit}
+              disabled={loading || !input.trim()}
+              className="w-12 h-12 rounded-full hoverboard-gradient text-white flex items-center justify-center shrink-0 disabled:opacity-40 transition-all active:scale-90 shadow-xl shadow-emerald-500/30"
+            >
+              <Send className="h-5 w-5" />
+            </button>
           </div>
-          <button
-            onClick={handleSubmit}
-            disabled={loading || !input.trim()}
-            className="w-12 h-12 rounded-full hoverboard-gradient text-white flex items-center justify-center shrink-0 disabled:opacity-40 transition-all active:scale-90 shadow-xl shadow-emerald-500/30"
-          >
-            <Send className="h-5 w-5" />
-          </button>
         </div>
       </div>
     </div>
